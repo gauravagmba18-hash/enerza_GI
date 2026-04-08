@@ -553,15 +553,15 @@ async function main() {
   }
 
   const items = [
-    { itemId: "ITEM001", itemName: "Meter Seal (Green)", category: "SEAL", uom: "NOS", stockQty: 500, unitCost: 5.50 },
-    { itemId: "ITEM002", itemName: "Gas Regulator (Std)", category: "REGULATOR", uom: "NOS", stockQty: 50, unitCost: 450.00 },
-    { itemId: "ITEM003", itemName: "Gasket (1/2 inch)", category: "SPARE", uom: "NOS", stockQty: 1000, unitCost: 1.25 },
+    { itemId: "ITEM001", itemName: "Meter Seal (Green)", category: "SEAL", uom: "NOS", unitCost: 5.50 },
+    { itemId: "ITEM002", itemName: "Gas Regulator (Std)", category: "REGULATOR", uom: "NOS", unitCost: 450.00 },
+    { itemId: "ITEM003", itemName: "Gasket (1/2 inch)", category: "SPARE", uom: "NOS", unitCost: 1.25 },
   ];
 
   for (const item of items) {
     await prisma.inventoryItem.upsert({
       where: { itemId: item.itemId },
-      update: { itemName: item.itemName, stockQty: item.stockQty, unitCost: item.unitCost },
+      update: { itemName: item.itemName, unitCost: item.unitCost },
       create: item
     });
   }
