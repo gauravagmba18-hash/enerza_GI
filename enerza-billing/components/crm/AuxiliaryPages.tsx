@@ -1,5 +1,4 @@
-"use client";
-import { 
+import {
   Package, 
   Wrench, 
   ZapOff, 
