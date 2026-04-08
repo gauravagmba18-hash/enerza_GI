@@ -1,0 +1,1136 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Customer {
+  customerId   String          @id @default(cuid()) @map("customer_id")
+  fullName     String          @map("full_name")
+  customerType String          @map("customer_type")
+  kycStatus    String          @map("kyc_status")
+  panRef       String?         @map("pan_ref")
+  aadhaarRef   String?         @map("aadhaar_ref")
+  mobile       String
+  email        String?
+  status       String          @default("ACTIVE")
+  createdAt    DateTime        @default(now()) @map("created_at")
+  updatedAt    DateTime        @updatedAt @map("updated_at")
+  segmentId    String          @map("segment_id")
+  accounts     Account[]
+  appUser      AppUser?
+  segment      ConsumerSegment @relation(fields: [segmentId], references: [segmentId])
+
+  @@index([status])
+  @@index([segmentId])
+  @@map("customer")
+}
+
+model ConsumerSegment {
+  segmentId          String              @id @default(cuid()) @map("segment_id")
+  segmentName        String              @map("segment_name")
+  utilityType        String              @map("utility_type")
+  description        String?
+  createdAt          DateTime            @default(now()) @map("created_at")
+  updatedAt          DateTime            @updatedAt @map("updated_at")
+  customers          Customer[]
+  ratePlans          RatePlan[]
+  serviceConnections ServiceConnection[]
+
+  @@map("consumer_segment")
+}
+
+model Premise {
+  premiseId    String    @id @default(cuid()) @map("premise_id")
+  addressLine1 String    @map("address_line1")
+  addressLine2 String?   @map("address_line2")
+  geoLat       Float?    @map("geo_lat")
+  geoLon       Float?    @map("geo_lon")
+  buildingType String?   @map("building_type")
+  status       String    @default("ACTIVE")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  areaId       String    @map("area_id")
+  accounts     Account[]
+  area         CgdArea   @relation(fields: [areaId], references: [areaId])
+
+  @@map("premise")
+}
+
+model Account {
+  accountId          String              @id @default(cuid()) @map("account_id")
+  bpType             String?             @map("bp_type")
+  billDeliveryMode   String              @map("bill_delivery_mode")
+  status             String              @default("ACTIVE")
+  effectiveFrom      DateTime            @map("effective_from")
+  createdAt          DateTime            @default(now()) @map("created_at")
+  updatedAt          DateTime            @updatedAt @map("updated_at")
+  customerId         String              @map("customer_id")
+  premiseId          String              @map("premise_id")
+  cycleId            String              @map("cycle_id")
+  customer           Customer            @relation(fields: [customerId], references: [customerId])
+  premise            Premise             @relation(fields: [premiseId], references: [premiseId])
+  cycle              BillCycle           @relation(fields: [cycleId], references: [cycleId])
+  appAccountLinks    AppAccountLink[]
+  appServiceRequests AppServiceRequest[]
+  bills              Bill[]
+  budgetBillingPlans BudgetBillingPlan[]
+  dunningNotices     DunningNotice[]
+  netMeteringCredits NetMeteringCredit[]
+  paymentOrders      PaymentOrder[]
+  securityDeposits   SecurityDeposit[]
+  serviceConnections ServiceConnection[]
+  serviceTickets     ServiceTicket[]
+
+  @@index([status])
+  @@index([customerId])
+  @@index([premiseId])
+  @@map("account")
+}
+
+model ServiceConnection {
+  connectionId    String              @id @default(cuid()) @map("connection_id")
+  podId           String?             @map("pod_id")
+  utilityType     String              @map("utility_type")
+  startDate       DateTime            @map("start_date")
+  endDate         DateTime?           @map("end_date")
+  status          String              @default("ACTIVE")
+  createdAt       DateTime            @default(now()) @map("created_at")
+  updatedAt       DateTime            @updatedAt @map("updated_at")
+  accountId       String              @map("account_id")
+  segmentId       String              @map("segment_id")
+  bills           Bill[]
+  elecConnDetail  ElecConnDetail?
+  gasConnDetail   GasConnDetail?
+  meterInstalls   MeterInstallation[]
+  meterReadings   MeterReading[]
+  account         Account             @relation(fields: [accountId], references: [accountId])
+  segment         ConsumerSegment     @relation(fields: [segmentId], references: [segmentId])
+  waterConnDetail WaterConnDetail?
+
+  @@index([status])
+  @@index([accountId])
+  @@index([utilityType])
+  @@map("service_connection")
+}
+
+model GasConnDetail {
+  connectionId    String            @id @map("connection_id")
+  serviceType     String            @map("service_type")
+  regulatorSerial String?           @map("regulator_serial")
+  createdAt       DateTime          @default(now()) @map("created_at")
+  updatedAt       DateTime          @updatedAt @map("updated_at")
+  pressureBandId  String            @map("pressure_band_id")
+  pressureBand    PressureBand      @relation(fields: [pressureBandId], references: [bandId])
+  connection      ServiceConnection @relation(fields: [connectionId], references: [connectionId])
+
+  @@map("gas_conn_detail")
+}
+
+model ElecConnDetail {
+  connectionId            String                   @id @map("connection_id")
+  loadKw                  Float?                   @map("load_kw")
+  supplyVoltage           String?                  @map("supply_voltage")
+  phaseType               String?                  @map("phase_type")
+  tariffCategory          String?                  @map("tariff_category")
+  contractDemandKva       Float?                   @map("contract_demand_kva")
+  isNetMetered            Boolean                  @default(false) @map("is_net_metered")
+  solarCapacityKw         Float?                   @map("solar_capacity_kw")
+  dtId                    String?                  @map("dt_id")
+  createdAt               DateTime                 @default(now()) @map("created_at")
+  updatedAt               DateTime                 @updatedAt @map("updated_at")
+  connection              ServiceConnection        @relation(fields: [connectionId], references: [connectionId])
+  distributionTransformer DistributionTransformer? @relation(fields: [dtId], references: [dtId])
+
+  @@map("elec_conn_detail")
+}
+
+model WaterConnDetail {
+  connectionId String            @id @map("connection_id")
+  pipeSizeMm   Float?            @map("pipe_size_mm")
+  supplyZoneId String?           @map("supply_zone_id")
+  meterType    String?           @map("meter_type")
+  createdAt    DateTime          @default(now()) @map("created_at")
+  updatedAt    DateTime          @updatedAt @map("updated_at")
+  supplyZone   SupplyZone?       @relation(fields: [supplyZoneId], references: [supplyZoneId])
+  connection   ServiceConnection @relation(fields: [connectionId], references: [connectionId])
+
+  @@map("water_conn_detail")
+}
+
+model SupplyZone {
+  supplyZoneId String            @id @default(cuid()) @map("supply_zone_id")
+  name         String
+  utilityType  String            @default("WATER") @map("utility_type")
+  status       String            @default("ACTIVE")
+  createdAt    DateTime          @default(now()) @map("created_at")
+  updatedAt    DateTime          @updatedAt @map("updated_at")
+  bulkReads    BulkMeterRead[]
+  waterDetails WaterConnDetail[]
+
+  @@map("supply_zone")
+}
+
+model BulkMeterRead {
+  readId       String     @id @default(cuid()) @map("read_id")
+  supplyZoneId String     @map("supply_zone_id")
+  readDate     DateTime   @map("read_date")
+  valueScm     Float      @map("value_scm")
+  status       String     @default("FINAL")
+  createdAt    DateTime   @default(now()) @map("created_at")
+  supplyZone   SupplyZone @relation(fields: [supplyZoneId], references: [supplyZoneId])
+
+  @@index([supplyZoneId, readDate])
+  @@map("bulk_meter_read")
+}
+
+model PressureBand {
+  bandId         String          @id @default(cuid()) @map("band_id")
+  bandName       String          @map("band_name")
+  minPressure    Float           @map("min_pressure")
+  maxPressure    Float           @map("max_pressure")
+  usageClass     String          @map("usage_class")
+  createdAt      DateTime        @default(now()) @map("created_at")
+  updatedAt      DateTime        @updatedAt @map("updated_at")
+  gasConnDetails GasConnDetail[]
+
+  @@map("pressure_band")
+}
+
+model RatePlan {
+  ratePlanId       String            @id @default(cuid()) @map("rate_plan_id")
+  planName         String            @map("plan_name")
+  utilityType      String            @map("utility_type")
+  effectiveFrom    DateTime          @map("effective_from")
+  effectiveTo      DateTime?         @map("effective_to")
+  billingFreq      String            @map("billing_freq")
+  status           String            @default("ACTIVE")
+  createdAt        DateTime          @default(now()) @map("created_at")
+  updatedAt        DateTime          @updatedAt @map("updated_at")
+  segmentId        String            @map("segment_id")
+  chargeComponents ChargeComponent[]
+  segment          ConsumerSegment   @relation(fields: [segmentId], references: [segmentId])
+
+  @@map("rate_plan")
+}
+
+model ChargeComponent {
+  componentId   String     @id @default(cuid()) @map("component_id")
+  componentName String     @map("component_name")
+  componentType String     @map("component_type")
+  uom           String?
+  rate          Float
+  postingClass  String?    @map("posting_class")
+  slabFrom      Int?       @map("slab_from")
+  slabTo        Int?       @map("slab_to")
+  createdAt     DateTime   @default(now()) @map("created_at")
+  updatedAt     DateTime   @updatedAt @map("updated_at")
+  ratePlanId    String     @map("rate_plan_id")
+  billLines     BillLine[]
+  ratePlan      RatePlan   @relation(fields: [ratePlanId], references: [ratePlanId])
+
+  @@map("charge_component")
+}
+
+model TaxMaster {
+  taxId         String    @id @default(cuid()) @map("tax_id")
+  taxName       String    @map("tax_name")
+  jurisdiction  String
+  taxRate       Float     @map("tax_rate")
+  applicability String
+  effectiveFrom DateTime  @map("effective_from")
+  effectiveTo   DateTime? @map("effective_to")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  @@map("tax_master")
+}
+
+model BillCycle {
+  cycleId      String    @id @default(cuid()) @map("cycle_id")
+  cycleName    String    @map("cycle_name")
+  readDateRule String    @map("read_date_rule")
+  billDateRule String    @map("bill_date_rule")
+  dueDateRule  String    @map("due_date_rule")
+  graceDays    Int       @default(0) @map("grace_days")
+  status       String    @default("ACTIVE")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  accounts     Account[]
+  bills        Bill[]
+
+  @@map("bill_cycle")
+}
+
+model Bill {
+  billId             String              @id @default(cuid()) @map("bill_id")
+  billDate           DateTime            @map("bill_date")
+  dueDate            DateTime            @map("due_date")
+  netAmount          Float               @map("net_amount")
+  taxAmount          Float               @map("tax_amount")
+  totalAmount        Float               @map("total_amount")
+  status             String              @default("PENDING")
+  createdAt          DateTime            @default(now()) @map("created_at")
+  updatedAt          DateTime            @updatedAt @map("updated_at")
+  accountId          String              @map("account_id")
+  connectionId       String              @map("connection_id")
+  cycleId            String              @map("cycle_id")
+  account            Account             @relation(fields: [accountId], references: [accountId])
+  connection         ServiceConnection   @relation(fields: [connectionId], references: [connectionId])
+  cycle              BillCycle           @relation(fields: [cycleId], references: [cycleId])
+  billLines          BillLine[]
+  dunningNotices     DunningNotice[]
+  netMeteringCredits NetMeteringCredit[]
+  paymentOrders      PaymentOrder[]
+
+  @@index([status])
+  @@index([accountId])
+  @@map("bill")
+}
+
+model BillLine {
+  lineId      String          @id @default(cuid()) @map("line_id")
+  description String?
+  quantity    Float
+  rate        Float
+  amount      Float
+  lineType    String          @map("line_type")
+  createdAt   DateTime        @default(now()) @map("created_at")
+  updatedAt   DateTime        @updatedAt @map("updated_at")
+  billId      String          @map("bill_id")
+  componentId String          @map("component_id")
+  bill        Bill            @relation(fields: [billId], references: [billId])
+  component   ChargeComponent @relation(fields: [componentId], references: [componentId])
+
+  @@map("bill_line")
+}
+
+model PaymentChannel {
+  channelId     String         @id @default(cuid()) @map("channel_id")
+  channelName   String         @map("channel_name")
+  channelType   String         @map("channel_type")
+  provider      String?
+  status        String         @default("ACTIVE")
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+  paymentOrders PaymentOrder[]
+
+  @@map("payment_channel")
+}
+
+model PaymentGateway {
+  gatewayId     String         @id @default(cuid()) @map("gateway_id")
+  provider      String
+  merchantId    String         @map("merchant_id")
+  callbackUrl   String         @map("callback_url")
+  environment   String         @default("SANDBOX")
+  status        String         @default("ACTIVE")
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+  paymentOrders PaymentOrder[]
+  settlements   Settlement[]
+
+  @@map("payment_gateway")
+}
+
+model PaymentOrder {
+  orderId        String         @id @default(cuid()) @map("order_id")
+  amount         Float
+  convenienceFee Float          @default(0) @map("convenience_fee")
+  status         String         @default("INITIATED")
+  initiatedAt    DateTime       @default(now()) @map("initiated_at")
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+  billId         String         @map("bill_id")
+  accountId      String         @map("account_id")
+  channelId      String         @map("channel_id")
+  gatewayId      String         @map("gateway_id")
+  gatewayTxns    GatewayTxn[]
+  bill           Bill           @relation(fields: [billId], references: [billId])
+  account        Account        @relation(fields: [accountId], references: [accountId])
+  channel        PaymentChannel @relation(fields: [channelId], references: [channelId])
+  gateway        PaymentGateway @relation(fields: [gatewayId], references: [gatewayId])
+  refund         Refund?
+
+  @@index([status])
+  @@index([accountId])
+  @@map("payment_order")
+}
+
+model GatewayTxn {
+  txnId          String          @id @default(cuid()) @map("txn_id")
+  gatewayRef     String?         @map("gateway_ref")
+  gatewayStatus  String          @map("gateway_status")
+  responseAt     DateTime?       @map("response_at")
+  settledAt      DateTime?       @map("settled_at")
+  createdAt      DateTime        @default(now()) @map("created_at")
+  updatedAt      DateTime        @updatedAt @map("updated_at")
+  orderId        String          @map("order_id")
+  settlementId   String?         @map("settlement_id")
+  order          PaymentOrder    @relation(fields: [orderId], references: [orderId])
+  settlement     Settlement?     @relation(fields: [settlementId], references: [settlementId])
+  suspenseRecord SuspenseRecord?
+
+  @@map("gateway_txn")
+}
+
+model Settlement {
+  settlementId   String         @id @default(cuid()) @map("settlement_id")
+  settlementDate DateTime       @map("settlement_date")
+  grossAmount    Float          @map("gross_amount")
+  netAmount      Float          @map("net_amount")
+  matchedCount   Int            @default(0) @map("matched_count")
+  exceptionCount Int            @default(0) @map("exception_count")
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+  gatewayId      String         @map("gateway_id")
+  gatewayTxns    GatewayTxn[]
+  gateway        PaymentGateway @relation(fields: [gatewayId], references: [gatewayId])
+
+  @@map("settlement")
+}
+
+model Refund {
+  refundId    String       @id @default(cuid()) @map("refund_id")
+  reasonCode  String?      @map("reason_code")
+  amount      Float
+  status      String       @default("INITIATED")
+  initiatedAt DateTime     @default(now()) @map("initiated_at")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+  orderId     String       @unique @map("order_id")
+  order       PaymentOrder @relation(fields: [orderId], references: [orderId])
+
+  @@map("refund")
+}
+
+model SuspenseRecord {
+  suspenseId       String     @id @default(cuid()) @map("suspense_id")
+  reason           String?
+  amount           Float
+  resolutionStatus String     @default("OPEN") @map("resolution_status")
+  createdAt        DateTime   @default(now()) @map("created_at")
+  updatedAt        DateTime   @updatedAt @map("updated_at")
+  txnId            String     @unique @map("txn_id")
+  txn              GatewayTxn @relation(fields: [txnId], references: [txnId])
+
+  @@map("suspense_record")
+}
+
+model CgdArea {
+  areaId      String       @id @default(cuid()) @map("area_id")
+  areaName    String       @map("area_name")
+  city        String
+  district    String
+  state       String
+  zone        String?
+  utilityType String       @map("utility_type")
+  status      String       @default("ACTIVE")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+  cngStations CngStation[]
+  premises    Premise[]
+  routes      Route[]
+
+  @@map("cgd_area")
+}
+
+model Route {
+  routeId       String         @id @default(cuid()) @map("route_id")
+  routeName     String         @map("route_name")
+  cycleGroup    String?        @map("cycle_group")
+  readerId      String?        @map("reader_id")
+  status        String         @default("ACTIVE")
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+  areaId        String         @map("area_id")
+  meterReadings MeterReading[]
+  area          CgdArea        @relation(fields: [areaId], references: [areaId])
+
+  @@map("route")
+}
+
+model Meter {
+  meterId            String              @id @default(cuid()) @map("meter_id")
+  serialNo           String              @unique @map("serial_no")
+  meterType          String              @map("meter_type")
+  make               String?
+  model              String?
+  uom                String?
+  utilityType        String              @map("utility_type")
+  calibrationDue     DateTime?           @map("calibration_due")
+  status             String              @default("ACTIVE")
+  createdAt          DateTime            @default(now()) @map("created_at")
+  updatedAt          DateTime            @updatedAt @map("updated_at")
+  installations      MeterInstallation[]
+  meterIntervalReads MeterIntervalRead[]
+  readings           MeterReading[]
+
+  @@index([status])
+  @@map("meter")
+}
+
+model MeterInstallation {
+  installId    String            @id @default(cuid()) @map("install_id")
+  installDate  DateTime          @map("install_date")
+  removeDate   DateTime?         @map("remove_date")
+  sealNo       String?           @map("seal_no")
+  reason       String?
+  createdAt    DateTime          @default(now()) @map("created_at")
+  updatedAt    DateTime          @updatedAt @map("updated_at")
+  meterId      String            @map("meter_id")
+  connectionId String            @map("connection_id")
+  meter        Meter             @relation(fields: [meterId], references: [meterId])
+  connection   ServiceConnection @relation(fields: [connectionId], references: [connectionId])
+
+  @@map("meter_installation")
+}
+
+model MeterReading {
+  readingId    String            @id @default(cuid()) @map("reading_id")
+  readingDate  DateTime          @map("reading_date")
+  readingValue Float             @map("reading_value")
+  consumption  Float
+  kvah         Float?
+  maxDemand    Float?            @map("max_demand")
+  readingType  String            @map("reading_type")
+  status       String            @default("PENDING")
+  createdAt    DateTime          @default(now()) @map("created_at")
+  updatedAt    DateTime          @updatedAt @map("updated_at")
+  meterId      String            @map("meter_id")
+  connectionId String            @map("connection_id")
+  routeId      String            @map("route_id")
+  meter        Meter             @relation(fields: [meterId], references: [meterId])
+  connection   ServiceConnection @relation(fields: [connectionId], references: [connectionId])
+  route        Route             @relation(fields: [routeId], references: [routeId])
+
+  @@map("meter_reading")
+}
+
+model CngStation {
+  stationId      String    @id @default(cuid()) @map("station_id")
+  stationName    String    @map("station_name")
+  city           String
+  compressorType String?   @map("compressor_type")
+  dispenserCount Int       @default(0) @map("dispenser_count")
+  status         String    @default("ACTIVE")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+  areaId         String    @map("area_id")
+  cngSales       CngSale[]
+  area           CgdArea   @relation(fields: [areaId], references: [areaId])
+
+  @@map("cng_station")
+}
+
+model VehicleCategory {
+  categoryId     String    @id @default(cuid()) @map("category_id")
+  categoryName   String    @map("category_name")
+  vehicleType    String    @map("vehicle_type")
+  commercialFlag Boolean   @default(false) @map("commercial_flag")
+  status         String    @default("ACTIVE")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+  cngSales       CngSale[]
+
+  @@map("vehicle_category")
+}
+
+model CngSale {
+  saleId      String          @id @default(cuid()) @map("sale_id")
+  saleDate    DateTime        @map("sale_date")
+  quantityScm Float           @map("quantity_scm")
+  unitPrice   Float           @map("unit_price")
+  amount      Float
+  createdAt   DateTime        @default(now()) @map("created_at")
+  updatedAt   DateTime        @updatedAt @map("updated_at")
+  stationId   String          @map("station_id")
+  categoryId  String          @map("category_id")
+  station     CngStation      @relation(fields: [stationId], references: [stationId])
+  category    VehicleCategory @relation(fields: [categoryId], references: [categoryId])
+
+  @@map("cng_sale")
+}
+
+model AppUser {
+  appUserId       String              @id @default(cuid()) @map("app_user_id")
+  mobile          String
+  email           String?
+  otpVerified     String              @default("N") @map("otp_verified")
+  status          String              @default("ACTIVE")
+  registeredAt    DateTime            @default(now()) @map("registered_at")
+  createdAt       DateTime            @default(now()) @map("created_at")
+  updatedAt       DateTime            @updatedAt @map("updated_at")
+  customerId      String              @unique @map("customer_id")
+  accountLinks    AppAccountLink[]
+  devices         AppDevice[]
+  notifications   AppNotification[]
+  serviceRequests AppServiceRequest[]
+  sessions        AppSession[]
+  customer        Customer            @relation(fields: [customerId], references: [customerId])
+
+  @@map("app_user")
+}
+
+model AppDevice {
+  deviceId          String       @id @default(cuid()) @map("device_id")
+  osType            String?      @map("os_type")
+  appVersion        String?      @map("app_version")
+  pushToken         String?      @map("push_token")
+  deviceFingerprint String?      @map("device_fingerprint")
+  active            Boolean      @default(true)
+  createdAt         DateTime     @default(now()) @map("created_at")
+  updatedAt         DateTime     @updatedAt @map("updated_at")
+  appUserId         String       @map("app_user_id")
+  appUser           AppUser      @relation(fields: [appUserId], references: [appUserId])
+  sessions          AppSession[]
+
+  @@map("app_device")
+}
+
+model AppAccountLink {
+  linkId        String   @id @default(cuid()) @map("link_id")
+  ownershipType String?  @map("ownership_type")
+  linkedAt      DateTime @default(now()) @map("linked_at")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  appUserId     String   @map("app_user_id")
+  accountId     String   @map("account_id")
+  appUser       AppUser  @relation(fields: [appUserId], references: [appUserId])
+  account       Account  @relation(fields: [accountId], references: [accountId])
+
+  @@map("app_account_link")
+}
+
+model AppSession {
+  sessionId     String    @id @default(cuid()) @map("session_id")
+  startedAt     DateTime  @default(now()) @map("started_at")
+  endedAt       DateTime? @map("ended_at")
+  sessionStatus String    @default("ACTIVE") @map("session_status")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  appUserId     String    @map("app_user_id")
+  deviceId      String    @map("device_id")
+  appUser       AppUser   @relation(fields: [appUserId], references: [appUserId])
+  device        AppDevice @relation(fields: [deviceId], references: [deviceId])
+
+  @@map("app_session")
+}
+
+model AppNotification {
+  notifId    String        @id @default(cuid()) @map("notif_id")
+  message    String?
+  channel    String?
+  sentAt     DateTime?     @map("sent_at")
+  readFlag   Boolean       @default(false) @map("read_flag")
+  createdAt  DateTime      @default(now()) @map("created_at")
+  updatedAt  DateTime      @updatedAt @map("updated_at")
+  appUserId  String        @map("app_user_id")
+  templateId String        @map("template_id")
+  appUser    AppUser       @relation(fields: [appUserId], references: [appUserId])
+  template   NotifTemplate @relation(fields: [templateId], references: [templateId])
+
+  @@map("app_notification")
+}
+
+model NotifTemplate {
+  templateId    String            @id @default(cuid()) @map("template_id")
+  channel       String
+  eventType     String            @map("event_type")
+  language      String            @default("en")
+  bodyTemplate  String            @map("body_template")
+  active        Boolean           @default(true)
+  createdAt     DateTime          @default(now()) @map("created_at")
+  updatedAt     DateTime          @updatedAt @map("updated_at")
+  notifications AppNotification[]
+
+  @@map("notif_template")
+}
+
+model AppServiceRequest {
+  requestId          String             @id @default(cuid()) @map("request_id")
+  description        String?
+  status             String             @default("OPEN")
+  createdAt          DateTime           @default(now()) @map("created_at")
+  updatedAt          DateTime           @updatedAt @map("updated_at")
+  appUserId          String             @map("app_user_id")
+  accountId          String             @map("account_id")
+  typeId             String             @map("type_id")
+  boq_amount         Float?
+  demand_note_status String?            @default("NOT_GENERATED")
+  verification_steps String?
+  appUser            AppUser            @relation(fields: [appUserId], references: [appUserId])
+  account            Account            @relation(fields: [accountId], references: [accountId])
+  type               ServiceRequestType @relation(fields: [typeId], references: [typeId])
+
+  @@map("app_service_request")
+}
+
+model ServiceRequestType {
+  typeId          String              @id @default(cuid()) @map("type_id")
+  category        String
+  subcategory     String?
+  slaHours        Int                 @default(24) @map("sla_hours")
+  priority        String              @default("MEDIUM")
+  department      String?
+  createdAt       DateTime            @default(now()) @map("created_at")
+  updatedAt       DateTime            @updatedAt @map("updated_at")
+  serviceRequests AppServiceRequest[]
+
+  @@map("service_request_type")
+}
+
+model ApiPartner {
+  partnerId        String                @id @default(cuid()) @map("partner_id")
+  partnerName      String                @map("partner_name")
+  partnerType      String                @map("partner_type")
+  contactEmail     String?               @map("contact_email")
+  contactMobile    String?               @map("contact_mobile")
+  settlementMode   String?               @map("settlement_mode")
+  status           String                @default("ACTIVE")
+  createdAt        DateTime              @default(now()) @map("created_at")
+  updatedAt        DateTime              @updatedAt @map("updated_at")
+  credentials      ApiCredential[]
+  endpointMappings ApiEndpointMapping[]
+  rateLimit        ApiRateLimit?
+  transactions     ApiTransaction[]
+  webhooks         WebhookSubscription[]
+
+  @@map("api_partner")
+}
+
+model ApiCredential {
+  credentialId String     @id @default(cuid()) @map("credential_id")
+  clientId     String     @map("client_id")
+  secretRef    String?    @map("secret_ref")
+  tokenExpiry  DateTime?  @map("token_expiry")
+  ipWhitelist  String?    @map("ip_whitelist")
+  certRef      String?    @map("cert_ref")
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
+  partnerId    String     @map("partner_id")
+  partner      ApiPartner @relation(fields: [partnerId], references: [partnerId])
+
+  @@map("api_credential")
+}
+
+model ApiEndpointCatalog {
+  endpointId    String               @id @default(cuid()) @map("endpoint_id")
+  endpointCode  String               @unique @map("endpoint_code")
+  operationType String               @map("operation_type")
+  requestMethod String               @map("request_method")
+  authType      String               @map("auth_type")
+  syncFlag      Boolean              @default(true) @map("sync_flag")
+  version       String               @default("v1")
+  createdAt     DateTime             @default(now()) @map("created_at")
+  updatedAt     DateTime             @updatedAt @map("updated_at")
+  mappings      ApiEndpointMapping[]
+  transactions  ApiTransaction[]
+
+  @@map("api_endpoint_catalog")
+}
+
+model ApiEndpointMapping {
+  mappingId     String             @id @default(cuid()) @map("mapping_id")
+  enabled       Boolean            @default(true)
+  effectiveFrom DateTime           @map("effective_from")
+  createdAt     DateTime           @default(now()) @map("created_at")
+  updatedAt     DateTime           @updatedAt @map("updated_at")
+  partnerId     String             @map("partner_id")
+  endpointId    String             @map("endpoint_id")
+  partner       ApiPartner         @relation(fields: [partnerId], references: [partnerId])
+  endpoint      ApiEndpointCatalog @relation(fields: [endpointId], references: [endpointId])
+
+  @@map("api_endpoint_mapping")
+}
+
+model ApiTransaction {
+  apiTxnId     String             @id @default(cuid()) @map("api_txn_id")
+  requestTime  DateTime           @default(now()) @map("request_time")
+  responseMs   Int?               @map("response_ms")
+  statusCode   String?            @map("status_code")
+  payloadRef   String?            @map("payload_ref")
+  createdAt    DateTime           @default(now()) @map("created_at")
+  updatedAt    DateTime           @updatedAt @map("updated_at")
+  partnerId    String             @map("partner_id")
+  endpointId   String             @map("endpoint_id")
+  errorCode    String?            @map("error_code")
+  partner      ApiPartner         @relation(fields: [partnerId], references: [partnerId])
+  endpoint     ApiEndpointCatalog @relation(fields: [endpointId], references: [endpointId])
+  apiErrorCode ApiErrorCode?      @relation(fields: [errorCode], references: [errorCode])
+
+  @@map("api_transaction")
+}
+
+model WebhookSubscription {
+  webhookId       String     @id @default(cuid()) @map("webhook_id")
+  eventType       String     @map("event_type")
+  targetUrl       String     @map("target_url")
+  signatureMethod String?    @map("signature_method")
+  retryCount      Int        @default(3) @map("retry_count")
+  active          Boolean    @default(true)
+  createdAt       DateTime   @default(now()) @map("created_at")
+  updatedAt       DateTime   @updatedAt @map("updated_at")
+  partnerId       String     @map("partner_id")
+  partner         ApiPartner @relation(fields: [partnerId], references: [partnerId])
+
+  @@map("webhook_subscription")
+}
+
+model ApiRateLimit {
+  limitId        String     @id @default(cuid()) @map("limit_id")
+  requestsPerMin Int        @map("requests_per_min")
+  burstLimit     Int        @map("burst_limit")
+  timeoutMs      Int        @default(5000) @map("timeout_ms")
+  retryPolicy    String?    @map("retry_policy")
+  createdAt      DateTime   @default(now()) @map("created_at")
+  updatedAt      DateTime   @updatedAt @map("updated_at")
+  partnerId      String     @unique @map("partner_id")
+  partner        ApiPartner @relation(fields: [partnerId], references: [partnerId])
+
+  @@map("api_rate_limit")
+}
+
+model ApiErrorCode {
+  errorCode    String           @id @map("error_code")
+  httpStatus   Int              @map("http_status")
+  message      String
+  retryable    Boolean          @default(false)
+  category     String?
+  createdAt    DateTime         @default(now()) @map("created_at")
+  updatedAt    DateTime         @updatedAt @map("updated_at")
+  transactions ApiTransaction[]
+
+  @@map("api_error_code")
+}
+
+model UtilityConfig {
+  configId         String   @id @default("SYSTEM_DEFAULT") @map("config_id")
+  utilityName      String   @map("utility_name")
+  prorationMode    String   @default("IMMEDIATE")
+  minBillingMode   String   @default("FIXED")
+  minBillingValue  Float    @default(0.0)
+  defaultSlaHours  Int      @default(24) @map("default_sla_hours")
+  maintenanceEmail String?  @map("maintenance_email")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  @@map("utility_config")
+}
+
+model ServiceTicket {
+  ticketId     String        @id @default(cuid()) @map("ticket_id")
+  subject      String
+  description  String?
+  status       String        @default("OPEN")
+  priority     String        @default("MEDIUM")
+  category     String?
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
+  closedAt     DateTime?     @map("closed_at")
+  accountId    String        @map("account_id")
+  outage_id    String?
+  outage_event outage_event? @relation(fields: [outage_id], references: [outage_id])
+  account      Account       @relation(fields: [accountId], references: [accountId])
+  workOrders   WorkOrder[]
+
+  @@map("service_ticket")
+}
+
+model WorkOrder {
+  workOrderId       String           @id @default(cuid()) @map("work_order_id")
+  ticketId          String?          @map("ticket_id")
+  technicianId      String?          @map("technician_id")
+  asset_id          String?
+  type              String           @default("SERVICE_RESTORATION")
+  status            String           @default("PENDING")
+  priority          String           @default("MEDIUM")
+  scheduledDate     DateTime?        @map("scheduled_date")
+  startedAt         DateTime?        @map("started_at")
+  completedAt       DateTime?        @map("completed_at")
+  inspectionNotes   String?          @map("inspection_notes")
+  resolutionNotes   String?          @map("resolution_notes")
+  gpsLat            Float?           @map("gps_lat")
+  gpsLon            Float?           @map("gps_lon")
+  checklist         String?
+  materials         String?
+  photos            String?
+  signature         String?
+  unattended_reason String?
+  asset             asset?           @relation(fields: [asset_id], references: [asset_id])
+  technician        Technician?      @relation(fields: [technicianId], references: [technicianId])
+  ticket            ServiceTicket?   @relation(fields: [ticketId], references: [ticketId])
+  spares            WorkOrderSpare[]
+
+  @@map("work_order")
+}
+
+model Technician {
+  technicianId       String              @id @default(cuid()) @map("technician_id")
+  fullName           String              @map("full_name")
+  mobile             String              @unique
+  status             String              @default("ACTIVE")
+  pincodeScope       String?             @map("pincode_scope")
+  createdAt          DateTime            @default(now()) @map("created_at")
+  updatedAt          DateTime            @updatedAt @map("updated_at")
+  inventory_location inventory_location?
+  workOrders         WorkOrder[]
+
+  @@map("technician")
+}
+
+model InventoryItem {
+  itemId             String               @id @default(cuid()) @map("item_id")
+  item_code          String?              @unique
+  itemName           String               @map("item_name")
+  category           String
+  uom                String?
+  min_level          Float                @default(10)
+  unitCost           Float                @default(0.0) @map("unit_cost")
+  createdAt          DateTime             @default(now()) @map("created_at")
+  updatedAt          DateTime             @updatedAt @map("updated_at")
+  inventory_stock    inventory_stock[]
+  inventory_transfer inventory_transfer[]
+  usage              WorkOrderSpare[]
+
+  @@map("inventory_item")
+}
+
+model WorkOrderSpare {
+  usageId     String        @id @default(cuid()) @map("usage_id")
+  workOrderId String        @map("work_order_id")
+  itemId      String        @map("item_id")
+  quantity    Float
+  createdAt   DateTime      @default(now()) @map("created_at")
+  item        InventoryItem @relation(fields: [itemId], references: [itemId])
+  workOrder   WorkOrder     @relation(fields: [workOrderId], references: [workOrderId])
+
+  @@map("work_order_spare")
+}
+
+model SubStation {
+  subStationId String   @id @default(cuid()) @map("sub_station_id")
+  name         String
+  voltageLevel String   @map("voltage_level")
+  areaId       String?  @map("area_id")
+  status       String   @default("ACTIVE")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  feeders      Feeder[]
+
+  @@map("sub_station")
+}
+
+model Feeder {
+  feederId     String                    @id @default(cuid()) @map("feeder_id")
+  name         String
+  subStationId String                    @map("sub_station_id")
+  status       String                    @default("ACTIVE")
+  createdAt    DateTime                  @default(now()) @map("created_at")
+  updatedAt    DateTime                  @updatedAt @map("updated_at")
+  asset        asset[]
+  transformers DistributionTransformer[]
+  subStation   SubStation                @relation(fields: [subStationId], references: [subStationId])
+  outage_event outage_event[]
+
+  @@map("feeder")
+}
+
+model DistributionTransformer {
+  dtId        String           @id @default(cuid()) @map("dt_id")
+  name        String
+  feederId    String           @map("feeder_id")
+  capacityKva Float?           @map("capacity_kva")
+  status      String           @default("ACTIVE")
+  createdAt   DateTime         @default(now()) @map("created_at")
+  updatedAt   DateTime         @updatedAt @map("updated_at")
+  feeder      Feeder           @relation(fields: [feederId], references: [feederId])
+  elecDetails ElecConnDetail[]
+
+  @@map("distribution_transformer")
+}
+
+model TodSlot {
+  slotId       String   @id @default(cuid()) @map("slot_id")
+  name         String
+  startTime    String
+  endTime      String
+  rateModifier Float
+  status       String   @default("ACTIVE")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@map("tod_slot")
+}
+
+model MeterIntervalRead {
+  intervalId String   @id @default(cuid()) @map("interval_id")
+  meterId    String   @map("meter_id")
+  timestamp  DateTime
+  kwhImport  Float    @default(0) @map("kwh_import")
+  kwhExport  Float    @default(0) @map("kwh_export")
+  kvah       Float    @default(0)
+  kvarh      Float    @default(0)
+  createdAt  DateTime @default(now()) @map("created_at")
+  meter      Meter    @relation(fields: [meterId], references: [meterId])
+
+  @@index([meterId, timestamp])
+  @@map("meter_interval_read")
+}
+
+model NetMeteringCredit {
+  creditId     String    @id @default(cuid()) @map("credit_id")
+  accountId    String    @map("account_id")
+  billId       String?   @map("bill_id")
+  creditKwh    Float     @map("credit_kwh")
+  carryForward Boolean   @default(true) @map("carry_forward")
+  expiryDate   DateTime? @map("expiry_date")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  bill         Bill?     @relation(fields: [billId], references: [billId])
+  account      Account   @relation(fields: [accountId], references: [accountId])
+
+  @@map("net_metering_credit")
+}
+
+model DunningLevel {
+  levelId     String          @id @default(cuid()) @map("level_id")
+  levelName   String
+  daysOverdue Int             @map("days_overdue")
+  penaltyFee  Float           @default(0) @map("penalty_fee")
+  actionType  String          @map("action_type")
+  status      String          @default("ACTIVE")
+  createdAt   DateTime        @default(now()) @map("created_at")
+  updatedAt   DateTime        @updatedAt @map("updated_at")
+  notices     DunningNotice[]
+
+  @@map("dunning_level")
+}
+
+model DunningNotice {
+  noticeId  String       @id @default(cuid()) @map("notice_id")
+  accountId String       @map("account_id")
+  billId    String       @map("bill_id")
+  levelId   String       @map("level_id")
+  issuedAt  DateTime     @default(now()) @map("issued_at")
+  status    String       @default("ISSUED")
+  createdAt DateTime     @default(now()) @map("created_at")
+  updatedAt DateTime     @updatedAt @map("updated_at")
+  level     DunningLevel @relation(fields: [levelId], references: [levelId])
+  bill      Bill         @relation(fields: [billId], references: [billId])
+  account   Account      @relation(fields: [accountId], references: [accountId])
+
+  @@map("dunning_notice")
+}
+
+model SecurityDeposit {
+  depositId   String    @id @default(cuid()) @map("deposit_id")
+  accountId   String    @map("account_id")
+  amount      Float
+  paymentDate DateTime? @map("payment_date")
+  status      String    @default("PENDING")
+  refundDate  DateTime? @map("refund_date")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  account     Account   @relation(fields: [accountId], references: [accountId])
+
+  @@map("security_deposit")
+}
+
+model BudgetBillingPlan {
+  planId              String    @id @default(cuid()) @map("plan_id")
+  accountId           String    @map("account_id")
+  monthlyAmount       Float     @map("monthly_amount")
+  startDate           DateTime  @map("start_date")
+  endDate             DateTime? @map("end_date")
+  reconciliationMonth Int       @map("reconciliation_month")
+  status              String    @default("ACTIVE")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+  account             Account   @relation(fields: [accountId], references: [accountId])
+
+  @@map("budget_billing_plan")
+}
+
+model asset {
+  asset_id             String                 @id
+  asset_code           String?                @unique
+  name                 String
+  category             String
+  status               String                 @default("ACTIVE")
+  health_status        String                 @default("GOOD")
+  last_maint_date      DateTime?
+  next_maint_date      DateTime?
+  ytd_failures         Int                    @default(0)
+  feeder_id            String?
+  created_at           DateTime               @default(now())
+  updated_at           DateTime
+  feeder               Feeder?                @relation(fields: [feeder_id], references: [feederId])
+  maintenance_activity maintenance_activity[]
+  work_order           WorkOrder[]
+}
+
+model inventory_location {
+  location_id                                                                String               @id
+  name                                                                       String
+  type                                                                       String               @default("WAREHOUSE")
+  technician_id                                                              String?              @unique
+  created_at                                                                 DateTime             @default(now())
+  updated_at                                                                 DateTime
+  technician                                                                 Technician?          @relation(fields: [technician_id], references: [technicianId])
+  inventory_stock                                                            inventory_stock[]
+  inventory_transfer_inventory_transfer_to_location_idToinventory_location   inventory_transfer[] @relation("inventory_transfer_to_location_idToinventory_location")
+  inventory_transfer_inventory_transfer_from_location_idToinventory_location inventory_transfer[] @relation("inventory_transfer_from_location_idToinventory_location")
+}
+
+model inventory_stock {
+  item_id            String
+  location_id        String
+  quantity           Float              @default(0)
+  inventory_location inventory_location @relation(fields: [location_id], references: [location_id])
+  inventory_item     InventoryItem      @relation(fields: [item_id], references: [itemId])
+
+  @@id([item_id, location_id])
+}
+
+model inventory_transfer {
+  transfer_id                                                                String             @id
+  item_id                                                                    String
+  from_location_id                                                           String
+  to_location_id                                                             String
+  quantity                                                                   Float
+  status                                                                     String             @default("COMPLETED")
+  created_at                                                                 DateTime           @default(now())
+  updated_at                                                                 DateTime
+  inventory_location_inventory_transfer_to_location_idToinventory_location   inventory_location @relation("inventory_transfer_to_location_idToinventory_location", fields: [to_location_id], references: [location_id])
+  inventory_location_inventory_transfer_from_location_idToinventory_location inventory_location @relation("inventory_transfer_from_location_idToinventory_location", fields: [from_location_id], references: [location_id])
+  inventory_item                                                             InventoryItem      @relation(fields: [item_id], references: [itemId])
+}
+
+model maintenance_activity {
+  activity_id   String   @id
+  asset_id      String
+  type          String   @default("PREVENTIVE")
+  description   String?
+  performed_at  DateTime @default(now())
+  notes         String?
+  health_update String?
+  asset         asset    @relation(fields: [asset_id], references: [asset_id])
+}
+
+model outage_event {
+  outage_id      String          @id
+  area           String
+  feeder_id      String?
+  type           String          @default("FORCED")
+  start_at       DateTime
+  est_restore    DateTime?
+  status         String          @default("ACTIVE")
+  description    String?
+  created_at     DateTime        @default(now())
+  updated_at     DateTime
+  feeder         Feeder?         @relation(fields: [feeder_id], references: [feederId])
+  service_ticket ServiceTicket[]
+}

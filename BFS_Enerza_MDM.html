@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BFS Enerza — MDM Platform</title>
+<style>
+:root{--shell:#354A5E;--blue:#0070F2;--bd:#0854A0;--bl:#D6EAFF;
+--g:#107E3E;--gl:#F1FAF5;--am:#C87400;--al:#FEF5E0;--re:#BB0000;--rl:#FFEBEB;
+--bdr:#D9D9D9;--bg:#F5F6F7;--card:#fff;--hov:#EEF0F3;--sel:#E0EDFF;
+--txt:#1D2D3E;--mut:#6A6D70;--sh:0 1px 4px rgba(0,0,0,.1);--r:4px;--nw:232px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:var(--bg);color:var(--txt);font-size:14px}
+.shell{position:fixed;top:0;left:0;right:0;height:48px;background:var(--shell);
+  display:flex;align-items:center;padding:0 20px;gap:14px;z-index:1000;box-shadow:0 2px 6px rgba(0,0,0,.2)}
+.s-brand{font-size:17px;font-weight:700;color:#fff;letter-spacing:.3px}
+.s-brand em{color:#5BB8FF;font-style:normal}
+.s-div{color:rgba(255,255,255,.3);font-size:18px}
+.s-sub{font-size:12px;color:rgba(255,255,255,.65)}
+.s-right{margin-left:auto;display:flex;align-items:center;gap:14px}
+.s-user{font-size:12px;color:rgba(255,255,255,.8)}
+.s-av{width:30px;height:30px;border-radius:50%;background:#0070F2;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+.nav{position:fixed;top:48px;left:0;bottom:0;width:var(--nw);background:var(--card);border-right:1px solid var(--bdr);overflow-y:auto;z-index:999}
+.nmod{padding:14px 16px 5px;font-size:10.5px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.9px;border-top:1px solid #F0F0F0;margin-top:2px}
+.nmod:first-child{border-top:none}
+.ni{display:flex;align-items:center;padding:8px 14px 8px 18px;font-size:13px;color:var(--txt);cursor:pointer;border-left:3px solid transparent;transition:all .12s}
+.ni:hover{background:var(--hov)}
+.ni.active{background:var(--bl);color:var(--blue);border-left-color:var(--blue);font-weight:600}
+.ni-ic{width:20px;margin-right:9px;font-size:13px;text-align:center}
+.content{margin-left:var(--nw);margin-top:48px;padding:18px;min-height:calc(100vh - 48px)}
+.screen{display:none}
+.screen.active{display:block;animation:fi .18s}
+@keyframes fi{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:translateY(0)}}
+.pg-hdr{background:var(--card);border:1px solid var(--bdr);border-radius:var(--r);padding:13px 20px;margin-bottom:13px;display:flex;align-items:center;gap:14px;box-shadow:var(--sh)}
+.pg-title{font-size:18px;font-weight:700}.pg-sub{font-size:12px;color:var(--mut);margin-top:2px}
+.badge{display:inline-flex;align-items:center;padding:2px 10px;border-radius:12px;font-size:11px;font-weight:700;border:1px solid}
+.b-active{background:var(--gl);color:var(--g);border-color:var(--g)}
+.b-draft{background:#F7F7F7;color:#888;border-color:#CCC}
+.b-blocked{background:var(--rl);color:var(--re);border-color:var(--re)}
+.b-warning{background:var(--al);color:var(--am);border-color:var(--am)}
+.b-pending{background:#FFF8E0;color:#996600;border-color:#CCA300}
+.b-inactive{background:#F5F5F5;color:#888;border-color:#CCC}
+.toolbar{background:var(--card);border:1px solid var(--bdr);border-radius:var(--r);padding:9px 14px;margin-bottom:11px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.s-input{flex:1;min-width:180px;max-width:300px;border:1px solid var(--bdr);border-radius:var(--r);padding:7px 10px;font-size:13px;outline:none}
+.s-input:focus{border-color:var(--blue)}
+.sel{border:1px solid var(--bdr);border-radius:var(--r);padding:7px 10px;font-size:13px;background:#fff;outline:none}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 13px;border-radius:var(--r);font-size:13px;cursor:pointer;border:1px solid;font-weight:500;transition:all .12s}
+.btn-p{background:var(--blue);color:#fff;border-color:var(--blue)}.btn-p:hover{background:var(--bd)}
+.btn-s{background:#fff;color:var(--blue);border-color:var(--blue)}.btn-s:hover{background:var(--bl)}
+.btn-g{background:#fff;color:var(--txt);border-color:var(--bdr)}.btn-g:hover{background:var(--hov)}
+.btn-ok{background:var(--g);color:#fff;border-color:var(--g)}
+.btn-warn{background:var(--am);color:#fff;border-color:var(--am)}
+.btn-err{background:var(--re);color:#fff;border-color:var(--re)}
+.btn-wht{background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.4)}.btn-wht:hover{background:rgba(255,255,255,.25)}
+.btn-sm{padding:4px 10px;font-size:12px}
+.spacer{flex:1}
+.t-card{background:var(--card);border:1px solid var(--bdr);border-radius:var(--r);box-shadow:var(--sh);overflow:hidden}
+.t-info{padding:7px 14px;font-size:12px;color:var(--mut);border-bottom:1px solid var(--bdr);background:#FAFAFA}
+table.dt{width:100%;border-collapse:collapse}
+table.dt thead th{background:#F0F4F8;padding:9px 11px;text-align:left;font-size:11px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.4px;border-bottom:2px solid var(--bdr);white-space:nowrap}
+table.dt tbody tr{border-bottom:1px solid #F5F5F5;cursor:pointer}
+table.dt tbody tr:hover{background:var(--hov)}
+table.dt tbody tr.sr{background:var(--sel)}
+table.dt td{padding:8px 11px;font-size:13px}
+.il{color:#0854A0;font-weight:600}
+.detail{background:var(--card);border:1px solid var(--bdr);border-radius:var(--r);box-shadow:var(--sh);margin-top:14px;overflow:hidden}
+.d-hdr{background:linear-gradient(135deg,#0854A0,#0070F2);color:#fff;padding:15px 20px;display:flex;align-items:flex-start;gap:12px}
+.d-title{font-size:16px;font-weight:700}.d-sub{font-size:12px;opacity:.8;margin-top:3px}
+.d-actions{margin-left:auto;display:flex;gap:8px;align-items:center}
+.f-sec{padding:15px 20px;border-bottom:1px solid #F0F0F0}
+.f-sec-ttl{font-size:11px;font-weight:700;color:var(--bd);text-transform:uppercase;letter-spacing:.5px;margin-bottom:13px;padding-bottom:5px;border-bottom:2px solid var(--bl)}
+.f-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:13px 20px}
+.fg{display:flex;flex-direction:column;gap:3px}.fg.full{grid-column:1/-1}
+.fl{font-size:11px;font-weight:600;color:var(--mut);text-transform:uppercase;letter-spacing:.4px}
+.fl.req::after{content:" *";color:var(--re)}
+.fi,.fsel,.fta{border:1px solid var(--bdr);border-radius:var(--r);padding:7px 10px;font-size:13px;color:var(--txt);background:#fff;outline:none}
+.fi:focus,.fsel:focus,.fta:focus{border-color:var(--blue);box-shadow:0 0 0 2px rgba(0,112,242,.1)}
+.fi[readonly]{background:#F8F8F8;color:var(--mut)}
+.fta{resize:vertical;min-height:66px}.fsel{cursor:pointer}
+.tabs-bar{display:flex;border-bottom:2px solid var(--bdr);padding:0 20px;background:#FAFAFA;overflow-x:auto}
+.tab-b{padding:9px 15px;font-size:13px;font-weight:500;cursor:pointer;color:var(--mut);border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap}
+.tab-b:hover{color:var(--txt)}.tab-b.active{color:var(--blue);border-bottom-color:var(--blue);font-weight:700}
+.tab-pane{display:none;padding:14px 20px}.tab-pane.active{display:block}
+.d-footer{padding:11px 20px;background:#FAFAFA;border-top:1px solid var(--bdr);display:flex;align-items:center;gap:8px}
+.audit{font-size:11px;color:var(--mut);flex:1}
+.mt{width:100%;border-collapse:collapse;font-size:13px}
+.mt th{background:#F5F7FA;padding:7px 10px;text-align:left;font-size:11px;font-weight:700;color:var(--mut);text-transform:uppercase;border-bottom:1px solid var(--bdr)}
+.mt td{padding:7px 10px;border-bottom:1px solid #F5F5F5}
+.mt tr:last-child td{border-bottom:none}
+.stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:13px;margin-bottom:18px}
+.sc{background:var(--card);border:1px solid var(--bdr);border-radius:var(--r);padding:15px 17px;box-shadow:var(--sh)}
+.sc-l{font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--mut);font-weight:700;margin-bottom:7px}
+.sc-v{font-size:26px;font-weight:700;color:var(--bd)}.sc-v.g{color:var(--g)}.sc-v.a{color:var(--am)}.sc-v.r{color:var(--re)}
+.sc-s{font-size:12px;color:var(--mut);margin-top:3px}
+.rec-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:13px;margin-top:14px}
+.rec-card{background:var(--card);border:1px solid var(--bdr);border-radius:var(--r);padding:14px 16px;box-shadow:var(--sh);cursor:pointer}
+.rec-card:hover{border-color:var(--blue);box-shadow:0 2px 8px rgba(0,112,242,.12)}
+.rc-mod{font-size:10px;text-transform:uppercase;letter-spacing:.7px;color:var(--blue);font-weight:700;margin-bottom:5px}
+.rc-title{font-size:14px;font-weight:700;color:var(--txt);margin-bottom:3px}
+.rc-sub{font-size:12px;color:var(--mut)}
+.empty{text-align:center;padding:32px;color:var(--mut);font-size:13px}
+.tag{display:inline-block;padding:1px 7px;border-radius:3px;font-size:11px;background:var(--bl);color:var(--bd);font-weight:600}
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="s-brand">BFS <em>Enerza</em></div>
+  <span class="s-div">|</span>
+  <div class="s-sub">Master Data Management</div>
+  <div class="s-right">
+    <div class="s-user">Ahmedabad Operations</div>
+    <div class="s-av">AD</div>
+  </div>
+</div>
+<nav class="nav"><div class="nmod">Customer &amp; Connection</div>
+<div class="ni" id="ni-dashboard" onclick="navigate('dashboard')"><span class="ni-ic">⬛</span>Dashboard</div>
+<div class="ni" id="ni-customer" onclick="navigate('customer')"><span class="ni-ic">🧑</span>Customer Master</div>
+<div class="ni" id="ni-premise" onclick="navigate('premise')"><span class="ni-ic">🏠</span>Premise Master</div>
+<div class="ni" id="ni-account" onclick="navigate('account')"><span class="ni-ic">📋</span>Account Master</div>
+<div class="ni" id="ni-segment" onclick="navigate('segment')"><span class="ni-ic">🏷️</span>Consumer Segment</div>
+<div class="ni" id="ni-connection" onclick="navigate('connection')"><span class="ni-ic">🔌</span>Service Connection</div>
+<div class="nmod">Metering &amp; Network</div>
+<div class="ni" id="ni-cgdarea" onclick="navigate('cgdarea')"><span class="ni-ic">🗺️</span>CGD Area Master</div>
+<div class="ni" id="ni-route" onclick="navigate('route')"><span class="ni-ic">🛤️</span>Route Master</div>
+<div class="ni" id="ni-pressure" onclick="navigate('pressure')"><span class="ni-ic">🌡️</span>Pressure Band</div>
+<div class="ni" id="ni-meter" onclick="navigate('meter')"><span class="ni-ic">⚡</span>Meter Master</div>
+<div class="ni" id="ni-cngstation" onclick="navigate('cngstation')"><span class="ni-ic">⛽</span>CNG Station</div>
+<div class="ni" id="ni-vehicle" onclick="navigate('vehicle')"><span class="ni-ic">🚗</span>Vehicle Category</div>
+<div class="nmod">Tariff &amp; Billing</div>
+<div class="ni" id="ni-rateplan" onclick="navigate('rateplan')"><span class="ni-ic">📐</span>Rate Plan Master</div>
+<div class="ni" id="ni-chargecmp" onclick="navigate('chargecmp')"><span class="ni-ic">🔢</span>Charge Component</div>
+<div class="ni" id="ni-taxmaster" onclick="navigate('taxmaster')"><span class="ni-ic">🧾</span>Tax Master</div>
+<div class="ni" id="ni-billcycle" onclick="navigate('billcycle')"><span class="ni-ic">📅</span>Bill Cycle Master</div>
+<div class="nmod">Mobile App MDM</div>
+<div class="ni" id="ni-appuser" onclick="navigate('appuser')"><span class="ni-ic">👥</span>App User Admin</div>
+<div class="ni" id="ni-device" onclick="navigate('device')"><span class="ni-ic">📲</span>Device Registry</div>
+<div class="ni" id="ni-notiftemplate" onclick="navigate('notiftemplate')"><span class="ni-ic">🔔</span>Notif Template</div>
+<div class="ni" id="ni-srtype" onclick="navigate('srtype')"><span class="ni-ic">🎫</span>Service Req Type</div>
+<div class="nmod">API &amp; Payments</div>
+<div class="ni" id="ni-apipartner" onclick="navigate('apipartner')"><span class="ni-ic">🤝</span>API Partner</div>
+<div class="ni" id="ni-endpoint" onclick="navigate('endpoint')"><span class="ni-ic">🔗</span>Endpoint Catalog</div>
+<div class="ni" id="ni-paychannel" onclick="navigate('paychannel')"><span class="ni-ic">💳</span>Payment Channel</div>
+<div class="ni" id="ni-paygateway" onclick="navigate('paygateway')"><span class="ni-ic">🏦</span>Payment Gateway</div>
+<div class="ni" id="ni-webhook" onclick="navigate('webhook')"><span class="ni-ic">🪝</span>Webhook Subscriptions</div>
+</nav>
+<main class="content"><div id="screen-dashboard" class="screen active">
+<div class="pg-hdr">
+  <div><div class="pg-title">BFS Enerza — MDM Dashboard</div>
+  <div class="pg-sub">Master Data Management · Multi-utility platform: Piped Gas · Electricity · Water · CNG</div></div>
+  <div class="spacer"></div>
+  <span class="badge b-active">System Active</span>
+</div>
+<div class="stats">
+<div class="sc"><div class="sc-l">Customers</div><div class="sc-v">1,248</div><div class="sc-s">1,187 Active</div></div>
+<div class="sc"><div class="sc-l">Connections</div><div class="sc-v">1,836</div><div class="sc-s">PNG · Elec · Water · CNG</div></div>
+<div class="sc"><div class="sc-l">Bills This Month</div><div class="sc-v g">1,124</div><div class="sc-s">₹ 18.4L total</div></div>
+<div class="sc"><div class="sc-l">Payments Received</div><div class="sc-v g">₹ 15.7L</div><div class="sc-s">Mar 2026 MTD</div></div>
+<div class="sc"><div class="sc-l">Pending KYC</div><div class="sc-v a">47</div><div class="sc-s">Awaiting verification</div></div>
+<div class="sc"><div class="sc-l">Overdue Bills</div><div class="sc-v r">83</div><div class="sc-s">₹ 2.1L outstanding</div></div>
+<div class="sc"><div class="sc-l">App Users</div><div class="sc-v">648</div><div class="sc-s">84% mobile-verified</div></div>
+<div class="sc"><div class="sc-l">API Partners</div><div class="sc-v">5</div><div class="sc-s">3 payment aggregators</div></div>
+</div>
+<div class="rec-grid"><div class="rec-card" onclick="navigate('customer')">
+<div class="rc-mod">👤</div>
+<div class="rc-title">Customer &amp; Connection</div>
+<div class="rc-sub">Customer Master, Premises, Accounts, Segments, Connections</div>
+</div><div class="rec-card" onclick="navigate('meter')">
+<div class="rc-mod">📊</div>
+<div class="rc-title">Metering &amp; Network</div>
+<div class="rc-sub">CGD Areas, Routes, Meters, CNG Stations, Pressure Bands</div>
+</div><div class="rec-card" onclick="navigate('rateplan')">
+<div class="rc-mod">💰</div>
+<div class="rc-title">Tariff &amp; Billing</div>
+<div class="rc-sub">Rate Plans, Charge Components, Tax Rules, Bill Cycles</div>
+</div><div class="rec-card" onclick="navigate('appuser')">
+<div class="rc-mod">📱</div>
+<div class="rc-title">Mobile App MDM</div>
+<div class="rc-sub">App Users, Devices, Notifications, Service Request Types</div>
+</div><div class="rec-card" onclick="navigate('apipartner')">
+<div class="rc-mod">🔗</div>
+<div class="rc-title">API &amp; Payments</div>
+<div class="rc-sub">API Partners, Endpoints, Payment Channels, Gateways, Webhooks</div>
+</div></div>
+</div>
+<div id="screen-customer" class="screen">
+<div class="pg-hdr">
+  <div><div class="pg-title">Customer Master</div><div class="pg-sub">Manage customer identity, KYC and contact records</div></div>
+  <div class="spacer"></div>
+</div>
+<div class="toolbar">
+  <input class="s-input" placeholder="🔍  Search by ID, name or mobile…">
+  <select class="sel"><option>All Status</option><option>Active</option><option>Draft</option><option>Blocked</option></select>
+  <div class="spacer"></div>
+  <button class="btn btn-p" onclick="showNewForm('customer')">＋ Create New</button>
+  <button class="btn btn-g">↑ Export</button>
+</div>
+<div class="t-card">
+  <div class="t-info">7 records shown — click a row to view details</div>
+  <table class="dt"><thead><tr><th>Customer ID</th><th>Full Name</th><th>Type</th><th>Segment</th><th>Mobile</th><th>KYC</th><th>Status</th></tr></thead><tbody><tr onclick="showDetail('customer',this)"><td><span class="il">CUST000001</span></td><td>Ramesh Haribhai Shah</td><td>Individual</td><td>Domestic-PNG</td><td>+91 98765 43210</td><td><span class="badge b-active">Verified</span></td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('customer',this)"><td><span class="il">CUST000002</span></td><td>Priya Nilesh Patel</td><td>Individual</td><td>Domestic-Elec</td><td>+91 87654 32109</td><td><span class="badge b-active">Verified</span></td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('customer',this)"><td><span class="il">CUST000003</span></td><td>Mehta Industries Ltd.</td><td>Corporate</td><td>Industrial-Gas</td><td>+91 76543 21098</td><td><span class="badge b-active">Verified</span></td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('customer',this)"><td><span class="il">CUST000004</span></td><td>Sunita Ramesh Desai</td><td>Individual</td><td>Domestic-Water</td><td>+91 65432 10987</td><td><span class="badge b-pending">Pending</span></td><td><span class="badge b-draft">Draft</span></td></tr><tr onclick="showDetail('customer',this)"><td><span class="il">CUST000005</span></td><td>Anand Infra Corporation</td><td>Corporate</td><td>Commercial-All</td><td>+91 54321 09876</td><td><span class="badge b-active">Verified</span></td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('customer',this)"><td><span class="il">CUST000006</span></td><td>Geeta Bhimrao Kulkarni</td><td>Individual</td><td>Domestic-PNG</td><td>+91 43210 98765</td><td><span class="badge b-pending">Pending</span></td><td><span class="badge b-draft">Draft</span></td></tr><tr onclick="showDetail('customer',this)"><td><span class="il">CUST000007</span></td><td>Gujarat Ceramics Pvt Ltd</td><td>Corporate</td><td>Industrial-Elec</td><td>+91 32109 87654</td><td><span class="badge b-active">Verified</span></td><td><span class="badge b-active">Active</span></td></tr></tbody></table>
+</div>
+<div id="detail-customer" class="detail" style="display:none">
+<div class="d-hdr">
+  <div><div class="d-title">Ramesh Haribhai Shah</div><div class="d-sub">CUST000001 · Individual &nbsp;<span class="badge b-active">Active</span></div></div>
+  <div class="d-actions">
+    <button class="btn btn-sm btn-wht">✏️ Edit</button>
+    <button class="btn btn-sm btn-wht" onclick="closeDetail('customer')">✕ Close</button>
+  </div>
+</div>
+<div class="f-sec"><div class="f-sec-ttl">Identity Information</div>
+<div class="f-grid"><div class="fg "><label class="fl req">Customer ID</label><input class="fi" type="text" value="CUST000001" readonly></div><div class="fg "><label class="fl req">Full Name</label><input class="fi" type="text" value="Ramesh Haribhai Shah"></div><div class="fg "><label class="fl">Short Name</label><input class="fi" type="text" value="R H Shah"></div><div class="fg "><label class="fl">Customer Type</label><select class="fsel"><option selected>Individual</option><option >Corporate</option><option >Government</option></select></div><div class="fg "><label class="fl req">Consumer Segment</label><select class="fsel"><option selected>Domestic-PNG</option><option >Domestic-Elec</option><option >Domestic-Water</option><option >Commercial-All</option><option >Industrial-Gas</option><option >Industrial-Elec</option></select></div><div class="fg "><label class="fl req">Status</label><select class="fsel"><option selected>Active</option><option >Draft</option><option >Blocked</option><option >Inactive</option></select></div></div></div><div class="f-sec"><div class="f-sec-ttl">KYC & Identity Documents</div>
+<div class="f-grid"><div class="fg "><label class="fl">KYC Status</label><select class="fsel"><option >Pending</option><option selected>Verified</option><option >Rejected</option></select></div><div class="fg "><label class="fl">PAN Reference</label><input class="fi" type="text" value="ABCDE1234F"></div><div class="fg "><label class="fl">Aadhaar Reference</label><input class="fi" type="text" value="XXXX XXXX 4321"></div><div class="fg "><label class="fl">Passport Reference</label><input class="fi" type="text" value=""></div></div></div><div class="f-sec"><div class="f-sec-ttl">Contact Details</div>
+<div class="f-grid"><div class="fg "><label class="fl req">Mobile Number</label><input class="fi" type="text" value="+91 98765 43210"></div><div class="fg "><label class="fl">Email Address</label><input class="fi" type="email" value="ramesh.shah@email.com"></div><div class="fg "><label class="fl">Alternate Mobile</label><input class="fi" type="text" value=""></div><div class="fg full"><label class="fl">Correspondence Address</label><textarea class="fta">4, Navrangpura, Ahmedabad - 380009</textarea></div></div></div><div class="f-sec"><div class="f-sec-ttl">Effective Dates</div>
+<div class="f-grid"><div class="fg "><label class="fl req">Effective From</label><input class="fi" type="date" value="2024-01-15"></div><div class="fg "><label class="fl">Effective To</label><input class="fi" type="date" value=""></div></div></div>
+<div class="tabs-bar"><div class="tab-b  active" onclick="swTab('customer','acct')">Linked Accounts (2)</div><div class="tab-b" onclick="swTab('customer','conn')">Connections (2)</div><div class="tab-b" onclick="swTab('customer','attach')">Attachments (1)</div><div class="tab-b" onclick="swTab('customer','hist')">Change History (3)</div></div><div id="customer-acct" class="tab-pane  active"><table class="mt"><thead><tr><th>Account ID</th><th>Premise</th><th>Cycle</th><th>Delivery</th><th>Status</th></tr></thead><tbody><tr><td><span class="il">ACCT000001</span></td><td>H-23, Navrangpura</td><td>Monthly</td><td>Email</td><td><span class="badge b-active">Active</span></td></tr><tr><td><span class="il">ACCT000002</span></td><td>Shop-4, CG Road</td><td>Monthly</td><td>App</td><td><span class="badge b-active">Active</span></td></tr></tbody></table></div><div id="customer-conn" class="tab-pane"><table class="mt"><thead><tr><th>Connection ID</th><th>Utility</th><th>Segment</th><th>Start Date</th><th>Status</th></tr></thead><tbody><tr><td><span class="il">CONN000001</span></td><td>Gas - PNG</td><td>Domestic</td><td>2024-01-15</td><td><span class="badge b-active">Active</span></td></tr><tr><td><span class="il">CONN000002</span></td><td>Electricity</td><td>Domestic</td><td>2024-01-15</td><td><span class="badge b-active">Active</span></td></tr></tbody></table></div><div id="customer-attach" class="tab-pane"><div class="empty">📎 1 file attached</div></div><div id="customer-hist" class="tab-pane"><table class="mt"><thead><tr><th>Date</th><th>Changed By</th><th>Field</th><th>Old Value</th><th>New Value</th></tr></thead><tbody><tr><td>2026-03-29 14:20</td><td>ops.mgr</td><td>KYC Status</td><td>Pending</td><td>Verified</td></tr><tr><td>2026-02-10 09:05</td><td>admin.1</td><td>Email</td><td>—</td><td>ramesh.shah@email.com</td></tr><tr><td>2024-01-15 11:30</td><td>admin.1</td><td>Status</td><td>Draft</td><td>Active</td></tr></tbody></table></div>
+<div class="d-footer"><div class="audit">Created: admin.1 · 2024-01-15 11:30 &nbsp;|&nbsp; Modified: ops.mgr · 2026-03-29 14:20</div><button class="btn btn btn-p">💾 Save</button><button class="btn btn btn-ok">✅ Approve</button><button class="btn btn btn-warn">🔒 Block</button><button class="btn btn btn-err">❌ Deactivate</button></div>
+</div>
+</div>
+<div id="screen-premise" class="screen">
+<div class="pg-hdr">
+  <div><div class="pg-title">Premise Master</div><div class="pg-sub">Manage service locations and geographic coordinates</div></div>
+  <div class="spacer"></div>
+</div>
+<div class="toolbar">
+  <input class="s-input" placeholder="🔍  Search by ID, name or mobile…">
+  <select class="sel"><option>All Status</option><option>Active</option><option>Draft</option><option>Blocked</option></select>
+  <div class="spacer"></div>
+  <button class="btn btn-p" onclick="showNewForm('premise')">＋ Create New</button>
+  <button class="btn btn-g">↑ Export</button>
+</div>
+<div class="t-card">
+  <div class="t-info">5 records shown — click a row to view details</div>
+  <table class="dt"><thead><tr><th>Premise ID</th><th>Address</th><th>City</th><th>Area</th><th>Building Type</th><th>Status</th></tr></thead><tbody><tr onclick="showDetail('premise',this)"><td><span class="il">PREM000001</span></td><td>H-23, Navrangpura, Near Stadium</td><td>Ahmedabad</td><td>AHM-WEST</td><td>Residential</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('premise',this)"><td><span class="il">PREM000002</span></td><td>Shop-4, CG Road, Ellisbridge</td><td>Ahmedabad</td><td>AHM-EAST</td><td>Commercial</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('premise',this)"><td><span class="il">PREM000003</span></td><td>Plot-7, GIDC Industrial Estate</td><td>Gandhinagar</td><td>GAN-NORTH</td><td>Industrial</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('premise',this)"><td><span class="il">PREM000004</span></td><td>B-12, Satellite Road</td><td>Ahmedabad</td><td>AHM-WEST</td><td>Residential</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('premise',this)"><td><span class="il">PREM000005</span></td><td>D-302, Vastrapur Lake Road</td><td>Ahmedabad</td><td>AHM-EAST</td><td>Residential</td><td><span class="badge b-draft">Draft</span></td></tr></tbody></table>
+</div>
+<div id="detail-premise" class="detail" style="display:none">
+<div class="d-hdr">
+  <div><div class="d-title">H-23, Navrangpura, Near Stadium</div><div class="d-sub">PREM000001 · Residential · Ahmedabad &nbsp;<span class="badge b-active">Active</span></div></div>
+  <div class="d-actions">
+    <button class="btn btn-sm btn-wht">✏️ Edit</button>
+    <button class="btn btn-sm btn-wht" onclick="closeDetail('premise')">✕ Close</button>
+  </div>
+</div>
+<div class="f-sec"><div class="f-sec-ttl">Location</div>
+<div class="f-grid"><div class="fg "><label class="fl req">Premise ID</label><input class="fi" type="text" value="PREM000001" readonly></div><div class="fg "><label class="fl req">Address Line 1</label><input class="fi" type="text" value="H-23, Navrangpura"></div><div class="fg "><label class="fl">Address Line 2</label><input class="fi" type="text" value="Near Stadium"></div><div class="fg "><label class="fl req">City</label><input class="fi" type="text" value="Ahmedabad"></div><div class="fg "><label class="fl req">State</label><input class="fi" type="text" value="Gujarat"></div><div class="fg "><label class="fl req">Pincode</label><input class="fi" type="text" value="380009"></div><div class="fg "><label class="fl req">CGD Area</label><select class="fsel"><option selected>AHM-WEST</option><option >AHM-EAST</option><option >GAN-NORTH</option><option >SURAT-N</option><option >VAD-CENTRAL</option></select></div></div></div><div class="f-sec"><div class="f-sec-ttl">Classification & Coordinates</div>
+<div class="f-grid"><div class="fg "><label class="fl">Building Type</label><select class="fsel"><option selected>Residential</option><option >Commercial</option><option >Industrial</option><option >Institutional</option></select></div><div class="fg "><label class="fl">Occupancy Type</label><select class="fsel"><option selected>Owned</option><option >Rented</option><option >Leased</option></select></div><div class="fg "><label class="fl">Geo Latitude</label><input class="fi" type="text" value="23.022505"></div><div class="fg "><label class="fl">Geo Longitude</label><input class="fi" type="text" value="72.571362"></div><div class="fg "><label class="fl req">Status</label><select class="fsel"><option selected>Active</option><option >Inactive</option></select></div></div></div>
+<div class="tabs-bar"><div class="tab-b  active" onclick="swTab('premise','acct')">Accounts (2)</div><div class="tab-b" onclick="swTab('premise','conn')">Connections (2)</div><div class="tab-b" onclick="swTab('premise','hist')">History (2)</div></div><div id="premise-acct" class="tab-pane  active"><table class="mt"><thead><tr><th>Account ID</th><th>Customer</th><th>Status</th></tr></thead><tbody><tr><td><span class="il">ACCT000001</span></td><td>Ramesh H Shah</td><td><span class="badge b-active">Active</span></td></tr></tbody></table></div><div id="premise-conn" class="tab-pane"><table class="mt"><thead><tr><th>Connection ID</th><th>Utility</th><th>Status</th></tr></thead><tbody><tr><td><span class="il">CONN000001</span></td><td>Gas PNG</td><td><span class="badge b-active">Active</span></td></tr></tbody></table></div><div id="premise-hist" class="tab-pane"><table class="mt"><thead><tr><th>Date</th><th>User</th><th>Action</th></tr></thead><tbody><tr><td>2024-01-15</td><td>admin.1</td><td>Created</td></tr></tbody></table></div>
+<div class="d-footer"><div class="audit">Created: admin.1 · 2024-01-15 | Modified: admin.1 · 2024-01-15</div><button class="btn btn btn-p">💾 Save</button><button class="btn btn btn-err">❌ Deactivate</button></div>
+</div>
+</div>
+<div id="screen-account" class="screen">
+<div class="pg-hdr">
+  <div><div class="pg-title">Account Master</div><div class="pg-sub">Billing accounts linking customers to premises and cycles</div></div>
+  <div class="spacer"></div>
+</div>
+<div class="toolbar">
+  <input class="s-input" placeholder="🔍  Search by ID, name or mobile…">
+  <select class="sel"><option>All Status</option><option>Active</option><option>Draft</option><option>Blocked</option></select>
+  <div class="spacer"></div>
+  <button class="btn btn-p" onclick="showNewForm('account')">＋ Create New</button>
+  <button class="btn btn-g">↑ Export</button>
+</div>
+<div class="t-card">
+  <div class="t-info">5 records shown — click a row to view details</div>
+  <table class="dt"><thead><tr><th>Account ID</th><th>Customer</th><th>Premise</th><th>Bill Cycle</th><th>Delivery</th><th>Status</th></tr></thead><tbody><tr onclick="showDetail('account',this)"><td><span class="il">ACCT000001</span></td><td>Ramesh H Shah</td><td>H-23 Navrangpura</td><td>Monthly-1</td><td>Email</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('account',this)"><td><span class="il">ACCT000002</span></td><td>Ramesh H Shah</td><td>Shop-4 CG Rd</td><td>Monthly-2</td><td>App</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('account',this)"><td><span class="il">ACCT000003</span></td><td>Priya N Patel</td><td>B-5 Satellite</td><td>Monthly-1</td><td>SMS</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('account',this)"><td><span class="il">ACCT000004</span></td><td>Mehta Industries</td><td>Plot-7 GIDC</td><td>Quarterly-1</td><td>Email</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('account',this)"><td><span class="il">ACCT000005</span></td><td>Sunita R Desai</td><td>C-9 Navrangpura</td><td>Monthly-3</td><td>Print</td><td><span class="badge b-draft">Draft</span></td></tr></tbody></table>
+</div>
+<div id="detail-account" class="detail" style="display:none">
+<div class="d-hdr">
+  <div><div class="d-title">ACCT000001 — Ramesh H Shah</div><div class="d-sub">Monthly-1 · Email Delivery &nbsp;<span class="badge b-active">Active</span></div></div>
+  <div class="d-actions">
+    <button class="btn btn-sm btn-wht">✏️ Edit</button>
+    <button class="btn btn-sm btn-wht" onclick="closeDetail('account')">✕ Close</button>
+  </div>
+</div>
+<div class="f-sec"><div class="f-sec-ttl">Account Details</div>
+<div class="f-grid"><div class="fg "><label class="fl req">Account ID</label><input class="fi" type="text" value="ACCT000001" readonly></div><div class="fg "><label class="fl req">Customer</label><input class="fi" type="text" value="CUST000001 – Ramesh H Shah"></div><div class="fg "><label class="fl req">Premise</label><input class="fi" type="text" value="PREM000001 – H-23 Navrangpura"></div><div class="fg "><label class="fl req">Bill Cycle</label><select class="fsel"><option selected>Monthly-1</option><option >Monthly-2</option><option >Monthly-3</option><option >Quarterly-1</option><option >Bimonthly-1</option></select></div><div class="fg "><label class="fl req">Bill Delivery Mode</label><select class="fsel"><option selected>Email</option><option >SMS</option><option >Print</option><option >App</option><option >WhatsApp</option></select></div><div class="fg "><label class="fl req">Status</label><select class="fsel"><option selected>Active</option><option >Inactive</option><option >Blocked</option></select></div></div></div><div class="f-sec"><div class="f-sec-ttl">Billing Address Override</div>
+<div class="f-grid"><div class="fg "><label class="fl">Billing Address</label><textarea class="fta">Same as premise address</textarea></div></div></div><div class="f-sec"><div class="f-sec-ttl">Dates</div>
+<div class="f-grid"><div class="fg "><label class="fl">Effective From</label><input class="fi" type="date" value="2024-01-15"></div><div class="fg "><label class="fl">Effective To</label><input class="fi" type="date" value=""></div></div></div>
+<div class="tabs-bar"><div class="tab-b  active" onclick="swTab('account','conn')">Connections (1)</div><div class="tab-b" onclick="swTab('account','bills')">Recent Bills (3)</div><div class="tab-b" onclick="swTab('account','pay')">Payments (3)</div></div><div id="account-conn" class="tab-pane  active"><table class="mt"><thead><tr><th>Conn ID</th><th>Utility</th><th>Segment</th><th>Status</th></tr></thead><tbody><tr><td><span class="il">CONN000001</span></td><td>Gas PNG</td><td>Domestic</td><td><span class="badge b-active">Active</span></td></tr></tbody></table></div><div id="account-bills" class="tab-pane"><table class="mt"><thead><tr><th>Bill ID</th><th>Date</th><th>Amount</th><th>Status</th></tr></thead><tbody><tr><td><span class="il">BILL001234</span></td><td>2026-03-01</td><td>₹ 847.00</td><td><span class="badge b-active">Active</span></td></tr><tr><td><span class="il">BILL001100</span></td><td>2026-02-01</td><td>₹ 792.00</td><td><span class="badge b-active">Active</span></td></tr></tbody></table></div><div id="account-pay" class="tab-pane"><table class="mt"><thead><tr><th>Order ID</th><th>Date</th><th>Amount</th><th>Channel</th><th>Status</th></tr></thead><tbody><tr><td><span class="il">ORD001234</span></td><td>2026-03-05</td><td>₹ 847.00</td><td>UPI</td><td><span class="badge b-active">Active</span></td></tr></tbody></table></div>
+<div class="d-footer"><div class="audit">Created: admin.1 · 2024-01-15 | Modified: admin.1 · 2024-01-15</div><button class="btn btn btn-p">💾 Save</button><button class="btn btn btn-err">❌ Deactivate</button></div>
+</div>
+</div>
+<div id="screen-segment" class="screen">
+<div class="pg-hdr">
+  <div><div class="pg-title">Consumer Segment</div><div class="pg-sub">Define and manage consumer classification groups per utility type</div></div>
+  <div class="spacer"></div>
+</div>
+<div class="toolbar">
+  <input class="s-input" placeholder="🔍  Search by ID, name or mobile…">
+  <select class="sel"><option>All Status</option><option>Active</option><option>Draft</option><option>Blocked</option></select>
+  <div class="spacer"></div>
+  <button class="btn btn-p" onclick="showNewForm('segment')">＋ Create New</button>
+  <button class="btn btn-g">↑ Export</button>
+</div>
+<div class="t-card">
+  <div class="t-info">8 records shown — click a row to view details</div>
+  <table class="dt"><thead><tr><th>Segment ID</th><th>Segment Name</th><th>Utility Type</th><th>Description</th><th>Status</th></tr></thead><tbody><tr onclick="showDetail('segment',this)"><td><span class="il">SEG-GAS-DOM</span></td><td>Domestic PNG</td><td>Gas</td><td>Residential piped natural gas consumers</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('segment',this)"><td><span class="il">SEG-GAS-COM</span></td><td>Commercial PNG</td><td>Gas</td><td>Shops, hotels, restaurants with PNG</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('segment',this)"><td><span class="il">SEG-GAS-IND</span></td><td>Industrial Gas</td><td>Gas</td><td>Factories and industrial units</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('segment',this)"><td><span class="il">SEG-ELEC-DOM</span></td><td>Domestic Electricity</td><td>Electricity</td><td>Residential electricity consumers</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('segment',this)"><td><span class="il">SEG-ELEC-COM</span></td><td>Commercial Electricity</td><td>Electricity</td><td>Commercial electricity consumers</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('segment',this)"><td><span class="il">SEG-WATER-DOM</span></td><td>Domestic Water</td><td>Water</td><td>Residential water supply consumers</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('segment',this)"><td><span class="il">SEG-CNG-PRIV</span></td><td>CNG Private Vehicle</td><td>CNG</td><td>Private vehicle CNG fueling</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('segment',this)"><td><span class="il">SEG-CNG-COMM</span></td><td>CNG Commercial Vehicle</td><td>CNG</td><td>Commercial vehicle CNG fueling</td><td><span class="badge b-active">Active</span></td></tr></tbody></table>
+</div>
+<div id="detail-segment" class="detail" style="display:none">
+<div class="d-hdr">
+  <div><div class="d-title">Domestic PNG</div><div class="d-sub">SEG-GAS-DOM · Gas Utility &nbsp;<span class="badge b-active">Active</span></div></div>
+  <div class="d-actions">
+    <button class="btn btn-sm btn-wht">✏️ Edit</button>
+    <button class="btn btn-sm btn-wht" onclick="closeDetail('segment')">✕ Close</button>
+  </div>
+</div>
+<div class="f-sec"><div class="f-sec-ttl">Segment Definition</div>
+<div class="f-grid"><div class="fg "><label class="fl req">Segment ID</label><input class="fi" type="text" value="SEG-GAS-DOM" readonly></div><div class="fg "><label class="fl req">Segment Name</label><input class="fi" type="text" value="Domestic PNG"></div><div class="fg "><label class="fl req">Utility Type</label><select class="fsel"><option selected>Gas</option><option >Electricity</option><option >Water</option><option >CNG</option><option >All</option></select></div><div class="fg "><label class="fl req">Status</label><select class="fsel"><option selected>Active</option><option >Inactive</option></select></div><div class="fg full"><label class="fl">Description</label><textarea class="fta">Residential piped natural gas consumers. Applies domestic tariff slabs.</textarea></div></div></div><div class="f-sec"><div class="f-sec-ttl">Eligibility</div>
+<div class="f-grid"><div class="fg full"><label class="fl">Eligibility Rules (JSON)</label><textarea class="fta">{"building_type": ["Residential"], "load_kw_max": null}</textarea></div></div></div>
+<div class="tabs-bar"><div class="tab-b  active" onclick="swTab('segment','rp')">Rate Plans (2)</div><div class="tab-b" onclick="swTab('segment','conn')">Connections (342)</div></div><div id="segment-rp" class="tab-pane  active"><table class="mt"><thead><tr><th>Rate Plan ID</th><th>Effective From</th><th>Status</th></tr></thead><tbody><tr><td><span class="il">RP-GAS-DOM-01</span></td><td>2024-04-01</td><td><span class="badge b-active">Active</span></td></tr></tbody></table></div><div id="segment-conn" class="tab-pane"><table class="mt"><thead><tr><th>Connection ID</th><th>Account</th><th>Status</th></tr></thead><tbody><tr><td><span class="il">CONN000001</span></td><td>ACCT000001</td><td><span class="badge b-active">Active</span></td></tr></tbody></table></div>
+<div class="d-footer"><div class="audit">Created: admin.1 · 2024-01-01</div><button class="btn btn btn-p">💾 Save</button><button class="btn btn btn-err">❌ Deactivate</button></div>
+</div>
+</div>
+<div id="screen-connection" class="screen">
+<div class="pg-hdr">
+  <div><div class="pg-title">Service Connection</div><div class="pg-sub">Manage utility connections linking accounts to metering and billing</div></div>
+  <div class="spacer"></div>
+</div>
+<div class="toolbar">
+  <input class="s-input" placeholder="🔍  Search by ID, name or mobile…">
+  <select class="sel"><option>All Status</option><option>Active</option><option>Draft</option><option>Blocked</option></select>
+  <div class="spacer"></div>
+  <button class="btn btn-p" onclick="showNewForm('connection')">＋ Create New</button>
+  <button class="btn btn-g">↑ Export</button>
+</div>
+<div class="t-card">
+  <div class="t-info">5 records shown — click a row to view details</div>
+  <table class="dt"><thead><tr><th>Connection ID</th><th>Account</th><th>Utility Type</th><th>Segment</th><th>Start Date</th><th>Status</th></tr></thead><tbody><tr onclick="showDetail('connection',this)"><td><span class="il">CONN000001</span></td><td>ACCT000001</td><td><span class="tag">Gas PNG</span></td><td>Domestic</td><td>2024-01-15</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('connection',this)"><td><span class="il">CONN000002</span></td><td>ACCT000001</td><td><span class="tag">Electricity</span></td><td>Domestic</td><td>2024-01-15</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('connection',this)"><td><span class="il">CONN000003</span></td><td>ACCT000003</td><td><span class="tag">Gas PNG</span></td><td>Commercial</td><td>2023-06-01</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('connection',this)"><td><span class="il">CONN000004</span></td><td>ACCT000004</td><td><span class="tag">Gas Industrial</span></td><td>Industrial</td><td>2022-03-15</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('connection',this)"><td><span class="il">CONN000005</span></td><td>ACCT000005</td><td><span class="tag">Water</span></td><td>Domestic</td><td>2024-03-01</td><td><span class="badge b-draft">Draft</span></td></tr></tbody></table>
+</div>
+<div id="detail-connection" class="detail" style="display:none">
+<div class="d-hdr">
+  <div><div class="d-title">CONN000001 — Gas PNG</div><div class="d-sub">ACCT000001 · Domestic · Ramesh H Shah &nbsp;<span class="badge b-active">Active</span></div></div>
+  <div class="d-actions">
+    <button class="btn btn-sm btn-wht">✏️ Edit</button>
+    <button class="btn btn-sm btn-wht" onclick="closeDetail('connection')">✕ Close</button>
+  </div>
+</div>
+<div class="f-sec"><div class="f-sec-ttl">Connection Details</div>
+<div class="f-grid"><div class="fg "><label class="fl req">Connection ID</label><input class="fi" type="text" value="CONN000001" readonly></div><div class="fg "><label class="fl req">Account</label><input class="fi" type="text" value="ACCT000001 – Ramesh H Shah"></div><div class="fg "><label class="fl req">Utility Type</label><select class="fsel"><option selected>Gas PNG</option><option >Gas CNG</option><option >Electricity</option><option >Water</option></select></div><div class="fg "><label class="fl req">Consumer Segment</label><select class="fsel"><option selected>Domestic PNG</option><option >Commercial PNG</option><option >Industrial Gas</option><option >Domestic Elec</option><option >Domestic Water</option><option >CNG Private</option></select></div><div class="fg "><label class="fl req">Start Date</label><input class="fi" type="date" value="2024-01-15"></div><div class="fg "><label class="fl">End Date</label><input class="fi" type="date" value=""></div><div class="fg "><label class="fl req">Status</label><select class="fsel"><option selected>Active</option><option >Suspended</option><option >Terminated</option></select></div></div></div><div class="f-sec"><div class="f-sec-ttl">Gas Connection Details</div>
+<div class="f-grid"><div class="fg "><label class="fl">Service Type</label><select class="fsel"><option selected>PNG</option><option >CNG</option></select></div><div class="fg "><label class="fl">Pressure Band</label><select class="fsel"><option selected>Domestic LP</option><option >Commercial MP</option><option >Industrial HP</option></select></div><div class="fg "><label class="fl">Regulator Serial</label><input class="fi" type="text" value="REG-2024-00123"></div><div class="fg "><label class="fl">Inlet Size (mm)</label><input class="fi" type="text" value="25"></div></div></div>
+<div class="tabs-bar"><div class="tab-b  active" onclick="swTab('connection','meter')">Meter Details</div><div class="tab-b" onclick="swTab('connection','bills')">Bills (12)</div><div class="tab-b" onclick="swTab('connection','hist')">History</div></div><div id="connection-meter" class="tab-pane  active"><table class="mt"><thead><tr><th>Meter ID</th><th>Serial</th><th>Type</th><th>Installed On</th></tr></thead><tbody><tr><td><span class="il">MTR000001</span></td><td>GAS-4521-XY</td><td>Electronic</td><td>2024-01-15</td></tr></tbody></table></div><div id="connection-bills" class="tab-pane"><table class="mt"><thead><tr><th>Bill ID</th><th>Period</th><th>Consumption</th><th>Amount</th></tr></thead><tbody><tr><td><span class="il">BILL001234</span></td><td>Mar 2026</td><td>8.4 SCM</td><td>₹ 847</td></tr></tbody></table></div><div id="connection-hist" class="tab-pane"><table class="mt"><thead><tr><th>Date</th><th>User</th><th>Change</th></tr></thead><tbody><tr><td>2024-01-15</td><td>admin.1</td><td>Connection Created & Activated</td></tr></tbody></table></div>
+<div class="d-footer"><div class="audit">Created: admin.1 · 2024-01-15</div><button class="btn btn btn-p">💾 Save</button><button class="btn btn btn-warn">⏸ Suspend</button><button class="btn btn btn-err">❌ Terminate</button></div>
+</div>
+</div>
+<div id="screen-cgdarea" class="screen">
+<div class="pg-hdr">
+  <div><div class="pg-title">CGD Area Master</div><div class="pg-sub">Define operating geographic areas for all utility types</div></div>
+  <div class="spacer"></div>
+</div>
+<div class="toolbar">
+  <input class="s-input" placeholder="🔍  Search by ID, name or mobile…">
+  <select class="sel"><option>All Status</option><option>Active</option><option>Draft</option><option>Blocked</option></select>
+  <div class="spacer"></div>
+  <button class="btn btn-p" onclick="showNewForm('cgdarea')">＋ Create New</button>
+  <button class="btn btn-g">↑ Export</button>
+</div>
+<div class="t-card">
+  <div class="t-info">5 records shown — click a row to view details</div>
+  <table class="dt"><thead><tr><th>Area ID</th><th>Area Name</th><th>City</th><th>District</th><th>State</th><th>Utility Types</th><th>Status</th></tr></thead><tbody><tr onclick="showDetail('cgdarea',this)"><td><span class="il">AHM-WEST</span></td><td>Ahmedabad West</td><td>Ahmedabad</td><td>Ahmedabad</td><td>Gujarat</td><td>Gas, Elec, Water</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('cgdarea',this)"><td><span class="il">AHM-EAST</span></td><td>Ahmedabad East</td><td>Ahmedabad</td><td>Ahmedabad</td><td>Gujarat</td><td>Gas, Elec</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('cgdarea',this)"><td><span class="il">GAN-NORTH</span></td><td>Gandhinagar North</td><td>Gandhinagar</td><td>Gandhinagar</td><td>Gujarat</td><td>Gas, Water</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('cgdarea',this)"><td><span class="il">SURAT-N</span></td><td>Surat North</td><td>Surat</td><td>Surat</td><td>Gujarat</td><td>Gas, Elec, Water</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('cgdarea',this)"><td><span class="il">VAD-CENTRAL</span></td><td>Vadodara Central</td><td>Vadodara</td><td>Vadodara</td><td>Gujarat</td><td>Gas, Elec</td><td><span class="badge b-active">Active</span></td></tr></tbody></table>
+</div>
+<div id="detail-cgdarea" class="detail" style="display:none">
+<div class="d-hdr">
+  <div><div class="d-title">Ahmedabad West</div><div class="d-sub">AHM-WEST · West Gujarat Zone &nbsp;<span class="badge b-active">Active</span></div></div>
+  <div class="d-actions">
+    <button class="btn btn-sm btn-wht">✏️ Edit</button>
+    <button class="btn btn-sm btn-wht" onclick="closeDetail('cgdarea')">✕ Close</button>
+  </div>
+</div>
+<div class="f-sec"><div class="f-sec-ttl">Area Definition</div>
+<div class="f-grid"><div class="fg "><label class="fl req">Area ID</label><input class="fi" type="text" value="AHM-WEST" readonly></div><div class="fg "><label class="fl req">Area Name</label><input class="fi" type="text" value="Ahmedabad West"></div><div class="fg "><label class="fl req">City</label><input class="fi" type="text" value="Ahmedabad"></div><div class="fg "><label class="fl req">District</label><input class="fi" type="text" value="Ahmedabad"></div><div class="fg "><label class="fl req">State</label><input class="fi" type="text" value="Gujarat"></div><div class="fg "><label class="fl">Zone</label><input class="fi" type="text" value="West Gujarat"></div><div class="fg "><label class="fl">Utility Types</label><input class="fi" type="text" value="Gas, Electricity, Water"></div><div class="fg "><label class="fl req">Status</label><select class="fsel"><option selected>Active</option><option >Inactive</option></select></div></div></div>
+<div class="tabs-bar"><div class="tab-b  active" onclick="swTab('cgdarea','routes')">Routes (4)</div><div class="tab-b" onclick="swTab('cgdarea','stations')">CNG Stations (2)</div></div><div id="cgdarea-routes" class="tab-pane  active"><table class="mt"><thead><tr><th>Route ID</th><th>Name</th><th>Cycle Group</th><th>Reader</th><th>Status</th></tr></thead><tbody><tr><td><span class="il">RT-AHM-W-01</span></td><td>AHM-West-Route-1</td><td>GRP-A</td><td>EMP00123</td><td><span class="badge b-active">Active</span></td></tr></tbody></table></div><div id="cgdarea-stations" class="tab-pane"><table class="mt"><thead><tr><th>Station ID</th><th>Name</th><th>Status</th></tr></thead><tbody><tr><td><span class="il">CNG-AHM-001</span></td><td>Navrangpura CNG Station</td><td><span class="badge b-active">Active</span></td></tr></tbody></table></div>
+<div class="d-footer"><div class="audit">Created: admin.1 · 2023-01-01</div><button class="btn btn btn-p">💾 Save</button><button class="btn btn btn-err">❌ Deactivate</button></div>
+</div>
+</div>
+<div id="screen-route" class="screen">
+<div class="pg-hdr">
+  <div><div class="pg-title">Route Master</div><div class="pg-sub">Define meter reading routes and reader assignments</div></div>
+  <div class="spacer"></div>
+</div>
+<div class="toolbar">
+  <input class="s-input" placeholder="🔍  Search by ID, name or mobile…">
+  <select class="sel"><option>All Status</option><option>Active</option><option>Draft</option><option>Blocked</option></select>
+  <div class="spacer"></div>
+  <button class="btn btn-p" onclick="showNewForm('route')">＋ Create New</button>
+  <button class="btn btn-g">↑ Export</button>
+</div>
+<div class="t-card">
+  <div class="t-info">4 records shown — click a row to view details</div>
+  <table class="dt"><thead><tr><th>Route ID</th><th>Route Name</th><th>Area</th><th>Cycle Group</th><th>Reader ID</th><th>Status</th></tr></thead><tbody><tr onclick="showDetail('route',this)"><td><span class="il">RT-AHM-W-01</span></td><td>AHM-West-Route-1</td><td>AHM-WEST</td><td>GRP-A</td><td>EMP00123</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('route',this)"><td><span class="il">RT-AHM-W-02</span></td><td>AHM-West-Route-2</td><td>AHM-WEST</td><td>GRP-A</td><td>EMP00124</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('route',this)"><td><span class="il">RT-AHM-E-01</span></td><td>AHM-East-Route-1</td><td>AHM-EAST</td><td>GRP-B</td><td>EMP00125</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('route',this)"><td><span class="il">RT-GAN-01</span></td><td>Gandhinagar-Route-1</td><td>GAN-NORTH</td><td>GRP-C</td><td>EMP00126</td><td><span class="badge b-active">Active</span></td></tr></tbody></table>
+</div>
+<div id="detail-route" class="detail" style="display:none">
+<div class="d-hdr">
+  <div><div class="d-title">AHM-West-Route-1</div><div class="d-sub">RT-AHM-W-01 · AHM-WEST · Group A &nbsp;<span class="badge b-active">Active</span></div></div>
+  <div class="d-actions">
+    <button class="btn btn-sm btn-wht">✏️ Edit</button>
+    <button class="btn btn-sm btn-wht" onclick="closeDetail('route')">✕ Close</button>
+  </div>
+</div>
+<div class="f-sec"><div class="f-sec-ttl">Route Details</div>
+<div class="f-grid"><div class="fg "><label class="fl req">Route ID</label><input class="fi" type="text" value="RT-AHM-W-01" readonly></div><div class="fg "><label class="fl req">Area</label><select class="fsel"><option selected>AHM-WEST</option><option >AHM-EAST</option><option >GAN-NORTH</option><option >SURAT-N</option><option >VAD-CENTRAL</option></select></div><div class="fg "><label class="fl req">Route Name</label><input class="fi" type="text" value="AHM-West-Route-1"></div><div class="fg "><label class="fl req">Cycle Group</label><input class="fi" type="text" value="GRP-A"></div><div class="fg "><label class="fl">Reader Employee ID</label><input class="fi" type="text" value="EMP00123"></div><div class="fg "><label class="fl req">Effective From</label><input class="fi" type="date" value="2024-01-01"></div><div class="fg "><label class="fl req">Status</label><select class="fsel"><option selected>Active</option><option >Inactive</option></select></div></div></div>
+<div class="tabs-bar"><div class="tab-b  active" onclick="swTab('route','conns')">Connections on Route (48)</div><div class="tab-b" onclick="swTab('route','sched')">Reading Schedule</div></div><div id="route-conns" class="tab-pane  active"><table class="mt"><thead><tr><th>Conn ID</th><th>Premise</th><th>Last Read</th><th>Status</th></tr></thead><tbody><tr><td><span class="il">CONN000001</span></td><td>H-23 Navrangpura</td><td>2026-03-05</td><td><span class="badge b-active">Active</span></td></tr></tbody></table></div><div id="route-sched" class="tab-pane"><table class="mt"><thead><tr><th>Month</th><th>Scheduled Date</th><th>Completed</th><th>Readings</th></tr></thead><tbody><tr><td>March 2026</td><td>2026-03-05</td><td>Yes</td><td>48 of 48</td></tr></tbody></table></div>
+<div class="d-footer"><div class="audit">Created: admin.1 · 2024-01-01</div><button class="btn btn btn-p">💾 Save</button></div>
+</div>
+</div>
+<div id="screen-pressure" class="screen">
+<div class="pg-hdr">
+  <div><div class="pg-title">Pressure Band Master</div><div class="pg-sub">Define gas pressure classifications for connections and tariffs</div></div>
+  <div class="spacer"></div>
+</div>
+<div class="toolbar">
+  <input class="s-input" placeholder="🔍  Search by ID, name or mobile…">
+  <select class="sel"><option>All Status</option><option>Active</option><option>Draft</option><option>Blocked</option></select>
+  <div class="spacer"></div>
+  <button class="btn btn-p" onclick="showNewForm('pressure')">＋ Create New</button>
+  <button class="btn btn-g">↑ Export</button>
+</div>
+<div class="t-card">
+  <div class="t-info">4 records shown — click a row to view details</div>
+  <table class="dt"><thead><tr><th>Band ID</th><th>Band Name</th><th>Min Pressure</th><th>Max Pressure</th><th>Usage Class</th><th>UOM</th><th>Status</th></tr></thead><tbody><tr onclick="showDetail('pressure',this)"><td><span class="il">PBAND-LP-DOM</span></td><td>Domestic Low Pressure</td><td>0.01</td><td>0.05</td><td>Domestic</td><td>bar</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('pressure',this)"><td><span class="il">PBAND-MP-COM</span></td><td>Commercial Medium Pressure</td><td>0.05</td><td>0.5</td><td>Commercial</td><td>bar</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('pressure',this)"><td><span class="il">PBAND-HP-IND</span></td><td>Industrial High Pressure</td><td>0.5</td><td>7.0</td><td>Industrial</td><td>bar</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('pressure',this)"><td><span class="il">PBAND-CNG-STA</span></td><td>CNG Station Pressure</td><td>200</td><td>250</td><td>CNG Station</td><td>bar</td><td><span class="badge b-active">Active</span></td></tr></tbody></table>
+</div>
+<div id="detail-pressure" class="detail" style="display:none">
+<div class="d-hdr">
+  <div><div class="d-title">Domestic Low Pressure</div><div class="d-sub">PBAND-LP-DOM &nbsp;<span class="badge b-active">Active</span></div></div>
+  <div class="d-actions">
+    <button class="btn btn-sm btn-wht">✏️ Edit</button>
+    <button class="btn btn-sm btn-wht" onclick="closeDetail('pressure')">✕ Close</button>
+  </div>
+</div>
+<div class="f-sec"><div class="f-sec-ttl">Pressure Band</div>
+<div class="f-grid"><div class="fg "><label class="fl req">Band ID</label><input class="fi" type="text" value="PBAND-LP-DOM" readonly></div><div class="fg "><label class="fl req">Band Name</label><input class="fi" type="text" value="Domestic Low Pressure"></div><div class="fg "><label class="fl req">Min Pressure</label><input class="fi" type="text" value="0.01"></div><div class="fg "><label class="fl req">Max Pressure</label><input class="fi" type="text" value="0.05"></div><div class="fg "><label class="fl req">Usage Class</label><select class="fsel"><option selected>Domestic</option><option >Commercial</option><option >Industrial</option><option >CNG Station</option></select></div><div class="fg "><label class="fl req">UOM</label><select class="fsel"><option selected>bar</option><option >mbar</option><option >psi</option></select></div><div class="fg "><label class="fl req">Status</label><select class="fsel"><option selected>Active</option><option >Inactive</option></select></div></div></div>
+<div class="tabs-bar"></div>
+<div class="d-footer"><div class="audit">Created: admin.1 · 2024-01-01</div><button class="btn btn btn-p">💾 Save</button></div>
+</div>
+</div>
+<div id="screen-meter" class="screen">
+<div class="pg-hdr">
+  <div><div class="pg-title">Meter Master</div><div class="pg-sub">Manage gas, electricity and water meter assets</div></div>
+  <div class="spacer"></div>
+</div>
+<div class="toolbar">
+  <input class="s-input" placeholder="🔍  Search by ID, name or mobile…">
+  <select class="sel"><option>All Status</option><option>Active</option><option>Draft</option><option>Blocked</option></select>
+  <div class="spacer"></div>
+  <button class="btn btn-p" onclick="showNewForm('meter')">＋ Create New</button>
+  <button class="btn btn-g">↑ Export</button>
+</div>
+<div class="t-card">
+  <div class="t-info">5 records shown — click a row to view details</div>
+  <table class="dt"><thead><tr><th>Meter ID</th><th>Serial No</th><th>Type</th><th>Make</th><th>UOM</th><th>Utility</th><th>Calibration Due</th><th>Status</th></tr></thead><tbody><tr onclick="showDetail('meter',this)"><td><span class="il">MTR000001</span></td><td>GAS-4521-XY</td><td>Electronic</td><td>Honeywell</td><td>SCM</td><td>Gas</td><td>2027-01-15</td><td><span class="badge b-active">Installed</span></td></tr><tr onclick="showDetail('meter',this)"><td><span class="il">MTR000002</span></td><td>GAS-4522-AB</td><td>Electronic</td><td>Elster</td><td>SCM</td><td>Gas</td><td>2027-02-20</td><td><span class="badge b-active">Installed</span></td></tr><tr onclick="showDetail('meter',this)"><td><span class="il">MTR000003</span></td><td>ELEC-7891-CD</td><td>Smart</td><td>Landis+Gyr</td><td>kWh</td><td>Electricity</td><td>2028-06-01</td><td><span class="badge b-active">Installed</span></td></tr><tr onclick="showDetail('meter',this)"><td><span class="il">MTR000004</span></td><td>WAT-3301-EF</td><td>Mechanical</td><td>Kranti</td><td>KL</td><td>Water</td><td>2026-12-01</td><td><span class="badge b-active">Installed</span></td></tr><tr onclick="showDetail('meter',this)"><td><span class="il">MTR000005</span></td><td>GAS-4523-GH</td><td>Electronic</td><td>Honeywell</td><td>SCM</td><td>Gas</td><td>2027-03-10</td><td><span class="badge b-draft">In Stock</span></td></tr></tbody></table>
+</div>
+<div id="detail-meter" class="detail" style="display:none">
+<div class="d-hdr">
+  <div><div class="d-title">MTR000001 — GAS-4521-XY</div><div class="d-sub">Electronic Gas Meter · Honeywell &nbsp;<span class="badge b-active">Installed</span></div></div>
+  <div class="d-actions">
+    <button class="btn btn-sm btn-wht">✏️ Edit</button>
+    <button class="btn btn-sm btn-wht" onclick="closeDetail('meter')">✕ Close</button>
+  </div>
+</div>
+<div class="f-sec"><div class="f-sec-ttl">Meter Identity</div>
+<div class="f-grid"><div class="fg "><label class="fl req">Meter ID</label><input class="fi" type="text" value="MTR000001" readonly></div><div class="fg "><label class="fl req">Serial Number</label><input class="fi" type="text" value="GAS-4521-XY"></div><div class="fg "><label class="fl">Meter Type</label><select class="fsel"><option >Mechanical</option><option selected>Electronic</option><option >Smart</option><option >Prepaid</option></select></div><div class="fg "><label class="fl">Make / Manufacturer</label><input class="fi" type="text" value="Honeywell"></div><div class="fg "><label class="fl">Model</label><input class="fi" type="text" value="ELF-G4"></div><div class="fg "><label class="fl">Meter Size</label><input class="fi" type="text" value="G4"></div><div class="fg "><label class="fl req">Unit of Measure</label><select class="fsel"><option selected>SCM</option><option >kWh</option><option >KL</option><option >MMBTU</option></select></div><div class="fg "><label class="fl req">Utility Type</label><select class="fsel"><option selected>Gas</option><option >Electricity</option><option >Water</option></select></div></div></div><div class="f-sec"><div class="f-sec-ttl">Calibration & Status</div>
+<div class="f-grid"><div class="fg "><label class="fl">Calibration Due Date</label><input class="fi" type="date" value="2027-01-15"></div><div class="fg "><label class="fl req">Status</label><select class="fsel"><option >In Stock</option><option selected>Installed</option><option >Removed</option><option >Defective</option></select></div></div></div>
+<div class="tabs-bar"><div class="tab-b  active" onclick="swTab('meter','inst')">Installation History</div><div class="tab-b" onclick="swTab('meter','rdg')">Recent Readings (6)</div></div><div id="meter-inst" class="tab-pane  active"><table class="mt"><thead><tr><th>Install ID</th><th>Connection</th><th>Install Date</th><th>Remove Date</th><th>Reason</th></tr></thead><tbody><tr><td><span class="il">INST000001</span></td><td>CONN000001</td><td>2024-01-15</td><td>—</td><td>New Install</td></tr></tbody></table></div><div id="meter-rdg" class="tab-pane"><table class="mt"><thead><tr><th>Reading ID</th><th>Date</th><th>Reading</th><th>Consumption</th><th>Type</th></tr></thead><tbody><tr><td><span class="il">RDG001234</span></td><td>2026-03-05</td><td>1048.4 SCM</td><td>8.4 SCM</td><td>Actual</td></tr><tr><td><span class="il">RDG001100</span></td><td>2026-02-05</td><td>1040.0 SCM</td><td>9.2 SCM</td><td>Actual</td></tr></tbody></table></div>
+<div class="d-footer"><div class="audit">Created: admin.1 · 2024-01-10</div><button class="btn btn btn-p">💾 Save</button><button class="btn btn btn-warn">🔧 Mark Defective</button><button class="btn btn btn-err">Remove</button></div>
+</div>
+</div>
+<div id="screen-cngstation" class="screen">
+<div class="pg-hdr">
+  <div><div class="pg-title">CNG Station Master</div><div class="pg-sub">Manage CNG filling stations, compressors and dispensing units</div></div>
+  <div class="spacer"></div>
+</div>
+<div class="toolbar">
+  <input class="s-input" placeholder="🔍  Search by ID, name or mobile…">
+  <select class="sel"><option>All Status</option><option>Active</option><option>Draft</option><option>Blocked</option></select>
+  <div class="spacer"></div>
+  <button class="btn btn-p" onclick="showNewForm('cngstation')">＋ Create New</button>
+  <button class="btn btn-g">↑ Export</button>
+</div>
+<div class="t-card">
+  <div class="t-info">4 records shown — click a row to view details</div>
+  <table class="dt"><thead><tr><th>Station ID</th><th>Station Name</th><th>City</th><th>Area</th><th>Compressor Type</th><th>Dispensers</th><th>Status</th></tr></thead><tbody><tr onclick="showDetail('cngstation',this)"><td><span class="il">CNG-AHM-001</span></td><td>Navrangpura CNG Station</td><td>Ahmedabad</td><td>AHM-WEST</td><td>Fast-fill</td><td>4</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('cngstation',this)"><td><span class="il">CNG-AHM-002</span></td><td>Satellite Road CNG</td><td>Ahmedabad</td><td>AHM-WEST</td><td>Standard</td><td>2</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('cngstation',this)"><td><span class="il">CNG-SURAT-001</span></td><td>Surat Ring Road CNG</td><td>Surat</td><td>SURAT-N</td><td>Mother</td><td>6</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('cngstation',this)"><td><span class="il">CNG-GAN-001</span></td><td>Gandhinagar Sector 11</td><td>Gandhinagar</td><td>GAN-NORTH</td><td>Standard</td><td>2</td><td><span class="badge b-active">Active</span></td></tr></tbody></table>
+</div>
+<div id="detail-cngstation" class="detail" style="display:none">
+<div class="d-hdr">
+  <div><div class="d-title">Navrangpura CNG Station</div><div class="d-sub">CNG-AHM-001 · Ahmedabad West &nbsp;<span class="badge b-active">Active</span></div></div>
+  <div class="d-actions">
+    <button class="btn btn-sm btn-wht">✏️ Edit</button>
+    <button class="btn btn-sm btn-wht" onclick="closeDetail('cngstation')">✕ Close</button>
+  </div>
+</div>
+<div class="f-sec"><div class="f-sec-ttl">Station Details</div>
+<div class="f-grid"><div class="fg "><label class="fl req">Station ID</label><input class="fi" type="text" value="CNG-AHM-001" readonly></div><div class="fg "><label class="fl req">Station Name</label><input class="fi" type="text" value="Navrangpura CNG Station"></div><div class="fg "><label class="fl req">CGD Area</label><select class="fsel"><option selected>AHM-WEST</option><option >AHM-EAST</option><option >GAN-NORTH</option><option >SURAT-N</option></select></div><div class="fg "><label class="fl">Address</label><input class="fi" type="text" value="Near Stadium, Navrangpura"></div><div class="fg "><label class="fl">City</label><input class="fi" type="text" value="Ahmedabad"></div><div class="fg "><label class="fl">State</label><input class="fi" type="text" value="Gujarat"></div></div></div><div class="f-sec"><div class="f-sec-ttl">Technical & Operational</div>
+<div class="f-grid"><div class="fg "><label class="fl">Compressor Type</label><select class="fsel"><option >Standard</option><option selected>Fast-fill</option><option >Mother</option><option >Online-Daughter</option></select></div><div class="fg "><label class="fl">Dispenser Count</label><input class="fi" type="text" value="4"></div><div class="fg "><label class="fl">Operational Since</label><input class="fi" type="date" value="2020-06-01"></div><div class="fg "><label class="fl req">Status</label><select class="fsel"><option selected>Active</option><option >Inactive</option><option >Maintenance</option></select></div></div></div>
+<div class="tabs-bar"><div class="tab-b  active" onclick="swTab('cngstation','sales')">Recent Sales</div><div class="tab-b" onclick="swTab('cngstation','stats')">Monthly Stats</div></div><div id="cngstation-sales" class="tab-pane  active"><table class="mt"><thead><tr><th>Sale ID</th><th>Date</th><th>Category</th><th>Quantity (SCM)</th><th>Amount</th></tr></thead><tbody><tr><td><span class="il">SALE001234</span></td><td>2026-03-29</td><td>Private Car</td><td>3.8 SCM</td><td>₹ 304</td></tr><tr><td><span class="il">SALE001233</span></td><td>2026-03-29</td><td>Auto Rickshaw</td><td>2.2 SCM</td><td>₹ 176</td></tr></tbody></table></div><div id="cngstation-stats" class="tab-pane"><table class="mt"><thead><tr><th>Month</th><th>Transactions</th><th>Volume (SCM)</th><th>Revenue</th></tr></thead><tbody><tr><td>March 2026</td><td>1,248</td><td>4,742 SCM</td><td>₹ 3,79,360</td></tr></tbody></table></div>
+<div class="d-footer"><div class="audit">Created: admin.1 · 2020-06-01</div><button class="btn btn btn-p">💾 Save</button><button class="btn btn btn-warn">🔧 Maintenance Mode</button></div>
+</div>
+</div>
+<div id="screen-vehicle" class="screen">
+<div class="pg-hdr">
+  <div><div class="pg-title">Vehicle Category Master</div><div class="pg-sub">Classify vehicle types for CNG dispensing and tariff application</div></div>
+  <div class="spacer"></div>
+</div>
+<div class="toolbar">
+  <input class="s-input" placeholder="🔍  Search by ID, name or mobile…">
+  <select class="sel"><option>All Status</option><option>Active</option><option>Draft</option><option>Blocked</option></select>
+  <div class="spacer"></div>
+  <button class="btn btn-p" onclick="showNewForm('vehicle')">＋ Create New</button>
+  <button class="btn btn-g">↑ Export</button>
+</div>
+<div class="t-card">
+  <div class="t-info">5 records shown — click a row to view details</div>
+  <table class="dt"><thead><tr><th>Category ID</th><th>Category Name</th><th>Vehicle Type</th><th>Fuel Capacity</th><th>Commercial</th><th>Status</th></tr></thead><tbody><tr onclick="showDetail('vehicle',this)"><td><span class="il">VEH-CAR-PRIV</span></td><td>Private Car</td><td>CAR</td><td>10.0 kg</td><td>No</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('vehicle',this)"><td><span class="il">VEH-AUTO-3W</span></td><td>Auto Rickshaw 3W</td><td>AUTO</td><td>5.0 kg</td><td>Yes</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('vehicle',this)"><td><span class="il">VEH-BUS-COMM</span></td><td>Commercial Bus</td><td>BUS</td><td>65.0 kg</td><td>Yes</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('vehicle',this)"><td><span class="il">VEH-TRUCK-HCV</span></td><td>Heavy Commercial Truck</td><td>TRUCK</td><td>120.0 kg</td><td>Yes</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('vehicle',this)"><td><span class="il">VEH-2W-PRIV</span></td><td>Two Wheeler</td><td>TWO_WHEELER</td><td>1.5 kg</td><td>No</td><td><span class="badge b-active">Active</span></td></tr></tbody></table>
+</div>
+<div id="detail-vehicle" class="detail" style="display:none">
+<div class="d-hdr">
+  <div><div class="d-title">Private Car</div><div class="d-sub">VEH-CAR-PRIV &nbsp;<span class="badge b-active">Active</span></div></div>
+  <div class="d-actions">
+    <button class="btn btn-sm btn-wht">✏️ Edit</button>
+    <button class="btn btn-sm btn-wht" onclick="closeDetail('vehicle')">✕ Close</button>
+  </div>
+</div>
+<div class="f-sec"><div class="f-sec-ttl">Vehicle Category</div>
+<div class="f-grid"><div class="fg "><label class="fl req">Category ID</label><input class="fi" type="text" value="VEH-CAR-PRIV" readonly></div><div class="fg "><label class="fl req">Category Name</label><input class="fi" type="text" value="Private Car"></div><div class="fg "><label class="fl req">Vehicle Type</label><select class="fsel"><option selected>CAR</option><option >BUS</option><option >AUTO</option><option >TRUCK</option><option >TWO_WHEELER</option></select></div><div class="fg "><label class="fl">Fuel Capacity (kg)</label><input class="fi" type="text" value="10.0"></div><div class="fg "><label class="fl">Commercial Flag</label><select class="fsel"><option >Yes</option><option selected>No</option></select></div><div class="fg "><label class="fl req">Status</label><select class="fsel"><option selected>Active</option><option >Inactive</option></select></div></div></div>
+<div class="tabs-bar"></div>
+<div class="d-footer"><div class="audit">Created: admin.1 · 2022-01-01</div><button class="btn btn btn-p">💾 Save</button></div>
+</div>
+</div>
+<div id="screen-rateplan" class="screen">
+<div class="pg-hdr">
+  <div><div class="pg-title">Rate Plan Master</div><div class="pg-sub">Define tariff plans for all utility types with effective-date governance</div></div>
+  <div class="spacer"></div>
+</div>
+<div class="toolbar">
+  <input class="s-input" placeholder="🔍  Search by ID, name or mobile…">
+  <select class="sel"><option>All Status</option><option>Active</option><option>Draft</option><option>Blocked</option></select>
+  <div class="spacer"></div>
+  <button class="btn btn-p" onclick="showNewForm('rateplan')">＋ Create New</button>
+  <button class="btn btn-g">↑ Export</button>
+</div>
+<div class="t-card">
+  <div class="t-info">6 records shown — click a row to view details</div>
+  <table class="dt"><thead><tr><th>Rate Plan ID</th><th>Plan Name</th><th>Utility</th><th>Segment</th><th>Effective From</th><th>Billing Freq</th><th>Status</th></tr></thead><tbody><tr onclick="showDetail('rateplan',this)"><td><span class="il">RP-GAS-DOM-01</span></td><td>Domestic PNG Slab 2024</td><td>Gas PNG</td><td>Domestic PNG</td><td>2024-04-01</td><td>Monthly</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('rateplan',this)"><td><span class="il">RP-GAS-COM-01</span></td><td>Commercial PNG Flat 2024</td><td>Gas PNG</td><td>Commercial PNG</td><td>2024-04-01</td><td>Monthly</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('rateplan',this)"><td><span class="il">RP-GAS-IND-01</span></td><td>Industrial Gas 2024</td><td>Gas PNG</td><td>Industrial Gas</td><td>2024-04-01</td><td>Monthly</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('rateplan',this)"><td><span class="il">RP-ELEC-DOM-01</span></td><td>Domestic Electricity 2024</td><td>Electricity</td><td>Domestic Elec</td><td>2024-04-01</td><td>Monthly</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('rateplan',this)"><td><span class="il">RP-WATER-DOM-01</span></td><td>Domestic Water 2024</td><td>Water</td><td>Domestic Water</td><td>2024-04-01</td><td>Monthly</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('rateplan',this)"><td><span class="il">RP-CNG-PRIV-01</span></td><td>CNG Private Vehicle 2024</td><td>CNG</td><td>CNG Private</td><td>2024-04-01</td><td>Daily</td><td><span class="badge b-active">Active</span></td></tr></tbody></table>
+</div>
+<div id="detail-rateplan" class="detail" style="display:none">
+<div class="d-hdr">
+  <div><div class="d-title">Domestic PNG Slab 2024</div><div class="d-sub">RP-GAS-DOM-01 · Gas PNG · Monthly &nbsp;<span class="badge b-active">Active</span></div></div>
+  <div class="d-actions">
+    <button class="btn btn-sm btn-wht">✏️ Edit</button>
+    <button class="btn btn-sm btn-wht" onclick="closeDetail('rateplan')">✕ Close</button>
+  </div>
+</div>
+<div class="f-sec"><div class="f-sec-ttl">Rate Plan Header</div>
+<div class="f-grid"><div class="fg "><label class="fl req">Rate Plan ID</label><input class="fi" type="text" value="RP-GAS-DOM-01" readonly></div><div class="fg "><label class="fl req">Plan Name</label><input class="fi" type="text" value="Domestic PNG Slab 2024"></div><div class="fg "><label class="fl req">Utility Type</label><select class="fsel"><option selected>Gas PNG</option><option >Gas CNG</option><option >Electricity</option><option >Water</option><option >CNG</option></select></div><div class="fg "><label class="fl req">Consumer Segment</label><select class="fsel"><option selected>Domestic PNG</option><option >Commercial PNG</option><option >Industrial Gas</option><option >Domestic Elec</option><option >Domestic Water</option><option >CNG Private</option><option >CNG Commercial</option></select></div><div class="fg "><label class="fl req">Billing Frequency</label><select class="fsel"><option selected>Monthly</option><option >Bimonthly</option><option >Quarterly</option><option >Daily</option></select></div><div class="fg "><label class="fl req">Status</label><select class="fsel"><option selected>Active</option><option >Draft</option><option >Inactive</option></select></div></div></div><div class="f-sec"><div class="f-sec-ttl">Effective Period</div>
+<div class="f-grid"><div class="fg "><label class="fl req">Effective From</label><input class="fi" type="date" value="2024-04-01"></div><div class="fg "><label class="fl">Effective To</label><input class="fi" type="date" value="2025-03-31"></div></div></div>
+<div class="tabs-bar"><div class="tab-b  active" onclick="swTab('rateplan','comps')">Charge Components (4)</div><div class="tab-b" onclick="swTab('rateplan','accts')">Applicable Accounts (342)</div></div><div id="rateplan-comps" class="tab-pane  active"><table class="mt"><thead><tr><th>Component ID</th><th>Name</th><th>Type</th><th>Rate</th><th>Slab</th><th>Status</th></tr></thead><tbody><tr><td><span class="il">CC-GAS-DOM-FIX</span></td><td>Fixed Monthly Charge</td><td>Fixed</td><td>₹ 120.00</td><td>—</td><td><span class="badge b-active">Active</span></td></tr><tr><td><span class="il">CC-GAS-DOM-V1</span></td><td>Variable Slab 1 (0–10 SCM)</td><td>Variable</td><td>₹ 30.00/SCM</td><td>0–10</td><td><span class="badge b-active">Active</span></td></tr><tr><td><span class="il">CC-GAS-DOM-V2</span></td><td>Variable Slab 2 (>10 SCM)</td><td>Variable</td><td>₹ 35.00/SCM</td><td>>10</td><td><span class="badge b-active">Active</span></td></tr><tr><td><span class="il">CC-GAS-DOM-GST</span></td><td>GST 5%</td><td>Tax</td><td>5%</td><td>—</td><td><span class="badge b-active">Active</span></td></tr></tbody></table></div><div id="rateplan-accts" class="tab-pane"><table class="mt"><thead><tr><th>Account ID</th><th>Customer</th><th>Segment</th></tr></thead><tbody><tr><td><span class="il">ACCT000001</span></td><td>Ramesh H Shah</td><td>Domestic PNG</td></tr></tbody></table></div>
+<div class="d-footer"><div class="audit">Created: tariff.mgr · 2024-03-15</div><button class="btn btn btn-p">💾 Save</button><button class="btn btn btn-ok">✅ Activate</button><button class="btn btn btn-err">❌ Deactivate</button></div>
+</div>
+</div>
+<div id="screen-chargecmp" class="screen">
+<div class="pg-hdr">
+  <div><div class="pg-title">Charge Component</div><div class="pg-sub">Define bill line components: fixed charges, variable slabs and taxes</div></div>
+  <div class="spacer"></div>
+</div>
+<div class="toolbar">
+  <input class="s-input" placeholder="🔍  Search by ID, name or mobile…">
+  <select class="sel"><option>All Status</option><option>Active</option><option>Draft</option><option>Blocked</option></select>
+  <div class="spacer"></div>
+  <button class="btn btn-p" onclick="showNewForm('chargecmp')">＋ Create New</button>
+  <button class="btn btn-g">↑ Export</button>
+</div>
+<div class="t-card">
+  <div class="t-info">6 records shown — click a row to view details</div>
+  <table class="dt"><thead><tr><th>Component ID</th><th>Plan</th><th>Name</th><th>Type</th><th>Rate</th><th>UOM</th><th>Slab From</th><th>Slab To</th><th>Status</th></tr></thead><tbody><tr onclick="showDetail('chargecmp',this)"><td><span class="il">CC-GAS-DOM-FIX</span></td><td>RP-GAS-DOM-01</td><td>Fixed Monthly Charge</td><td>Fixed</td><td>₹ 120.00</td><td>—</td><td>—</td><td>—</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('chargecmp',this)"><td><span class="il">CC-GAS-DOM-V1</span></td><td>RP-GAS-DOM-01</td><td>Variable Slab 1</td><td>Variable</td><td>₹ 30.00</td><td>SCM</td><td>0</td><td>10</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('chargecmp',this)"><td><span class="il">CC-GAS-DOM-V2</span></td><td>RP-GAS-DOM-01</td><td>Variable Slab 2</td><td>Variable</td><td>₹ 35.00</td><td>SCM</td><td>10</td><td>∞</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('chargecmp',this)"><td><span class="il">CC-GAS-DOM-GST</span></td><td>RP-GAS-DOM-01</td><td>GST 5%</td><td>Tax</td><td>5%</td><td>%</td><td>—</td><td>—</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('chargecmp',this)"><td><span class="il">CC-ELEC-DOM-FIX</span></td><td>RP-ELEC-DOM-01</td><td>Meter Rent</td><td>Fixed</td><td>₹ 45.00</td><td>—</td><td>—</td><td>—</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('chargecmp',this)"><td><span class="il">CC-ELEC-DOM-V1</span></td><td>RP-ELEC-DOM-01</td><td>Energy Slab 1</td><td>Variable</td><td>₹ 3.50</td><td>kWh</td><td>0</td><td>100</td><td><span class="badge b-active">Active</span></td></tr></tbody></table>
+</div>
+<div id="detail-chargecmp" class="detail" style="display:none">
+<div class="d-hdr">
+  <div><div class="d-title">Fixed Monthly Charge</div><div class="d-sub">CC-GAS-DOM-FIX · Fixed Type &nbsp;<span class="badge b-active">Active</span></div></div>
+  <div class="d-actions">
+    <button class="btn btn-sm btn-wht">✏️ Edit</button>
+    <button class="btn btn-sm btn-wht" onclick="closeDetail('chargecmp')">✕ Close</button>
+  </div>
+</div>
+<div class="f-sec"><div class="f-sec-ttl">Component Identity</div>
+<div class="f-grid"><div class="fg "><label class="fl req">Component ID</label><input class="fi" type="text" value="CC-GAS-DOM-FIX" readonly></div><div class="fg "><label class="fl req">Rate Plan</label><select class="fsel"><option selected>RP-GAS-DOM-01</option><option >RP-GAS-COM-01</option><option >RP-ELEC-DOM-01</option><option >RP-WATER-DOM-01</option></select></div><div class="fg "><label class="fl req">Component Name</label><input class="fi" type="text" value="Fixed Monthly Charge"></div><div class="fg "><label class="fl req">Component Type</label><select class="fsel"><option selected>Fixed</option><option >Variable</option><option >Tax</option><option >Subsidy</option><option >Adjustment</option></select></div><div class="fg "><label class="fl">UOM</label><input class="fi" type="text" value="—"></div><div class="fg "><label class="fl req">Rate Value</label><input class="fi" type="text" value="120.00"></div><div class="fg "><label class="fl">GL Posting Class</label><input class="fi" type="text" value="GAS-FIXED-REV"></div><div class="fg "><label class="fl req">Status</label><select class="fsel"><option selected>Active</option><option >Inactive</option></select></div></div></div><div class="f-sec"><div class="f-sec-ttl">Slab Configuration (for Variable type)</div>
+<div class="f-grid"><div class="fg "><label class="fl">Slab From</label><input class="fi" type="text" value="—"></div><div class="fg "><label class="fl">Slab To</label><input class="fi" type="text" value="—"></div><div class="fg "><label class="fl">Applicable Tax</label><select class="fsel"><option selected>GST-5</option><option >GST-18</option><option >NONE</option><option >CESS-2</option></select></div></div></div>
+<div class="tabs-bar"></div>
+<div class="d-footer"><div class="audit">Created: tariff.mgr · 2024-03-15</div><button class="btn btn btn-p">💾 Save</button></div>
+</div>
+</div>
+<div id="screen-taxmaster" class="screen">
+<div class="pg-hdr">
+  <div><div class="pg-title">Tax Master</div><div class="pg-sub">Maintain GST, electricity duty and other tax rules with effective dates</div></div>
+  <div class="spacer"></div>
+</div>
+<div class="toolbar">
+  <input class="s-input" placeholder="🔍  Search by ID, name or mobile…">
+  <select class="sel"><option>All Status</option><option>Active</option><option>Draft</option><option>Blocked</option></select>
+  <div class="spacer"></div>
+  <button class="btn btn-p" onclick="showNewForm('taxmaster')">＋ Create New</button>
+  <button class="btn btn-g">↑ Export</button>
+</div>
+<div class="t-card">
+  <div class="t-info">5 records shown — click a row to view details</div>
+  <table class="dt"><thead><tr><th>Tax ID</th><th>Tax Name</th><th>Jurisdiction</th><th>Rate</th><th>Applicability</th><th>Effective From</th><th>Status</th></tr></thead><tbody><tr onclick="showDetail('taxmaster',this)"><td><span class="il">GST-5</span></td><td>GST 5% on Gas</td><td>Central + State</td><td>5.00%</td><td>Gas PNG / CNG</td><td>2017-07-01</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('taxmaster',this)"><td><span class="il">GST-18</span></td><td>GST 18% on Services</td><td>Central + State</td><td>18.00%</td><td>Service Charges</td><td>2017-07-01</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('taxmaster',this)"><td><span class="il">ELEC-DUTY-15</span></td><td>Electricity Duty 15%</td><td>State</td><td>15.00%</td><td>Electricity</td><td>2020-01-01</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('taxmaster',this)"><td><span class="il">WATER-TAX-5</span></td><td>Water Tax 5%</td><td>Municipal</td><td>5.00%</td><td>Water Supply</td><td>2022-04-01</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('taxmaster',this)"><td><span class="il">CESS-2</span></td><td>Swachh Bharat Cess 2%</td><td>Central</td><td>2.00%</td><td>All utilities</td><td>2020-04-01</td><td><span class="badge b-active">Active</span></td></tr></tbody></table>
+</div>
+<div id="detail-taxmaster" class="detail" style="display:none">
+<div class="d-hdr">
+  <div><div class="d-title">GST 5% on Gas</div><div class="d-sub">GST-5 · Central + State &nbsp;<span class="badge b-active">Active</span></div></div>
+  <div class="d-actions">
+    <button class="btn btn-sm btn-wht">✏️ Edit</button>
+    <button class="btn btn-sm btn-wht" onclick="closeDetail('taxmaster')">✕ Close</button>
+  </div>
+</div>
+<div class="f-sec"><div class="f-sec-ttl">Tax Rule</div>
+<div class="f-grid"><div class="fg "><label class="fl req">Tax ID</label><input class="fi" type="text" value="GST-5" readonly></div><div class="fg "><label class="fl req">Tax Name</label><input class="fi" type="text" value="GST 5% on Gas"></div><div class="fg "><label class="fl req">Jurisdiction</label><select class="fsel"><option >Central</option><option >State</option><option >Municipal</option><option selected>Central + State</option></select></div><div class="fg "><label class="fl req">Tax Rate (%)</label><input class="fi" type="text" value="5.00"></div><div class="fg "><label class="fl">Applicability</label><input class="fi" type="text" value="Gas PNG / CNG"></div><div class="fg "><label class="fl req">Effective From</label><input class="fi" type="date" value="2017-07-01"></div><div class="fg "><label class="fl">Effective To</label><input class="fi" type="date" value=""></div><div class="fg "><label class="fl req">Status</label><select class="fsel"><option selected>Active</option><option >Inactive</option></select></div></div></div>
+<div class="tabs-bar"></div>
+<div class="d-footer"><div class="audit">Created: finance.mgr · 2017-06-25</div><button class="btn btn btn-p">💾 Save</button></div>
+</div>
+</div>
+<div id="screen-billcycle" class="screen">
+<div class="pg-hdr">
+  <div><div class="pg-title">Bill Cycle Master</div><div class="pg-sub">Define billing cycles, reading schedules, due dates and grace periods</div></div>
+  <div class="spacer"></div>
+</div>
+<div class="toolbar">
+  <input class="s-input" placeholder="🔍  Search by ID, name or mobile…">
+  <select class="sel"><option>All Status</option><option>Active</option><option>Draft</option><option>Blocked</option></select>
+  <div class="spacer"></div>
+  <button class="btn btn-p" onclick="showNewForm('billcycle')">＋ Create New</button>
+  <button class="btn btn-g">↑ Export</button>
+</div>
+<div class="t-card">
+  <div class="t-info">4 records shown — click a row to view details</div>
+  <table class="dt"><thead><tr><th>Cycle ID</th><th>Cycle Name</th><th>Read Date Rule</th><th>Bill Date Rule</th><th>Due Date Rule</th><th>Grace Days</th><th>Status</th></tr></thead><tbody><tr onclick="showDetail('billcycle',this)"><td><span class="il">BC-MONTHLY-1</span></td><td>Monthly Group 1</td><td>5th of month</td><td>8th of month</td><td>28th of month</td><td>7</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('billcycle',this)"><td><span class="il">BC-MONTHLY-2</span></td><td>Monthly Group 2</td><td>10th of month</td><td>13th of month</td><td>3rd next month</td><td>7</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('billcycle',this)"><td><span class="il">BC-MONTHLY-3</span></td><td>Monthly Group 3</td><td>15th of month</td><td>18th of month</td><td>8th next month</td><td>7</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('billcycle',this)"><td><span class="il">BC-QTR-1</span></td><td>Quarterly Group 1</td><td>Last day of quarter</td><td>3rd of next month</td><td>30th of next month</td><td>15</td><td><span class="badge b-active">Active</span></td></tr></tbody></table>
+</div>
+<div id="detail-billcycle" class="detail" style="display:none">
+<div class="d-hdr">
+  <div><div class="d-title">Monthly Group 1</div><div class="d-sub">BC-MONTHLY-1 &nbsp;<span class="badge b-active">Active</span></div></div>
+  <div class="d-actions">
+    <button class="btn btn-sm btn-wht">✏️ Edit</button>
+    <button class="btn btn-sm btn-wht" onclick="closeDetail('billcycle')">✕ Close</button>
+  </div>
+</div>
+<div class="f-sec"><div class="f-sec-ttl">Cycle Configuration</div>
+<div class="f-grid"><div class="fg "><label class="fl req">Cycle ID</label><input class="fi" type="text" value="BC-MONTHLY-1" readonly></div><div class="fg "><label class="fl req">Cycle Name</label><input class="fi" type="text" value="Monthly Group 1"></div><div class="fg "><label class="fl req">Read Date Rule</label><input class="fi" type="text" value="5th of month"></div><div class="fg "><label class="fl req">Bill Date Rule</label><input class="fi" type="text" value="8th of month"></div><div class="fg "><label class="fl req">Due Date Rule</label><input class="fi" type="text" value="28th of month"></div><div class="fg "><label class="fl req">Grace Days</label><input class="fi" type="text" value="7"></div><div class="fg "><label class="fl req">Status</label><select class="fsel"><option selected>Active</option><option >Inactive</option></select></div></div></div>
+<div class="tabs-bar"><div class="tab-b  active" onclick="swTab('billcycle','accts')">Accounts on this Cycle (284)</div></div><div id="billcycle-accts" class="tab-pane  active"><table class="mt"><thead><tr><th>Account ID</th><th>Customer</th><th>Status</th></tr></thead><tbody><tr><td><span class="il">ACCT000001</span></td><td>Ramesh H Shah</td><td><span class="badge b-active">Active</span></td></tr></tbody></table></div>
+<div class="d-footer"><div class="audit">Created: billing.mgr · 2024-01-01</div><button class="btn btn btn-p">💾 Save</button></div>
+</div>
+</div>
+<div id="screen-appuser" class="screen">
+<div class="pg-hdr">
+  <div><div class="pg-title">App User Administration</div><div class="pg-sub">Manage consumer mobile app users, devices and account links</div></div>
+  <div class="spacer"></div>
+</div>
+<div class="toolbar">
+  <input class="s-input" placeholder="🔍  Search by ID, name or mobile…">
+  <select class="sel"><option>All Status</option><option>Active</option><option>Draft</option><option>Blocked</option></select>
+  <div class="spacer"></div>
+  <button class="btn btn-p" onclick="showNewForm('appuser')">＋ Create New</button>
+  <button class="btn btn-g">↑ Export</button>
+</div>
+<div class="t-card">
+  <div class="t-info">4 records shown — click a row to view details</div>
+  <table class="dt"><thead><tr><th>App User ID</th><th>Mobile</th><th>Customer Link</th><th>OTP Verified</th><th>Status</th><th>Last Login</th></tr></thead><tbody><tr onclick="showDetail('appuser',this)"><td><span class="il">APPU000001</span></td><td>+91 98765 43210</td><td>CUST000001</td><td>Yes</td><td><span class="badge b-active">Active</span></td><td>2026-03-29 09:14</td></tr><tr onclick="showDetail('appuser',this)"><td><span class="il">APPU000002</span></td><td>+91 87654 32109</td><td>CUST000002</td><td>Yes</td><td><span class="badge b-active">Active</span></td><td>2026-03-28 18:42</td></tr><tr onclick="showDetail('appuser',this)"><td><span class="il">APPU000003</span></td><td>+91 76543 21098</td><td>CUST000003</td><td>Yes</td><td><span class="badge b-active">Active</span></td><td>2026-03-27 12:05</td></tr><tr onclick="showDetail('appuser',this)"><td><span class="il">APPU000004</span></td><td>+91 65432 10987</td><td>—</td><td>No</td><td><span class="badge b-draft">Draft</span></td><td>—</td></tr></tbody></table>
+</div>
+<div id="detail-appuser" class="detail" style="display:none">
+<div class="d-hdr">
+  <div><div class="d-title">APPU000001 — +91 98765 43210</div><div class="d-sub">Linked: CUST000001 · Ramesh H Shah &nbsp;<span class="badge b-active">Active</span></div></div>
+  <div class="d-actions">
+    <button class="btn btn-sm btn-wht">✏️ Edit</button>
+    <button class="btn btn-sm btn-wht" onclick="closeDetail('appuser')">✕ Close</button>
+  </div>
+</div>
+<div class="f-sec"><div class="f-sec-ttl">App User Profile</div>
+<div class="f-grid"><div class="fg "><label class="fl req">App User ID</label><input class="fi" type="text" value="APPU000001" readonly></div><div class="fg "><label class="fl req">Mobile Number</label><input class="fi" type="text" value="+91 98765 43210"></div><div class="fg "><label class="fl">Email</label><input class="fi" type="email" value="ramesh.shah@email.com"></div><div class="fg "><label class="fl">Linked Customer ID</label><input class="fi" type="text" value="CUST000001"></div><div class="fg "><label class="fl">OTP Verified</label><select class="fsel"><option selected>Yes</option><option >No</option></select></div><div class="fg "><label class="fl">MPIN Set</label><select class="fsel"><option selected>Yes</option><option >No</option></select></div><div class="fg "><label class="fl req">Status</label><select class="fsel"><option selected>Active</option><option >Locked</option><option >Suspended</option></select></div></div></div><div class="f-sec"><div class="f-sec-ttl">Registration</div>
+<div class="f-grid"><div class="fg "><label class="fl">Registered At</label><input class="fi" type="text" value="2024-01-20 10:30" readonly></div><div class="fg "><label class="fl">Last Login</label><input class="fi" type="text" value="2026-03-29 09:14" readonly></div></div></div>
+<div class="tabs-bar"><div class="tab-b  active" onclick="swTab('appuser','devs')">Devices (2)</div><div class="tab-b" onclick="swTab('appuser','accts')">Linked Accounts (2)</div><div class="tab-b" onclick="swTab('appuser','srs')">Service Requests (1)</div></div><div id="appuser-devs" class="tab-pane  active"><table class="mt"><thead><tr><th>Device ID</th><th>OS</th><th>App Version</th><th>Active</th><th>Registered</th></tr></thead><tbody><tr><td><span class="il">DEV000001</span></td><td>Android 14</td><td>3.2.1</td><td>Yes</td><td>2024-01-20</td></tr><tr><td><span class="il">DEV000002</span></td><td>iOS 17</td><td>3.2.1</td><td>Yes</td><td>2025-06-10</td></tr></tbody></table></div><div id="appuser-accts" class="tab-pane"><table class="mt"><thead><tr><th>Link ID</th><th>Account ID</th><th>Type</th><th>Linked On</th></tr></thead><tbody><tr><td><span class="il">LNK000001</span></td><td>ACCT000001</td><td>Owner</td><td>2024-01-20</td></tr><tr><td><span class="il">LNK000002</span></td><td>ACCT000002</td><td>Owner</td><td>2024-01-20</td></tr></tbody></table></div><div id="appuser-srs" class="tab-pane"><table class="mt"><thead><tr><th>Request ID</th><th>Category</th><th>Status</th><th>Created</th></tr></thead><tbody><tr><td><span class="il">SR000001</span></td><td>Bill Dispute</td><td>Resolved</td><td>2026-02-15</td></tr></tbody></table></div>
+<div class="d-footer"><div class="audit">Created: auto · 2024-01-20</div><button class="btn btn btn-p">💾 Save</button><button class="btn btn btn-warn">🔒 Lock Account</button><button class="btn btn btn-err">❌ Suspend</button></div>
+</div>
+</div>
+<div id="screen-device" class="screen">
+<div class="pg-hdr">
+  <div><div class="pg-title">Device Registry</div><div class="pg-sub">Manage trusted consumer devices for mobile app access</div></div>
+  <div class="spacer"></div>
+</div>
+<div class="toolbar">
+  <input class="s-input" placeholder="🔍  Search by ID, name or mobile…">
+  <select class="sel"><option>All Status</option><option>Active</option><option>Draft</option><option>Blocked</option></select>
+  <div class="spacer"></div>
+  <button class="btn btn-p" onclick="showNewForm('device')">＋ Create New</button>
+  <button class="btn btn-g">↑ Export</button>
+</div>
+<div class="t-card">
+  <div class="t-info">3 records shown — click a row to view details</div>
+  <table class="dt"><thead><tr><th>Device ID</th><th>App User</th><th>OS</th><th>App Version</th><th>Push Token</th><th>Active</th><th>Registered</th></tr></thead><tbody><tr onclick="showDetail('device',this)"><td><span class="il">DEV000001</span></td><td>APPU000001</td><td>Android 14</td><td>3.2.1</td><td>fcm:abc123…</td><td><span class="badge b-active">Active</span></td><td>2024-01-20</td></tr><tr onclick="showDetail('device',this)"><td><span class="il">DEV000002</span></td><td>APPU000001</td><td>iOS 17</td><td>3.2.1</td><td>apns:xyz456…</td><td><span class="badge b-active">Active</span></td><td>2025-06-10</td></tr><tr onclick="showDetail('device',this)"><td><span class="il">DEV000003</span></td><td>APPU000002</td><td>Android 13</td><td>3.1.4</td><td>fcm:def789…</td><td><span class="badge b-active">Active</span></td><td>2024-03-05</td></tr></tbody></table>
+</div>
+<div id="detail-device" class="detail" style="display:none">
+<div class="d-hdr">
+  <div><div class="d-title">DEV000001</div><div class="d-sub">Android 14 · App v3.2.1 · APPU000001 &nbsp;<span class="badge b-active">Active</span></div></div>
+  <div class="d-actions">
+    <button class="btn btn-sm btn-wht">✏️ Edit</button>
+    <button class="btn btn-sm btn-wht" onclick="closeDetail('device')">✕ Close</button>
+  </div>
+</div>
+<div class="f-sec"><div class="f-sec-ttl">Device Details</div>
+<div class="f-grid"><div class="fg "><label class="fl req">Device ID</label><input class="fi" type="text" value="DEV000001" readonly></div><div class="fg "><label class="fl req">App User ID</label><input class="fi" type="text" value="APPU000001"></div><div class="fg "><label class="fl">OS Type</label><select class="fsel"><option selected>Android</option><option >iOS</option></select></div><div class="fg "><label class="fl">OS Version</label><input class="fi" type="text" value="Android 14"></div><div class="fg "><label class="fl">App Version</label><input class="fi" type="text" value="3.2.1"></div><div class="fg "><label class="fl">Push Token</label><input class="fi" type="text" value="fcm:abc123..."></div><div class="fg "><label class="fl">Device Fingerprint</label><input class="fi" type="text" value="sha256:aabbcc..."></div><div class="fg "><label class="fl">Active</label><select class="fsel"><option selected>Yes</option><option >No</option></select></div></div></div>
+<div class="tabs-bar"></div>
+<div class="d-footer"><div class="audit">Created: auto · 2024-01-20</div><button class="btn btn btn-p">💾 Save</button><button class="btn btn btn-err">❌ Revoke Trust</button></div>
+</div>
+</div>
+<div id="screen-notiftemplate" class="screen">
+<div class="pg-hdr">
+  <div><div class="pg-title">Notification Template</div><div class="pg-sub">Manage SMS, push and email message templates for consumer alerts</div></div>
+  <div class="spacer"></div>
+</div>
+<div class="toolbar">
+  <input class="s-input" placeholder="🔍  Search by ID, name or mobile…">
+  <select class="sel"><option>All Status</option><option>Active</option><option>Draft</option><option>Blocked</option></select>
+  <div class="spacer"></div>
+  <button class="btn btn-p" onclick="showNewForm('notiftemplate')">＋ Create New</button>
+  <button class="btn btn-g">↑ Export</button>
+</div>
+<div class="t-card">
+  <div class="t-info">6 records shown — click a row to view details</div>
+  <table class="dt"><thead><tr><th>Template ID</th><th>Channel</th><th>Event Type</th><th>Language</th><th>Status</th></tr></thead><tbody><tr onclick="showDetail('notiftemplate',this)"><td><span class="il">NT-BILL-GEN-PUSH-EN</span></td><td>PUSH</td><td>Bill Generated</td><td>English</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('notiftemplate',this)"><td><span class="il">NT-BILL-GEN-SMS-EN</span></td><td>SMS</td><td>Bill Generated</td><td>English</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('notiftemplate',this)"><td><span class="il">NT-DUE-REM-PUSH-EN</span></td><td>PUSH</td><td>Due Reminder</td><td>English</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('notiftemplate',this)"><td><span class="il">NT-PAY-RCV-PUSH-EN</span></td><td>PUSH</td><td>Payment Received</td><td>English</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('notiftemplate',this)"><td><span class="il">NT-OUTAGE-PUSH-EN</span></td><td>PUSH</td><td>Outage Alert</td><td>English</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('notiftemplate',this)"><td><span class="il">NT-BILL-GEN-PUSH-HI</span></td><td>PUSH</td><td>Bill Generated</td><td>Hindi</td><td><span class="badge b-active">Active</span></td></tr></tbody></table>
+</div>
+<div id="detail-notiftemplate" class="detail" style="display:none">
+<div class="d-hdr">
+  <div><div class="d-title">NT-BILL-GEN-PUSH-EN</div><div class="d-sub">Push · Bill Generated · English &nbsp;<span class="badge b-active">Active</span></div></div>
+  <div class="d-actions">
+    <button class="btn btn-sm btn-wht">✏️ Edit</button>
+    <button class="btn btn-sm btn-wht" onclick="closeDetail('notiftemplate')">✕ Close</button>
+  </div>
+</div>
+<div class="f-sec"><div class="f-sec-ttl">Template Details</div>
+<div class="f-grid"><div class="fg "><label class="fl req">Template ID</label><input class="fi" type="text" value="NT-BILL-GEN-PUSH-EN" readonly></div><div class="fg "><label class="fl req">Channel</label><select class="fsel"><option selected>PUSH</option><option >SMS</option><option >EMAIL</option><option >WHATSAPP</option></select></div><div class="fg "><label class="fl req">Event Type</label><select class="fsel"><option selected>Bill Generated</option><option >Due Reminder</option><option >Payment Received</option><option >Outage Alert</option><option >Marketing</option></select></div><div class="fg "><label class="fl req">Language</label><select class="fsel"><option selected>English</option><option >Hindi</option><option >Gujarati</option><option >Marathi</option></select></div><div class="fg "><label class="fl">Subject (email only)</label><input class="fi" type="text" value="Your BFS Enerza Bill for {{month}}"></div><div class="fg "><label class="fl">Active</label><select class="fsel"><option selected>Yes</option><option >No</option></select></div></div></div><div class="f-sec"><div class="f-sec-ttl">Message Body</div>
+<div class="f-grid"><div class="fg full"><label class="fl">Body Template (use {{variable}} placeholders)</label><textarea class="fta">Your gas bill for {{billing_month}} is ₹{{bill_amount}}. Due by {{due_date}}. Pay now: {{payment_link}}</textarea></div></div></div>
+<div class="tabs-bar"></div>
+<div class="d-footer"><div class="audit">Created: app.admin · 2024-01-01</div><button class="btn btn btn-p">💾 Save</button><button class="btn btn btn-s">🔍 Preview</button></div>
+</div>
+</div>
+<div id="screen-srtype" class="screen">
+<div class="pg-hdr">
+  <div><div class="pg-title">Service Request Type</div><div class="pg-sub">Define complaint and service request categories with SLA targets</div></div>
+  <div class="spacer"></div>
+</div>
+<div class="toolbar">
+  <input class="s-input" placeholder="🔍  Search by ID, name or mobile…">
+  <select class="sel"><option>All Status</option><option>Active</option><option>Draft</option><option>Blocked</option></select>
+  <div class="spacer"></div>
+  <button class="btn btn-p" onclick="showNewForm('srtype')">＋ Create New</button>
+  <button class="btn btn-g">↑ Export</button>
+</div>
+<div class="t-card">
+  <div class="t-info">5 records shown — click a row to view details</div>
+  <table class="dt"><thead><tr><th>Type ID</th><th>Category</th><th>Subcategory</th><th>SLA (hrs)</th><th>Priority</th><th>Department</th><th>Status</th></tr></thead><tbody><tr onclick="showDetail('srtype',this)"><td><span class="il">SRT-GAS-LEAK</span></td><td>Emergency</td><td>Gas Leak</td><td>2</td><td>Critical</td><td>Operations</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('srtype',this)"><td><span class="il">SRT-BILL-DISP</span></td><td>Billing</td><td>Bill Dispute</td><td>48</td><td>Medium</td><td>Finance</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('srtype',this)"><td><span class="il">SRT-NEW-CONN</span></td><td>Connection</td><td>New Connection Request</td><td>72</td><td>Low</td><td>Tech Services</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('srtype',this)"><td><span class="il">SRT-MTR-FAULT</span></td><td>Metering</td><td>Meter Fault</td><td>24</td><td>High</td><td>Metering</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('srtype',this)"><td><span class="il">SRT-PAY-FAIL</span></td><td>Payment</td><td>Payment Failure</td><td>4</td><td>High</td><td>Finance</td><td><span class="badge b-active">Active</span></td></tr></tbody></table>
+</div>
+<div id="detail-srtype" class="detail" style="display:none">
+<div class="d-hdr">
+  <div><div class="d-title">Gas Leak Emergency</div><div class="d-sub">SRT-GAS-LEAK · 2hr SLA &nbsp;<span class="badge b-active">Active</span></div></div>
+  <div class="d-actions">
+    <button class="btn btn-sm btn-wht">✏️ Edit</button>
+    <button class="btn btn-sm btn-wht" onclick="closeDetail('srtype')">✕ Close</button>
+  </div>
+</div>
+<div class="f-sec"><div class="f-sec-ttl">Request Type</div>
+<div class="f-grid"><div class="fg "><label class="fl req">Type ID</label><input class="fi" type="text" value="SRT-GAS-LEAK" readonly></div><div class="fg "><label class="fl req">Category</label><input class="fi" type="text" value="Emergency"></div><div class="fg "><label class="fl req">Subcategory</label><input class="fi" type="text" value="Gas Leak"></div><div class="fg "><label class="fl req">SLA Target (hours)</label><input class="fi" type="text" value="2"></div><div class="fg "><label class="fl req">Priority</label><select class="fsel"><option >Low</option><option >Medium</option><option >High</option><option selected>Critical</option></select></div><div class="fg "><label class="fl">Handling Department</label><input class="fi" type="text" value="Operations"></div><div class="fg "><label class="fl req">Status</label><select class="fsel"><option selected>Active</option><option >Inactive</option></select></div></div></div>
+<div class="tabs-bar"></div>
+<div class="d-footer"><div class="audit">Created: ops.mgr · 2024-01-01</div><button class="btn btn btn-p">💾 Save</button></div>
+</div>
+</div>
+<div id="screen-apipartner" class="screen">
+<div class="pg-hdr">
+  <div><div class="pg-title">API Partner Master</div><div class="pg-sub">Onboard and govern external API partners, aggregators and govt portals</div></div>
+  <div class="spacer"></div>
+</div>
+<div class="toolbar">
+  <input class="s-input" placeholder="🔍  Search by ID, name or mobile…">
+  <select class="sel"><option>All Status</option><option>Active</option><option>Draft</option><option>Blocked</option></select>
+  <div class="spacer"></div>
+  <button class="btn btn-p" onclick="showNewForm('apipartner')">＋ Create New</button>
+  <button class="btn btn-g">↑ Export</button>
+</div>
+<div class="t-card">
+  <div class="t-info">5 records shown — click a row to view details</div>
+  <table class="dt"><thead><tr><th>Partner ID</th><th>Partner Name</th><th>Type</th><th>Contact Email</th><th>Settlement</th><th>Status</th></tr></thead><tbody><tr onclick="showDetail('apipartner',this)"><td><span class="il">PART-BBPS-01</span></td><td>BharatBillPay System (NPCI)</td><td>Payment Aggregator</td><td>api@bbps.npci.org.in</td><td>T+1 NEFT</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('apipartner',this)"><td><span class="il">PART-PAYTM-01</span></td><td>Paytm Payments Bank</td><td>Payment Aggregator</td><td>util@paytm.com</td><td>T+1 NEFT</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('apipartner',this)"><td><span class="il">PART-PHONEPE-01</span></td><td>PhonePe Pvt Ltd</td><td>Payment Aggregator</td><td>billers@phonepe.com</td><td>T+0 RTGS</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('apipartner',this)"><td><span class="il">PART-GSTN-01</span></td><td>GSTN Government Portal</td><td>Govt Portal</td><td>api@gstn.gov.in</td><td>—</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('apipartner',this)"><td><span class="il">PART-HDFC-01</span></td><td>HDFC Bank</td><td>Bank</td><td>apiteam@hdfcbank.com</td><td>T+1 NEFT</td><td><span class="badge b-active">Active</span></td></tr></tbody></table>
+</div>
+<div id="detail-apipartner" class="detail" style="display:none">
+<div class="d-hdr">
+  <div><div class="d-title">BharatBillPay System (NPCI)</div><div class="d-sub">PART-BBPS-01 · Payment Aggregator &nbsp;<span class="badge b-active">Active</span></div></div>
+  <div class="d-actions">
+    <button class="btn btn-sm btn-wht">✏️ Edit</button>
+    <button class="btn btn-sm btn-wht" onclick="closeDetail('apipartner')">✕ Close</button>
+  </div>
+</div>
+<div class="f-sec"><div class="f-sec-ttl">Partner Identity</div>
+<div class="f-grid"><div class="fg "><label class="fl req">Partner ID</label><input class="fi" type="text" value="PART-BBPS-01" readonly></div><div class="fg "><label class="fl req">Partner Name</label><input class="fi" type="text" value="BharatBillPay System (NPCI)"></div><div class="fg "><label class="fl req">Partner Type</label><select class="fsel"><option selected>Payment Aggregator</option><option >Bank</option><option >Govt Portal</option><option >Third Party</option><option >CRM System</option></select></div><div class="fg "><label class="fl">Legal Entity Name</label><input class="fi" type="text" value="National Payments Corporation of India"></div><div class="fg "><label class="fl req">Contact Email</label><input class="fi" type="email" value="api@bbps.npci.org.in"></div><div class="fg "><label class="fl">Contact Mobile</label><input class="fi" type="text" value="+91 22 4082 7000"></div><div class="fg "><label class="fl">Settlement Mode</label><select class="fsel"><option >T+0 RTGS</option><option selected>T+1 NEFT</option><option >T+2 NEFT</option><option >UPI</option></select></div><div class="fg "><label class="fl req">Onboarded On</label><input class="fi" type="date" value="2024-02-01"></div><div class="fg "><label class="fl req">Status</label><select class="fsel"><option selected>Active</option><option >Suspended</option><option >Terminated</option></select></div></div></div>
+<div class="tabs-bar"><div class="tab-b  active" onclick="swTab('apipartner','creds')">Credentials (1)</div><div class="tab-b" onclick="swTab('apipartner','eps')">Endpoints (3)</div><div class="tab-b" onclick="swTab('apipartner','txns')">Recent Transactions (2)</div></div><div id="apipartner-creds" class="tab-pane  active"><table class="mt"><thead><tr><th>Credential ID</th><th>Client ID</th><th>Expires</th><th>IP Whitelist</th><th>Last Rotated</th></tr></thead><tbody><tr><td><span class="il">CRED-BBPS-01</span></td><td>bbps_client_001</td><td>2027-02-01</td><td>103.22.45.0/24</td><td>2026-02-01</td></tr></tbody></table></div><div id="apipartner-eps" class="tab-pane"><table class="mt"><thead><tr><th>Endpoint</th><th>Operation</th><th>Auth Type</th><th>Enabled</th></tr></thead><tbody><tr><td><span class="il">EP-FETCH-BILL</span></td><td>Fetch Bill Details</td><td>OAuth2</td><td>Yes</td></tr><tr><td><span class="il">EP-POST-PAY</span></td><td>Post Payment</td><td>OAuth2</td><td>Yes</td></tr><tr><td><span class="il">EP-CHECK-STATUS</span></td><td>Check Payment Status</td><td>OAuth2</td><td>Yes</td></tr></tbody></table></div><div id="apipartner-txns" class="tab-pane"><table class="mt"><thead><tr><th>Txn ID</th><th>Endpoint</th><th>Time</th><th>Response ms</th><th>Status</th></tr></thead><tbody><tr><td><span class="il">ATXN001234</span></td><td>Fetch Bill</td><td>2026-03-29 09:14</td><td>145 ms</td><td><span class="badge b-active">Active</span></td></tr><tr><td><span class="il">ATXN001233</span></td><td>Post Payment</td><td>2026-03-29 09:13</td><td>220 ms</td><td><span class="badge b-active">Active</span></td></tr></tbody></table></div>
+<div class="d-footer"><div class="audit">Created: it.admin · 2024-02-01</div><button class="btn btn btn-p">💾 Save</button><button class="btn btn btn-ok">✅ Activate</button><button class="btn btn btn-err">❌ Suspend</button></div>
+</div>
+</div>
+<div id="screen-endpoint" class="screen">
+<div class="pg-hdr">
+  <div><div class="pg-title">API Endpoint Catalog</div><div class="pg-sub">Registry of all exchange operations available to API partners</div></div>
+  <div class="spacer"></div>
+</div>
+<div class="toolbar">
+  <input class="s-input" placeholder="🔍  Search by ID, name or mobile…">
+  <select class="sel"><option>All Status</option><option>Active</option><option>Draft</option><option>Blocked</option></select>
+  <div class="spacer"></div>
+  <button class="btn btn-p" onclick="showNewForm('endpoint')">＋ Create New</button>
+  <button class="btn btn-g">↑ Export</button>
+</div>
+<div class="t-card">
+  <div class="t-info">5 records shown — click a row to view details</div>
+  <table class="dt"><thead><tr><th>Endpoint ID</th><th>Code</th><th>Operation Type</th><th>Method</th><th>Auth Type</th><th>Sync</th><th>Version</th><th>Status</th></tr></thead><tbody><tr onclick="showDetail('endpoint',this)"><td><span class="il">EP-FETCH-BILL</span></td><td>FETCH_BILL</td><td>Fetch Bill Details</td><td>GET</td><td>OAuth2</td><td>Yes</td><td>v2</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('endpoint',this)"><td><span class="il">EP-FETCH-DUES</span></td><td>FETCH_DUES</td><td>Fetch Outstanding Dues</td><td>GET</td><td>OAuth2</td><td>Yes</td><td>v2</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('endpoint',this)"><td><span class="il">EP-POST-PAY</span></td><td>POST_PAYMENT</td><td>Post Payment</td><td>POST</td><td>OAuth2</td><td>No</td><td>v2</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('endpoint',this)"><td><span class="il">EP-CHECK-STATUS</span></td><td>CHECK_STATUS</td><td>Check Payment Status</td><td>GET</td><td>OAuth2</td><td>Yes</td><td>v2</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('endpoint',this)"><td><span class="il">EP-WEBHOOK-PAY</span></td><td>WEBHOOK_PAYMENT</td><td>Payment Callback</td><td>POST</td><td>HMAC</td><td>—</td><td>v1</td><td><span class="badge b-active">Active</span></td></tr></tbody></table>
+</div>
+<div id="detail-endpoint" class="detail" style="display:none">
+<div class="d-hdr">
+  <div><div class="d-title">FETCH_BILL</div><div class="d-sub">EP-FETCH-BILL · GET /v2/bills/{bill_id} &nbsp;<span class="badge b-active">Active</span></div></div>
+  <div class="d-actions">
+    <button class="btn btn-sm btn-wht">✏️ Edit</button>
+    <button class="btn btn-sm btn-wht" onclick="closeDetail('endpoint')">✕ Close</button>
+  </div>
+</div>
+<div class="f-sec"><div class="f-sec-ttl">Endpoint Definition</div>
+<div class="f-grid"><div class="fg "><label class="fl req">Endpoint ID</label><input class="fi" type="text" value="EP-FETCH-BILL" readonly></div><div class="fg "><label class="fl req">Endpoint Code</label><input class="fi" type="text" value="FETCH_BILL"></div><div class="fg "><label class="fl req">API Path</label><input class="fi" type="text" value="/v2/bills/{bill_id}"></div><div class="fg "><label class="fl">Operation Type</label><select class="fsel"><option selected>Fetch Bill Details</option><option >Fetch Dues</option><option >Post Payment</option><option >Check Status</option><option >Webhook</option></select></div><div class="fg "><label class="fl req">HTTP Method</label><select class="fsel"><option selected>GET</option><option >POST</option><option >PUT</option><option >PATCH</option></select></div><div class="fg "><label class="fl req">Auth Type</label><select class="fsel"><option >API_KEY</option><option selected>OAuth2</option><option >mTLS</option><option >HMAC</option></select></div><div class="fg "><label class="fl">Synchronous</label><select class="fsel"><option selected>Yes</option><option >No</option></select></div><div class="fg "><label class="fl req">Version</label><input class="fi" type="text" value="v2"></div><div class="fg "><label class="fl req">Status</label><select class="fsel"><option selected>Active</option><option >Deprecated</option></select></div></div></div>
+<div class="tabs-bar"></div>
+<div class="d-footer"><div class="audit">Created: it.admin · 2024-01-15</div><button class="btn btn btn-p">💾 Save</button></div>
+</div>
+</div>
+<div id="screen-paychannel" class="screen">
+<div class="pg-hdr">
+  <div><div class="pg-title">Payment Channel Master</div><div class="pg-sub">Define accepted payment channels including UPI, BBPS, card and cash</div></div>
+  <div class="spacer"></div>
+</div>
+<div class="toolbar">
+  <input class="s-input" placeholder="🔍  Search by ID, name or mobile…">
+  <select class="sel"><option>All Status</option><option>Active</option><option>Draft</option><option>Blocked</option></select>
+  <div class="spacer"></div>
+  <button class="btn btn-p" onclick="showNewForm('paychannel')">＋ Create New</button>
+  <button class="btn btn-g">↑ Export</button>
+</div>
+<div class="t-card">
+  <div class="t-info">7 records shown — click a row to view details</div>
+  <table class="dt"><thead><tr><th>Channel ID</th><th>Channel Name</th><th>Type</th><th>Provider</th><th>Conv Fee</th><th>Status</th></tr></thead><tbody><tr onclick="showDetail('paychannel',this)"><td><span class="il">CH-UPI-01</span></td><td>UPI Direct</td><td>UPI</td><td>NPCI UPI</td><td>No</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('paychannel',this)"><td><span class="il">CH-BBPS-01</span></td><td>BBPS Agent Network</td><td>BBPS</td><td>NPCI BBPS</td><td>No</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('paychannel',this)"><td><span class="il">CH-CARD-01</span></td><td>Debit/Credit Card</td><td>CARD</td><td>Razorpay</td><td>Yes</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('paychannel',this)"><td><span class="il">CH-NB-01</span></td><td>Net Banking</td><td>NET_BANKING</td><td>PayU</td><td>No</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('paychannel',this)"><td><span class="il">CH-WALLET-01</span></td><td>Paytm Wallet</td><td>WALLET</td><td>Paytm</td><td>No</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('paychannel',this)"><td><span class="il">CH-CASH-01</span></td><td>Cash Counter</td><td>CASH</td><td>Internal</td><td>No</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('paychannel',this)"><td><span class="il">CH-POS-01</span></td><td>POS Terminal</td><td>POS</td><td>Mswipe</td><td>No</td><td><span class="badge b-active">Active</span></td></tr></tbody></table>
+</div>
+<div id="detail-paychannel" class="detail" style="display:none">
+<div class="d-hdr">
+  <div><div class="d-title">UPI Direct</div><div class="d-sub">CH-UPI-01 · No Convenience Fee &nbsp;<span class="badge b-active">Active</span></div></div>
+  <div class="d-actions">
+    <button class="btn btn-sm btn-wht">✏️ Edit</button>
+    <button class="btn btn-sm btn-wht" onclick="closeDetail('paychannel')">✕ Close</button>
+  </div>
+</div>
+<div class="f-sec"><div class="f-sec-ttl">Channel Details</div>
+<div class="f-grid"><div class="fg "><label class="fl req">Channel ID</label><input class="fi" type="text" value="CH-UPI-01" readonly></div><div class="fg "><label class="fl req">Channel Name</label><input class="fi" type="text" value="UPI Direct"></div><div class="fg "><label class="fl req">Channel Type</label><select class="fsel"><option selected>UPI</option><option >CARD</option><option >NET_BANKING</option><option >WALLET</option><option >BBPS</option><option >CASH</option><option >POS</option></select></div><div class="fg "><label class="fl">Provider</label><input class="fi" type="text" value="NPCI UPI"></div><div class="fg "><label class="fl">Convenience Fee</label><select class="fsel"><option >Yes</option><option selected>No</option></select></div><div class="fg "><label class="fl req">Status</label><select class="fsel"><option selected>Active</option><option >Inactive</option></select></div></div></div>
+<div class="tabs-bar"></div>
+<div class="d-footer"><div class="audit">Created: finance.mgr · 2024-01-01</div><button class="btn btn btn-p">💾 Save</button></div>
+</div>
+</div>
+<div id="screen-paygateway" class="screen">
+<div class="pg-hdr">
+  <div><div class="pg-title">Payment Gateway Master</div><div class="pg-sub">Configure payment gateway providers and settlement cycle parameters</div></div>
+  <div class="spacer"></div>
+</div>
+<div class="toolbar">
+  <input class="s-input" placeholder="🔍  Search by ID, name or mobile…">
+  <select class="sel"><option>All Status</option><option>Active</option><option>Draft</option><option>Blocked</option></select>
+  <div class="spacer"></div>
+  <button class="btn btn-p" onclick="showNewForm('paygateway')">＋ Create New</button>
+  <button class="btn btn-g">↑ Export</button>
+</div>
+<div class="t-card">
+  <div class="t-info">4 records shown — click a row to view details</div>
+  <table class="dt"><thead><tr><th>Gateway ID</th><th>Provider</th><th>Merchant ID</th><th>Environment</th><th>Settlement Cycle</th><th>Status</th></tr></thead><tbody><tr onclick="showDetail('paygateway',this)"><td><span class="il">GW-RAZORPAY-01</span></td><td>Razorpay</td><td>rzp_live_ENERZA01</td><td>Production</td><td>T+1</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('paygateway',this)"><td><span class="il">GW-PAYU-01</span></td><td>PayU India</td><td>enerza_payu_prod</td><td>Production</td><td>T+1</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('paygateway',this)"><td><span class="il">GW-CCAVENUE-01</span></td><td>CCAvenue</td><td>enerza_cca_001</td><td>Production</td><td>T+2</td><td><span class="badge b-active">Active</span></td></tr><tr onclick="showDetail('paygateway',this)"><td><span class="il">GW-RAZORPAY-UAT</span></td><td>Razorpay</td><td>rzp_test_ENERZA01</td><td>Sandbox</td><td>—</td><td><span class="badge b-draft">Draft</span></td></tr></tbody></table>
+</div>
+<div id="detail-paygateway" class="detail" style="display:none">
+<div class="d-hdr">
+  <div><div class="d-title">Razorpay</div><div class="d-sub">GW-RAZORPAY-01 · Production · T+1 &nbsp;<span class="badge b-active">Active</span></div></div>
+  <div class="d-actions">
+    <button class="btn btn-sm btn-wht">✏️ Edit</button>
+    <button class="btn btn-sm btn-wht" onclick="closeDetail('paygateway')">✕ Close</button>
+  </div>
+</div>
+<div class="f-sec"><div class="f-sec-ttl">Gateway Configuration</div>
+<div class="f-grid"><div class="fg "><label class="fl req">Gateway ID</label><input class="fi" type="text" value="GW-RAZORPAY-01" readonly></div><div class="fg "><label class="fl req">Provider</label><input class="fi" type="text" value="Razorpay"></div><div class="fg "><label class="fl req">Merchant ID</label><input class="fi" type="text" value="rzp_live_ENERZA01"></div><div class="fg "><label class="fl">Callback URL Ref</label><input class="fi" type="text" value="vault://enerza/gw/razorpay/callback"></div><div class="fg "><label class="fl req">Environment</label><select class="fsel"><option selected>Production</option><option >Sandbox</option></select></div><div class="fg "><label class="fl">Settlement Cycle</label><select class="fsel"><option >T+0</option><option selected>T+1</option><option >T+2</option></select></div><div class="fg "><label class="fl req">Status</label><select class="fsel"><option selected>Active</option><option >Inactive</option></select></div></div></div>
+<div class="tabs-bar"><div class="tab-b  active" onclick="swTab('paygateway','chmaps')">Channel Mappings</div><div class="tab-b" onclick="swTab('paygateway','settle')">Recent Settlements</div></div><div id="paygateway-chmaps" class="tab-pane  active"><table class="mt"><thead><tr><th>Channel</th><th>Enabled</th></tr></thead><tbody><tr><td>UPI Direct</td><td>Yes</td></tr><tr><td>Debit/Credit Card</td><td>Yes</td></tr><tr><td>Net Banking</td><td>Yes</td></tr></tbody></table></div><div id="paygateway-settle" class="tab-pane"><table class="mt"><thead><tr><th>Settlement ID</th><th>Date</th><th>Net Amount</th><th>Transactions</th></tr></thead><tbody><tr><td><span class="il">STL001234</span></td><td>2026-03-28</td><td>₹ 4,82,340</td><td>234</td></tr></tbody></table></div>
+<div class="d-footer"><div class="audit">Created: finance.mgr · 2024-01-01</div><button class="btn btn btn-p">💾 Save</button></div>
+</div>
+</div>
+<div id="screen-webhook" class="screen">
+<div class="pg-hdr">
+  <div><div class="pg-title">Webhook Subscriptions</div><div class="pg-sub">Manage event-driven webhook callbacks to API partners</div></div>
+  <div class="spacer"></div>
+</div>
+<div class="toolbar">
+  <input class="s-input" placeholder="🔍  Search by ID, name or mobile…">
+  <select class="sel"><option>All Status</option><option>Active</option><option>Draft</option><option>Blocked</option></select>
+  <div class="spacer"></div>
+  <button class="btn btn-p" onclick="showNewForm('webhook')">＋ Create New</button>
+  <button class="btn btn-g">↑ Export</button>
+</div>
+<div class="t-card">
+  <div class="t-info">4 records shown — click a row to view details</div>
+  <table class="dt"><thead><tr><th>Webhook ID</th><th>Partner</th><th>Event Type</th><th>Target URL</th><th>Retry Count</th><th>Active</th></tr></thead><tbody><tr onclick="showDetail('webhook',this)"><td><span class="il">WH-BBPS-PAY-OK</span></td><td>PART-BBPS-01</td><td>Payment Success</td><td>https://bbps.npci.in/cb/pay</td><td>3</td><td>Yes</td></tr><tr onclick="showDetail('webhook',this)"><td><span class="il">WH-PAYTM-PAY-OK</span></td><td>PART-PAYTM-01</td><td>Payment Success</td><td>https://api.paytm.com/cb/util</td><td>3</td><td>Yes</td></tr><tr onclick="showDetail('webhook',this)"><td><span class="il">WH-PAYTM-PAY-FAIL</span></td><td>PART-PAYTM-01</td><td>Payment Failed</td><td>https://api.paytm.com/cb/util</td><td>3</td><td>Yes</td></tr><tr onclick="showDetail('webhook',this)"><td><span class="il">WH-PHONEPE-BILL</span></td><td>PART-PHONEPE-01</td><td>Bill Generated</td><td>https://api.phonepe.com/notify</td><td>2</td><td>Yes</td></tr></tbody></table>
+</div>
+<div id="detail-webhook" class="detail" style="display:none">
+<div class="d-hdr">
+  <div><div class="d-title">WH-BBPS-PAY-OK</div><div class="d-sub">Payment Success → PART-BBPS-01 &nbsp;<span class="badge b-active">Active</span></div></div>
+  <div class="d-actions">
+    <button class="btn btn-sm btn-wht">✏️ Edit</button>
+    <button class="btn btn-sm btn-wht" onclick="closeDetail('webhook')">✕ Close</button>
+  </div>
+</div>
+<div class="f-sec"><div class="f-sec-ttl">Webhook Subscription</div>
+<div class="f-grid"><div class="fg "><label class="fl req">Webhook ID</label><input class="fi" type="text" value="WH-BBPS-PAY-OK" readonly></div><div class="fg "><label class="fl req">Partner</label><select class="fsel"><option selected>PART-BBPS-01</option><option >PART-PAYTM-01</option><option >PART-PHONEPE-01</option><option >PART-HDFC-01</option></select></div><div class="fg "><label class="fl req">Event Type</label><select class="fsel"><option selected>Payment Success</option><option >Payment Failed</option><option >Bill Generated</option><option >Refund Processed</option><option >Account Updated</option></select></div><div class="fg "><label class="fl req">Target URL</label><input class="fi" type="text" value="https://bbps.npci.in/cb/pay"></div><div class="fg "><label class="fl">Signature Method</label><select class="fsel"><option selected>HMAC_SHA256</option><option >RSA</option><option >None</option></select></div><div class="fg "><label class="fl">Secret Reference</label><input class="fi" type="text" value="vault://enerza/webhooks/bbps-secret"></div><div class="fg "><label class="fl">Max Retry Count</label><input class="fi" type="text" value="3"></div><div class="fg "><label class="fl">Active</label><select class="fsel"><option selected>Yes</option><option >No</option></select></div></div></div>
+<div class="tabs-bar"></div>
+<div class="d-footer"><div class="audit">Created: it.admin · 2024-02-01</div><button class="btn btn btn-p">💾 Save</button></div>
+</div>
+</div></main>
+<script>
+function navigate(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
+  var s=document.getElementById('screen-'+id);
+  if(s)s.classList.add('active');
+  var n=document.getElementById('ni-'+id);
+  if(n)n.classList.add('active');
+}
+function showDetail(sid,row){
+  var d=document.getElementById('detail-'+sid);
+  if(!d)return;
+  document.querySelectorAll('#screen-'+sid+' .dt tbody tr').forEach(r=>r.classList.remove('sr'));
+  row.classList.add('sr');
+  d.style.display='block';
+  setTimeout(()=>d.scrollIntoView({behavior:'smooth',block:'nearest'}),50);
+}
+function closeDetail(sid){
+  var d=document.getElementById('detail-'+sid);
+  if(d)d.style.display='none';
+  document.querySelectorAll('#screen-'+sid+' .dt tbody tr').forEach(r=>r.classList.remove('sr'));
+}
+function swTab(sid,tid){
+  document.querySelectorAll('#screen-'+sid+' .tab-pane').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('#screen-'+sid+' .tab-b').forEach(b=>b.classList.remove('active'));
+  var p=document.getElementById(sid+'-'+tid);if(p)p.classList.add('active');
+  event.target.classList.add('active');
+}
+function showNewForm(sid){
+  var d=document.getElementById('detail-'+sid);
+  if(!d)return;
+  d.style.display='block';
+  document.querySelectorAll('#screen-'+sid+' .dt tbody tr').forEach(r=>r.classList.remove('sr'));
+  d.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+window.onload=function(){navigate('dashboard');};
+</script>
+</body>
+</html>

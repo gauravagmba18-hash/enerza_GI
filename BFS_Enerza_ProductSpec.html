@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BFS Enerza Three-Utility Product Suite</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --gas:#0F7A5A;--gas-l:#E0F5EE;--gas-m:#1D9E75;
+  --elec:#8A5C00;--elec-l:#FEF5D6;--elec-m:#CCA000;
+  --water:#0A4A8A;--water-l:#D6ECFF;--water-m:#2577C5;
+  --built:#107E3E;--partial:#854F0B;--missing:#A32D2D;--sap:#0051AB;
+  --ink:#0D1117;--ink3:#6B7685;--border:#DFE3EB;
+  --card:#fff;--bg:#F2F4F7;--navy:#1A2B3C;
+  --r:10px;--mono:"DM Mono",monospace;--sans:"DM Sans",sans-serif;--disp:"Syne",sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--sans);background:var(--bg);color:var(--ink);font-size:14px}
+.shell{background:var(--navy);padding:0 24px;height:54px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:200}
+.brand{font-family:var(--disp);font-size:19px;font-weight:800;color:#fff}
+.brand em{color:#5BB8FF;font-style:normal}
+.stag{font-size:11px;color:rgba(255,255,255,.5);font-family:var(--mono);text-transform:uppercase;letter-spacing:.5px;padding-left:12px;border-left:1px solid rgba(255,255,255,.2)}
+.navp{margin-left:auto;display:flex;gap:5px;flex-wrap:wrap}
+.np{padding:4px 11px;border-radius:16px;font-size:12px;cursor:pointer;border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.7);transition:all .15s}
+.np:hover,.np.a{background:rgba(255,255,255,.15);color:#fff}
+.np.gp{color:#6DE0B5;border-color:rgba(109,224,181,.4)}
+.np.ep{color:#FFD966;border-color:rgba(255,217,102,.4)}
+.np.wp{color:#7EC8F8;border-color:rgba(126,200,248,.4)}
+.np.gp:hover,.np.gp.a{background:rgba(109,224,181,.12)}
+.np.ep:hover,.np.ep.a{background:rgba(255,217,102,.12)}
+.np.wp:hover,.np.wp.a{background:rgba(126,200,248,.12)}
+.hero{background:var(--navy);padding:44px 24px 48px;text-align:center;border-bottom:1px solid rgba(255,255,255,.06)}
+.hero-lbl{font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.8px;margin-bottom:14px}
+.hero-h{font-family:var(--disp);font-size:36px;font-weight:800;color:#fff;line-height:1.1;margin-bottom:10px}
+.hero-s{font-size:15px;color:rgba(255,255,255,.55);max-width:600px;margin:0 auto 28px;font-weight:300}
+.pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;max-width:860px;margin:0 auto}
+.pc{border-radius:12px;padding:20px;cursor:pointer;transition:all .2s;border:2px solid transparent;text-align:left}
+.pc.g{background:rgba(29,158,117,.15);border-color:rgba(29,158,117,.3)}
+.pc.e{background:rgba(186,117,23,.12);border-color:rgba(186,117,23,.3)}
+.pc.w{background:rgba(24,95,165,.15);border-color:rgba(37,119,197,.3)}
+.pc:hover{transform:translateY(-2px)}
+.pc-ic{font-size:26px;margin-bottom:8px}
+.pc-t{font-family:var(--disp);font-size:15px;font-weight:700;color:#fff;margin-bottom:3px}
+.pc-s{font-size:12px;color:rgba(255,255,255,.6)}
+.pc-c{font-family:var(--mono);font-size:10px;margin-top:8px;padding:2px 7px;border-radius:3px;display:inline-block;background:rgba(255,255,255,.1);color:rgba(255,255,255,.6)}
+.page{max-width:1340px;margin:0 auto;padding:22px 24px}
+.sec-hd{font-family:var(--disp);font-size:20px;font-weight:700;color:var(--ink);margin-bottom:5px}
+.sec-sb{font-size:13px;color:var(--ink3);margin-bottom:18px}
+.stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:11px;margin-bottom:20px}
+.scard{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:13px;text-align:center}
+.snum{font-family:var(--disp);font-size:28px;font-weight:800}
+.snum.b{color:var(--built)}.snum.p{color:var(--partial)}.snum.m{color:var(--missing)}.snum.s{color:var(--sap)}
+.slbl{font-size:11px;color:var(--ink3);margin-top:4px;font-family:var(--mono)}
+.leg{display:flex;gap:18px;margin-bottom:18px;flex-wrap:wrap}
+.li{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:500}
+.ld{width:11px;height:11px;border-radius:3px}
+.ld.b{background:var(--built)}.ld.p{background:var(--partial)}.ld.m{background:var(--missing)}.ld.s{background:var(--sap)}
+.mgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:13px}
+.mc{background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+.mch{padding:11px 15px;display:flex;align-items:center;gap:9px;border-bottom:1px solid var(--border)}
+.mci{width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.mct{font-family:var(--disp);font-size:13px;font-weight:700;color:var(--ink);flex:1}
+.mcs{font-size:10px;font-family:var(--mono);padding:2px 6px;border-radius:3px}
+.mcs.sap{background:rgba(0,81,171,.1);color:var(--sap)}
+.mcs.pdf{background:rgba(15,126,62,.1);color:var(--built)}
+.mcb{padding:9px 15px 12px}
+.fi{display:flex;align-items:flex-start;gap:7px;padding:4px 0;border-bottom:1px solid #F5F5F5}
+.fi:last-child{border-bottom:none}
+.fis{width:9px;height:9px;border-radius:2px;flex-shrink:0;margin-top:4px}
+.fis.b{background:var(--built)}.fis.p{background:var(--partial)}.fis.m{background:var(--missing)}.fis.s{background:var(--sap)}
+.fit{font-size:12px;line-height:1.5;color:#2A3441}
+.fin{font-size:10px;color:var(--ink3);display:block;margin-top:1px;font-style:italic}
+.tbr{display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:20px;overflow-x:auto}
+.tb{padding:9px 16px;font-size:13px;font-family:var(--disp);font-weight:600;color:var(--ink3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s;white-space:nowrap}
+.tb:hover{color:var(--ink)}
+.tb.ga.a{color:var(--gas);border-bottom-color:var(--gas)}
+.tb.el.a{color:var(--elec);border-bottom-color:var(--elec)}
+.tb.wa.a{color:var(--water);border-bottom-color:var(--water)}
+.tp{display:none}.tp.a{display:block}
+.ul{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.up{border-radius:var(--r);overflow:hidden;border:1px solid var(--border)}
+.uph{padding:16px 18px;color:#fff}
+.uph.g{background:linear-gradient(135deg,#0A5E42,var(--gas-m))}
+.uph.e{background:linear-gradient(135deg,#5C3800,var(--elec-m))}
+.uph.w{background:linear-gradient(135deg,#062A5E,var(--water-m))}
+.upn{font-family:var(--disp);font-size:17px;font-weight:800;margin-bottom:2px}
+.ups{font-size:11px;opacity:.7;font-family:var(--mono)}
+.upb{background:var(--card);padding:14px}
+.umt{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--ink3);font-family:var(--mono);margin-bottom:5px;padding-bottom:4px;border-bottom:1px solid var(--border)}
+.umf{display:flex;align-items:flex-start;gap:6px;padding:3px 0;font-size:12px;color:#2A3441}
+.umck{font-size:11px;flex-shrink:0;margin-top:1px}
+.umck.y{color:var(--built)}.umck.n{color:var(--ink3)}.umck.u{color:var(--partial)}
+.divider{height:1px;background:var(--border);margin:28px 0}
+.cmpw{overflow-x:auto;border:1px solid var(--border);border-radius:var(--r);background:var(--card)}
+.cmp{width:100%;border-collapse:collapse;font-size:12px}
+.cmp thead th{background:#F0F3F7;padding:9px 12px;font-size:10px;font-family:var(--mono);font-weight:500;text-transform:uppercase;letter-spacing:.4px;color:var(--ink3);border-bottom:2px solid var(--border);white-space:nowrap;text-align:center}
+.cmp thead th:first-child{text-align:left;min-width:200px}
+.cmp tbody tr:hover{background:#FAFAFA}
+.cmp td{padding:7px 12px;border-bottom:1px solid #F5F5F5;vertical-align:middle}
+.cmp td:not(:first-child){text-align:center}
+.cmp .cr td{background:#F8FAFB;font-family:var(--disp);font-size:10.5px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px;padding:5px 12px}
+.ch{font-size:14px}
+.ch.y{color:var(--built)}.ch.n{color:#CCC}.ch.p{color:var(--partial)}.ch.s{color:var(--sap)}
+.fn{font-size:12px;color:#2A3441;font-weight:500}
+.fs{font-size:9px;font-family:var(--mono);margin-left:5px;padding:1px 5px;border-radius:3px;vertical-align:middle}
+.fs.sap{background:rgba(0,81,171,.1);color:var(--sap)}
+.fs.pdf{background:rgba(15,126,62,.1);color:var(--built)}
+.fs.new{background:rgba(133,79,11,.1);color:var(--partial)}
+.rmap{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:13px}
+.rm{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:15px}
+.rmp{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--ink3);margin-bottom:5px}
+.rmt{font-family:var(--disp);font-size:14px;font-weight:700;color:var(--ink);margin-bottom:8px}
+.rmi{display:flex;gap:6px;align-items:flex-start;padding:3px 0;font-size:12px;color:#2A3441}
+.rmd{width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:5px}
+.rmd.q1{background:#0070F2}.rmd.q2{background:var(--gas)}.rmd.q3{background:var(--partial)}.rmd.q4{background:var(--missing)}
+.rtl{display:flex;gap:7px;margin-top:11px;flex-wrap:wrap}
+.rt{padding:2px 8px;border-radius:4px;font-size:10px;font-family:var(--mono)}
+.rt.q1{background:#E6F1FB;color:#0A447C}.rt.q2{background:var(--gas-l);color:var(--gas)}
+.rt.q3{background:var(--elec-l);color:var(--elec)}.rt.q4{background:#FFEBEB;color:var(--missing)}
+.ach{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:14px}
+.acht{font-family:var(--disp);font-size:14px;font-weight:700;margin-bottom:11px}
+.acg{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:9px}
+.ab{border:1px solid var(--border);border-radius:8px;padding:11px;background:#FAFBFC}
+.abt{font-size:11px;font-weight:600;color:var(--ink);margin-bottom:5px;font-family:var(--mono)}
+.abi{font-size:11px;color:var(--ink3);padding:2px 0;display:flex;align-items:center;gap:4px}
+.abd{width:4px;height:4px;border-radius:50%;background:var(--border);flex-shrink:0}
+@media(max-width:900px){.pgrid,.ul{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <div class="brand">BFS <em>Enerza</em></div>
+  <div class="stag">Three-Utility Product Suite</div>
+  <div class="navp">
+    <div class="np a" onclick="show('ov')">Overview</div>
+    <div class="np gp" onclick="show('gas')">Enerza Gas</div>
+    <div class="np ep" onclick="show('elec')">Enerza Power</div>
+    <div class="np wp" onclick="show('water')">Enerza Water</div>
+    <div class="np" onclick="show('mat')">Gap Matrix</div>
+    <div class="np" onclick="show('rd')">Roadmap</div>
+  </div>
+</div>
+
+<div class="hero">
+  <div class="hero-lbl">BFS Enerza Product Suite 2026</div>
+  <div class="hero-h">Three products. One platform.<br>SAP IS-U depth. India-first pricing.</div>
+  <div class="hero-s">Each utility runs a separate instance with purpose-built tariff engines, regulatory compliance, and segment-specific workflows.</div>
+  <div class="pgrid">
+    <div class="pc g" onclick="show('gas')">
+      <div class="pc-ic">&#x1F525;</div>
+      <div class="pc-t">Enerza Gas</div>
+      <div class="pc-s">PNG domestic &middot; commercial &middot; industrial<br>CNG transport fueling</div>
+      <div class="pc-c">48 modules &middot; PNGRB compliant</div>
+    </div>
+    <div class="pc e" onclick="show('elec')">
+      <div class="pc-ic">&#x26A1;</div>
+      <div class="pc-t">Enerza Power</div>
+      <div class="pc-s">LT/HT residential &middot; commercial &middot; industrial<br>Solar net metering &middot; AMI-ready</div>
+      <div class="pc-c">52 modules &middot; CERC/SERC compliant</div>
+    </div>
+    <div class="pc w" onclick="show('water')">
+      <div class="pc-ic">&#x1F4A7;</div>
+      <div class="pc-t">Enerza Water</div>
+      <div class="pc-s">Municipal water &middot; sewerage<br>Industrial water &middot; NRW tracking</div>
+      <div class="pc-c">44 modules &middot; MoHUA AMRUT 2.0</div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== OVERVIEW ====== -->
+<div id="s-ov" class="page">
+  <div class="sec-hd">What we have &middot; What we are adding</div>
+  <div class="sec-sb">Cross-referencing Phases 1-4 vs Enerza PDF vs SAP IS-U complete module set</div>
+  <div class="stats">
+    <div class="scard"><div class="snum b">38</div><div class="slbl">Built (Ph 1-4)</div></div>
+    <div class="scard"><div class="snum p">14</div><div class="slbl">Partial</div></div>
+    <div class="scard"><div class="snum m">26</div><div class="slbl">Enerza PDF gaps</div></div>
+    <div class="scard"><div class="snum s">21</div><div class="slbl">SAP IS-U gaps</div></div>
+    <div class="scard"><div class="snum" style="color:var(--water)">99</div><div class="slbl">Total features</div></div>
+  </div>
+  <div class="leg">
+    <div class="li"><div class="ld b"></div>Built in Phases 1-4</div>
+    <div class="li"><div class="ld p"></div>Partially built</div>
+    <div class="li"><div class="ld m"></div>Gap from Enerza PDF</div>
+    <div class="li"><div class="ld s"></div>Gap from SAP IS-U</div>
+  </div>
+  <div class="mgrid">
+
+    <div class="mc">
+      <div class="mch"><div class="mci" style="background:#EEF2FF">&#x1F510;</div><div class="mct">Authentication &amp; Access</div><div class="mcs pdf">Both</div></div>
+      <div class="mcb">
+        <div class="fi"><div class="fis b"></div><div class="fit">JWT auth + 7-role RBAC + OAuth2 scopes<span class="fin">Built - Phase 3</span></div></div>
+        <div class="fi"><div class="fis b"></div><div class="fit">Consumer login: mobile/CAN + OTP<span class="fin">Built</span></div></div>
+        <div class="fi"><div class="fis m"></div><div class="fit">Employee SSO with LDAP/AD integration<span class="fin">Enerza PDF - SSO for all staff</span></div></div>
+        <div class="fi"><div class="fis m"></div><div class="fit">Dedicated field staff Android app login<span class="fin">Enerza PDF - meter reader app</span></div></div>
+        <div class="fi"><div class="fis m"></div><div class="fit">Pay-without-login guest flow via CAN<span class="fin">Enerza PDF - guest payment shown</span></div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">Biometric auth for cash desk agents<span class="fin">SAP IS-U FI-CA cash desk</span></div></div>
+      </div>
+    </div>
+
+    <div class="mc">
+      <div class="mch"><div class="mci" style="background:#E0F5EE">&#x1F50C;</div><div class="mct">New Connection Workflow</div><div class="mcs pdf">Enerza PDF</div></div>
+      <div class="mcb">
+        <div class="fi"><div class="fis b"></div><div class="fit">Connection request form + segment selection<span class="fin">Built</span></div></div>
+        <div class="fi"><div class="fis m"></div><div class="fit">Application review + document verification workflow<span class="fin">Enerza PDF - 6-step workflow with stakeholders</span></div></div>
+        <div class="fi"><div class="fis m"></div><div class="fit">Site inspection with GPS + photo capture<span class="fin">Enerza PDF - field inspection module</span></div></div>
+        <div class="fi"><div class="fis m"></div><div class="fit">Bill of Quantities (BoQ) auto-generation<span class="fin">Enerza PDF - integrated BoQ costing</span></div></div>
+        <div class="fi"><div class="fis m"></div><div class="fit">Demand note: fee + security deposit auto-calc<span class="fin">Enerza PDF - demand generation step</span></div></div>
+        <div class="fi"><div class="fis m"></div><div class="fit">FoC connection for govt scheme beneficiaries<span class="fin">Enerza PDF - zero-cost with subsidy validation</span></div></div>
+        <div class="fi"><div class="fis p"></div><div class="fit">Payment + automated connection activation<span class="fin">Payment built; activation trigger needs wiring</span></div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">Move-in / Move-out with meter transfer<span class="fin">SAP IS-U - customer premise change</span></div></div>
+      </div>
+    </div>
+
+    <div class="mc">
+      <div class="mch"><div class="mci" style="background:#FEF5D6">&#x1F3AB;</div><div class="mct">Service Request Management</div><div class="mcs pdf">Enerza PDF</div></div>
+      <div class="mcb">
+        <div class="fi"><div class="fis b"></div><div class="fit">Service request types + SLA + department routing<span class="fin">Built - MDM + schema</span></div></div>
+        <div class="fi"><div class="fis m"></div><div class="fit">Account transfer / name change workflow<span class="fin">Enerza PDF</span></div></div>
+        <div class="fi"><div class="fis m"></div><div class="fit">Category change (R1 to C1) + tariff recalculation<span class="fin">Enerza PDF</span></div></div>
+        <div class="fi"><div class="fis m"></div><div class="fit">Meter replacement with consumption migration<span class="fin">Enerza PDF</span></div></div>
+        <div class="fi"><div class="fis m"></div><div class="fit">Connection size modification + BoQ<span class="fin">Enerza PDF</span></div></div>
+        <div class="fi"><div class="fis m"></div><div class="fit">Meter location change with site assessment<span class="fin">Enerza PDF</span></div></div>
+        <div class="fi"><div class="fis b"></div><div class="fit">Reconnection + disconnection on arrears<span class="fin">Built - billing engine</span></div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">Work order: schedule to dispatch to close<span class="fin">SAP IS-U Work Management</span></div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">Field service GPS routing + resource allocation<span class="fin">SAP IS-U WM</span></div></div>
+      </div>
+    </div>
+
+    <div class="mc">
+      <div class="mch"><div class="mci" style="background:#FFEBEB">&#x1F4E3;</div><div class="mct">Complaint Management</div><div class="mcs pdf">Enerza PDF</div></div>
+      <div class="mcb">
+        <div class="fi"><div class="fis p"></div><div class="fit">Complaint categories: commercial / O&amp;M / HSC / T&amp;D<span class="fin">Schema built; workflow engine not wired</span></div></div>
+        <div class="fi"><div class="fis m"></div><div class="fit">3-tier escalation matrix (L1 L2 L3) with TAT<span class="fin">Enerza PDF - complaint-specific turnaround time</span></div></div>
+        <div class="fi"><div class="fis m"></div><div class="fit">SLA breach auto-escalation + manager notification<span class="fin">Enerza PDF</span></div></div>
+        <div class="fi"><div class="fis m"></div><div class="fit">EAM integration: complaint triggers work order on asset<span class="fin">Enerza PDF - EAM integration shown</span></div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">Dispute management with financial hold on dunning<span class="fin">SAP IS-U FI-CA dispute cases</span></div></div>
+        <div class="fi"><div class="fis m"></div><div class="fit">WhatsApp + IVR + walk-in omnichannel intake<span class="fin">Enerza PDF omnichannel mention</span></div></div>
+      </div>
+    </div>
+
+    <div class="mc">
+      <div class="mch"><div class="mci" style="background:#E6F1FB">&#x1F4CA;</div><div class="mct">Metering &amp; Energy Data Management</div><div class="mcs pdf">Both</div></div>
+      <div class="mcb">
+        <div class="fi"><div class="fis b"></div><div class="fit">Meter master + installation lifecycle<span class="fin">Built</span></div></div>
+        <div class="fi"><div class="fis b"></div><div class="fit">Actual / estimated / self-read + anomaly detection<span class="fin">Built</span></div></div>
+        <div class="fi"><div class="fis b"></div><div class="fit">Route assignment + field reader mobile API<span class="fin">Built - compliance.py FieldReaderAPI</span></div></div>
+        <div class="fi"><div class="fis m"></div><div class="fit">Zone/MRU reading progress dashboard (SMRC day-wise)<span class="fin">Enerza PDF - completed/scheduled/deferred view</span></div></div>
+        <div class="fi"><div class="fis m"></div><div class="fit">Meter photo + offline sync on field app<span class="fin">Enerza PDF</span></div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">AMI / Smart meter: 15-min interval reads<span class="fin">SAP IS-U EDM (electricity/water)</span></div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">Load profiles + demand forecasting<span class="fin">SAP IS-U EDM</span></div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">Remote meter connect / disconnect command<span class="fin">SAP IS-U AMI</span></div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">Tamper / theft / revenue protection detection<span class="fin">SAP IS-U</span></div></div>
+      </div>
+    </div>
+
+    <div class="mc">
+      <div class="mch"><div class="mci" style="background:#F4ECF7">&#x1F4C4;</div><div class="mct">Billing &amp; Invoicing</div><div class="mcs pdf">Both</div></div>
+      <div class="mcb">
+        <div class="fi"><div class="fis b"></div><div class="fit">Multi-slab tariff engine for Gas / Power / Water / CNG<span class="fin">Built</span></div></div>
+        <div class="fi"><div class="fis b"></div><div class="fit">GST / electricity duty / water tax computation<span class="fin">Built</span></div></div>
+        <div class="fi"><div class="fis b"></div><div class="fit">Arrears carry-forward + late fees + bill reversal<span class="fin">Built</span></div></div>
+        <div class="fi"><div class="fis b"></div><div class="fit">Batch billing + PDF bill generation<span class="fin">Built</span></div></div>
+        <div class="fi"><div class="fis m"></div><div class="fit">APM / LNG dual-track pricing for gas<span class="fin">India-specific - not yet built</span></div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">TOD billing from 15-min smart meter data<span class="fin">SAP IS-U - electricity only</span></div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">Maximum demand + power factor billing<span class="fin">SAP IS-U - HT electricity</span></div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">Net metering: solar export credit<span class="fin">SAP IS-U</span></div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">Budget billing plan: equal monthly + annual reconcile<span class="fin">SAP IS-U</span></div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">Installment plan for overdue amounts<span class="fin">SAP IS-U FI-CA</span></div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">Convergent billing: multi-utility on one invoice<span class="fin">SAP IS-U</span></div></div>
+        <div class="fi"><div class="fis m"></div><div class="fit">Multilingual bills: Hindi / Gujarati / Marathi<span class="fin">Enerza PDF regional language implied</span></div></div>
+        <div class="fi"><div class="fis m"></div><div class="fit">WhatsApp bill delivery integration<span class="fin">Enerza PDF omnichannel</span></div></div>
+      </div>
+    </div>
+
+    <div class="mc">
+      <div class="mch"><div class="mci" style="background:#FEF9E7">&#x1F4B0;</div><div class="mct">Collections &amp; FI-CA</div><div class="mcs pdf">Both</div></div>
+      <div class="mcb">
+        <div class="fi"><div class="fis b"></div><div class="fit">Multi-channel payments: UPI / BBPS / card / cash<span class="fin">Built</span></div></div>
+        <div class="fi"><div class="fis b"></div><div class="fit">Gateway reconciliation + settlement + suspense<span class="fin">Built</span></div></div>
+        <div class="fi"><div class="fis b"></div><div class="fit">Refund processing + dispute handling<span class="fin">Built</span></div></div>
+        <div class="fi"><div class="fis m"></div><div class="fit">Physical cash desk: POS / cheque / demand draft<span class="fin">Enerza PDF - cash desk with receipt generation</span></div></div>
+        <div class="fi"><div class="fis m"></div><div class="fit">Dynamic QR code per bill (UPI deep link)<span class="fin">Enerza PDF</span></div></div>
+        <div class="fi"><div class="fis m"></div><div class="fit">Escrow account management for security deposits<span class="fin">Enerza PDF - accounting module</span></div></div>
+        <div class="fi"><div class="fis m"></div><div class="fit">Collection source-wise payment ledger<span class="fin">Enerza PDF - accounting module</span></div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">Dunning: 3-level automated notices + agency export<span class="fin">SAP IS-U FI-CA</span></div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">Security deposit: interest calc + termination refund<span class="fin">SAP IS-U FI-CA</span></div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">Write-off / bad debt provisioning with age analysis<span class="fin">SAP IS-U FI-CA</span></div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">Credit scoring for risk-based deposit calculation<span class="fin">SAP IS-U FI-CA</span></div></div>
+      </div>
+    </div>
+
+    <div class="mc">
+      <div class="mch"><div class="mci" style="background:#F1FAF5">&#x1F4C8;</div><div class="mct">Analytics &amp; Reporting</div><div class="mcs pdf">Both</div></div>
+      <div class="mcb">
+        <div class="fi"><div class="fis b"></div><div class="fit">MIS dashboard: revenue / collection / aging / consumption<span class="fin">Built - mis-dashboard.html with Chart.js</span></div></div>
+        <div class="fi"><div class="fis m"></div><div class="fit">Cash desk executive dashboard (collection type breakdown)<span class="fin">Enerza PDF - shown on analytics slide</span></div></div>
+        <div class="fi"><div class="fis m"></div><div class="fit">SMRC meter reading performance dashboard<span class="fin">Enerza PDF - zone/MRU/reader-wise progress</span></div></div>
+        <div class="fi"><div class="fis m"></div><div class="fit">Consumer 12-month usage chart (low/normal/high bands)<span class="fin">Enerza PDF - consumer portal chart shown</span></div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">Demand forecasting from load profile data<span class="fin">SAP IS-U EDM</span></div></div>
+        <div class="fi"><div class="fis p"></div><div class="fit">PNGRB / CERC / MoHUA regulatory filing<span class="fin">Skeleton built in compliance.py; full forms needed</span></div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">AT&amp;C loss / NRW analytics per zone<span class="fin">SAP IS-U - power and water</span></div></div>
+      </div>
+    </div>
+
+    <div class="mc">
+      <div class="mch"><div class="mci" style="background:#F0F4FF">&#x1F4DD;</div><div class="mct">Contract &amp; Business Partner MDM</div><div class="mcs sap">SAP IS-U</div></div>
+      <div class="mcb">
+        <div class="fi"><div class="fis b"></div><div class="fit">Customer / account / premise / connection master<span class="fin">Built - 48-table schema + 25 MDM screens</span></div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">Business Partner (BP) hub: one identity across all 3 utilities<span class="fin">SAP IS-U - single BP for multi-utility customer</span></div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">Contract account: multiple contracts per customer<span class="fin">SAP IS-U FI-CA</span></div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">Point of Delivery (POD): universal ID per meter connection<span class="fin">SAP IS-U - deregulated market readiness</span></div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">Contract renewal / modification / termination workflow<span class="fin">SAP IS-U Contract Management</span></div></div>
+        <div class="fi"><div class="fis b"></div><div class="fit">Effective-date governance on all master data<span class="fin">Built - schema has effective_from/to on all masters</span></div></div>
+      </div>
+    </div>
+
+    <div class="mc">
+      <div class="mch"><div class="mci" style="background:#FFF3E0">&#x1F527;</div><div class="mct">Asset &amp; Network Management (EAM)</div><div class="mcs sap">Both</div></div>
+      <div class="mcb">
+        <div class="fi"><div class="fis b"></div><div class="fit">Meter asset catalog + installation history<span class="fin">Built</span></div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">GIS integration: network map with pipeline / cable routes<span class="fin">SAP IS-U - GIS for network visibility</span></div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">Preventive maintenance schedules + due-date alerts<span class="fin">SAP IS-U PM integration</span></div></div>
+        <div class="fi"><div class="fis m"></div><div class="fit">EAM integration: complaint triggers work order on asset<span class="fin">Enerza PDF - EAM integration shown</span></div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">Capex project tracking: pipeline / network expansion BoQ<span class="fin">SAP IS-U - PS integration for Capex</span></div></div>
+      </div>
+    </div>
+
+    <div class="mc">
+      <div class="mch"><div class="mci" style="background:#EBF5FB">&#x1F4F1;</div><div class="mct">Consumer &amp; Field Staff Apps</div><div class="mcs pdf">Both</div></div>
+      <div class="mcb">
+        <div class="fi"><div class="fis b"></div><div class="fit">App user MDM + device + session + notification<span class="fin">Built</span></div></div>
+        <div class="fi"><div class="fis b"></div><div class="fit">Wireframes: login / dashboard / bill / payment / CNG<span class="fin">Built</span></div></div>
+        <div class="fi"><div class="fis m"></div><div class="fit">React Native consumer app (Android + iOS)<span class="fin">App to be built from wireframes</span></div></div>
+        <div class="fi"><div class="fis m"></div><div class="fit">New connection application from consumer app<span class="fin">Enerza PDF - consumer portal shows this</span></div></div>
+        <div class="fi"><div class="fis m"></div><div class="fit">RFI surveys from consumer portal<span class="fin">Enerza PDF - RFI Surveys tab shown</span></div></div>
+        <div class="fi"><div class="fis m"></div><div class="fit">WhatsApp bot: bill query / payment / complaint<span class="fin">Enerza PDF omnichannel</span></div></div>
+        <div class="fi"><div class="fis m"></div><div class="fit">Field app: meter photo + offline mode + SMRC supervisor view<span class="fin">Enerza PDF - SMRC dashboard shown</span></div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">Budget billing / installment plan self-service<span class="fin">SAP IS-U consumer self-service</span></div></div>
+      </div>
+    </div>
+
+    <div class="mc">
+      <div class="mch"><div class="mci" style="background:#E8EAF6">&#x1F4CB;</div><div class="mct">Compliance &amp; Regulatory</div><div class="mcs pdf">Both</div></div>
+      <div class="mcb">
+        <div class="fi"><div class="fis b"></div><div class="fit">GSTN GSTR-1 auto-generation from billing data<span class="fin">Built</span></div></div>
+        <div class="fi"><div class="fis b"></div><div class="fit">Aadhaar e-KYC (UIDAI) API stub ready<span class="fin">Built - compliance.py</span></div></div>
+        <div class="fi"><div class="fis b"></div><div class="fit">DPDPA consent tracking + PII masking + erasure<span class="fin">Built - compliance.py</span></div></div>
+        <div class="fi"><div class="fis m"></div><div class="fit">PNGRB Form-D / Form-E full implementation<span class="fin">Skeleton built; full forms needed</span></div></div>
+        <div class="fi"><div class="fis m"></div><div class="fit">RDSS MIS reporting for power DISCOMs<span class="fin">Not yet built</span></div></div>
+        <div class="fi"><div class="fis m"></div><div class="fit">AMRUT 2.0 MIS reporting for water ULBs<span class="fin">Not yet built</span></div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">GIS integration for network compliance mapping<span class="fin">SAP IS-U</span></div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ====== GAS ====== -->
+<div id="s-gas" class="page" style="display:none">
+  <div class="sec-hd" style="color:var(--gas)">&#x1F525; Enerza Gas - Full Module Specification</div>
+  <div class="sec-sb">PNG domestic + commercial + industrial + CNG. PNGRB compliant. APM/LNG dual-track pricing.</div>
+  <div class="tbr" id="gt">
+    <div class="tb ga a" onclick="sw('g','gc',this)">Core Modules</div>
+    <div class="tb ga" onclick="sw('g','gs',this)">Gas-Specific</div>
+    <div class="tb ga" onclick="sw('g','gtar',this)">Tariff Engine</div>
+    <div class="tb ga" onclick="sw('g','gcng',this)">CNG Operations</div>
+    <div class="tb ga" onclick="sw('g','gcomp',this)">Compliance</div>
+  </div>
+  <div id="g-gc" class="tp a">
+    <div class="mgrid">
+      <div class="mc"><div class="mch"><div class="mci" style="background:var(--gas-l)">&#x1F3E0;</div><div class="mct">PNG Domestic (R1 / Slum / BPL)</div></div><div class="mcb">
+        <div class="fi"><div class="fis b"></div><div class="fit">Slab tariff: 0-10 / 10-30 / >30 SCM</div></div>
+        <div class="fi"><div class="fis b"></div><div class="fit">Fixed monthly charge + GST 5%</div></div>
+        <div class="fi"><div class="fis m"></div><div class="fit">APM subsidised rate for BPL households (50% on Slab 1)</div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">Budget billing: flat monthly + annual reconciliation</div></div>
+        <div class="fi"><div class="fis m"></div><div class="fit">Self-read via app with photo proof and OTP confirm</div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">FoC connection for govt scheme (PMUY Ujjwala)</div></div>
+      </div></div>
+      <div class="mc"><div class="mch"><div class="mci" style="background:var(--gas-l)">&#x1F3ED;</div><div class="mct">PNG Commercial &amp; Industrial</div></div><div class="mcb">
+        <div class="fi"><div class="fis b"></div><div class="fit">Commercial PNG: flat &#8377;38/SCM + fixed &#8377;350</div></div>
+        <div class="fi"><div class="fis b"></div><div class="fit">Industrial: pressure-based tariff + demand charge</div></div>
+        <div class="fi"><div class="fis m"></div><div class="fit">LNG pass-through pricing for non-APM industrial</div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">Calorific value billing (GCV from lab analysis)</div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">Advance billing for high-volume industrial</div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">Credit score-based security deposit calculation</div></div>
+      </div></div>
+      <div class="mc"><div class="mch"><div class="mci" style="background:var(--gas-l)">&#x1F5FA;&#xFE0F;</div><div class="mct">PNGRB GA Zone Management</div></div><div class="mcb">
+        <div class="fi"><div class="fis m"></div><div class="fit">GA boundary definition + 25-year franchise zone map</div></div>
+        <div class="fi"><div class="fis m"></div><div class="fit">Work programme: PNG household + CNG station milestones vs targets</div></div>
+        <div class="fi"><div class="fis m"></div><div class="fit">Steel / PE pipeline network registry with GIS overlay</div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">Regulatory filing dashboard: submission status + acknowledgements</div></div>
+        <div class="fi"><div class="fis m"></div><div class="fit">PNGRB Form-D / Form-E auto-generation monthly</div></div>
+      </div></div>
+    </div>
+  </div>
+  <div id="g-gs" class="tp">
+    <div class="mgrid">
+      <div class="mc"><div class="mch"><div class="mci" style="background:var(--gas-l)">&#x2696;&#xFE0F;</div><div class="mct">APM / LNG Dual-Track Pricing</div></div><div class="mcb">
+        <div class="fi"><div class="fis m"></div><div class="fit">APM rate master: quarterly price revision by MoPNG</div></div>
+        <div class="fi"><div class="fis m"></div><div class="fit">LNG spot rate import + industrial pass-through calculation</div></div>
+        <div class="fi"><div class="fis m"></div><div class="fit">Priority allocation: domestic > CNG > industrial</div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">Price revision workflow with effective-date governance + notification</div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">Subsidy reconciliation with govt scheme billing</div></div>
+      </div></div>
+      <div class="mc"><div class="mch"><div class="mci" style="background:var(--gas-l)">&#x1F321;&#xFE0F;</div><div class="mct">Network &amp; Pressure Management</div></div><div class="mcb">
+        <div class="fi"><div class="fis b"></div><div class="fit">Pressure band master: LP domestic / MP commercial / HP industrial</div></div>
+        <div class="fi"><div class="fis m"></div><div class="fit">Pressure zone map with network interconnection points</div></div>
+        <div class="fi"><div class="fis m"></div><div class="fit">City gate station to district station offtake management</div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">Unaccounted-for-gas (UAG) tracking per zone</div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">Emergency shutdown / isolation valve management</div></div>
+      </div></div>
+    </div>
+  </div>
+  <div id="g-gtar" class="tp">
+    <div class="ach">
+      <div class="acht">Gas Tariff Structure - Complete Specification</div>
+      <div class="acg">
+        <div class="ab"><div class="abt" style="color:var(--gas)">PNG Domestic R1</div>
+          <div class="abi"><div class="abd"></div>Fixed: &#8377;120/month</div>
+          <div class="abi"><div class="abd"></div>Slab 1 (0-10 SCM): &#8377;30/SCM</div>
+          <div class="abi"><div class="abd"></div>Slab 2 (10-30 SCM): &#8377;35/SCM</div>
+          <div class="abi"><div class="abd"></div>Slab 3 (>30 SCM): &#8377;42/SCM</div>
+          <div class="abi"><div class="abd"></div>GST: 5% on total</div>
+          <div class="abi"><div class="abd"></div>BPL: 50% subsidy on Slab 1</div>
+        </div>
+        <div class="ab"><div class="abt" style="color:var(--gas)">PNG Commercial C1</div>
+          <div class="abi"><div class="abd"></div>Fixed: &#8377;350/month</div>
+          <div class="abi"><div class="abd"></div>Variable: &#8377;38/SCM flat</div>
+          <div class="abi"><div class="abd"></div>GST: 5% on total</div>
+          <div class="abi"><div class="abd"></div>Security deposit: 3 months avg bill</div>
+        </div>
+        <div class="ab"><div class="abt" style="color:var(--gas)">PNG Industrial I1</div>
+          <div class="abi"><div class="abd"></div>Fixed demand charge</div>
+          <div class="abi"><div class="abd"></div>Variable: LNG rate + margin</div>
+          <div class="abi"><div class="abd"></div>Calorific value adjustment</div>
+          <div class="abi"><div class="abd"></div>GST: 5% on total</div>
+          <div class="abi"><div class="abd"></div>Advance billing option</div>
+        </div>
+        <div class="ab"><div class="abt" style="color:var(--gas)">New Connection Charges</div>
+          <div class="abi"><div class="abd"></div>Security deposit (refundable)</div>
+          <div class="abi"><div class="abd"></div>Service line charges (BoQ)</div>
+          <div class="abi"><div class="abd"></div>Meter deposit: &#8377;1,500</div>
+          <div class="abi"><div class="abd"></div>Regulator + fitting charges</div>
+          <div class="abi"><div class="abd"></div>GST: 18% on service charges</div>
+        </div>
+        <div class="ab"><div class="abt" style="color:var(--gas)">Billing Plans</div>
+          <div class="abi"><div class="abd"></div>Monthly (default)</div>
+          <div class="abi"><div class="abd"></div>Bimonthly (small consumers)</div>
+          <div class="abi"><div class="abd"></div>Budget billing (equal monthly)</div>
+          <div class="abi"><div class="abd"></div>Advance billing (industrial)</div>
+          <div class="abi"><div class="abd"></div>Installment plan (overdue)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="g-gcng" class="tp">
+    <div class="mgrid">
+      <div class="mc"><div class="mch"><div class="mci" style="background:var(--gas-l)">&#x26FD;</div><div class="mct">CNG Station Operations</div></div><div class="mcb">
+        <div class="fi"><div class="fis b"></div><div class="fit">Station master + vehicle category + daily sales</div></div>
+        <div class="fi"><div class="fis b"></div><div class="fit">UPI / FASTAG / Cash payment at dispenser</div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">Fleet account: bulk CNG contracts for commercial operators</div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">Mother-daughter station inventory reconciliation</div></div>
+        <div class="fi"><div class="fis m"></div><div class="fit">Real-time price board integration (dynamic CNG price update)</div></div>
+        <div class="fi"><div class="fis m"></div><div class="fit">Shift-wise sales reconciliation + dispenser-wise reporting</div></div>
+        <div class="fi"><div class="fis m"></div><div class="fit">Station-wise analytics: monthly volume / revenue / transactions</div></div>
+      </div></div>
+    </div>
+  </div>
+  <div id="g-gcomp" class="tp">
+    <div class="mgrid">
+      <div class="mc"><div class="mch"><div class="mci" style="background:var(--gas-l)">&#x1F4CB;</div><div class="mct">PNGRB Compliance</div></div><div class="mcb">
+        <div class="fi"><div class="fis p"></div><div class="fit">PNGRB reports skeleton in compliance.py<span class="fin">Needs full Form-D / Form-E implementation</span></div></div>
+        <div class="fi"><div class="fis m"></div><div class="fit">Form-D: monthly PNG household count + consumption</div></div>
+        <div class="fi"><div class="fis m"></div><div class="fit">Form-E: CNG station-wise volume + vehicle count</div></div>
+        <div class="fi"><div class="fis m"></div><div class="fit">Work programme adherence: connections vs PNGRB target</div></div>
+        <div class="fi"><div class="fis m"></div><div class="fit">Tariff revision filing with effective-date submission</div></div>
+        <div class="fi"><div class="fis b"></div><div class="fit">GSTN GSTR-1 auto-generation from billing data</div></div>
+        <div class="fi"><div class="fis b"></div><div class="fit">Aadhaar e-KYC + DPDPA + PII masking</div></div>
+      </div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== POWER ====== -->
+<div id="s-elec" class="page" style="display:none">
+  <div class="sec-hd" style="color:var(--elec)">&#x26A1; Enerza Power - Full Module Specification</div>
+  <div class="sec-sb">LT/HT distribution billing. TOD / MD / PF / Net Metering. Smart meter AMI-ready. CERC/SERC compliant.</div>
+  <div class="tbr" id="et">
+    <div class="tb el a" onclick="sw('e','ec',this)">LT Consumers</div>
+    <div class="tb el" onclick="sw('e','eht',this)">HT Industrial</div>
+    <div class="tb el" onclick="sw('e','etar',this)">Tariff Engine</div>
+    <div class="tb el" onclick="sw('e','esm',this)">Smart Metering</div>
+    <div class="tb el" onclick="sw('e','edis',this)">DISCOM Ops</div>
+  </div>
+  <div id="e-ec" class="tp a">
+    <div class="mgrid">
+      <div class="mc"><div class="mch"><div class="mci" style="background:var(--elec-l)">&#x1F3E0;</div><div class="mct">LT-1 Domestic</div></div><div class="mcb">
+        <div class="fi"><div class="fis b"></div><div class="fit">Multi-slab: 0-100 kWh &#8377;3.50 / 101-300 &#8377;5.00 / >300 &#8377;7.50</div></div>
+        <div class="fi"><div class="fis b"></div><div class="fit">Meter rent &#8377;45 + electricity duty 15% + GST 18% on rent</div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">FPPC (fuel + power purchase cost) quarterly surcharge</div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">TOD tariff: peak / off-peak / night rate differential</div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">Agriculture pump set: flat seasonal billing</div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">BPL lifeline: 0-30 kWh free / concessional</div></div>
+      </div></div>
+      <div class="mc"><div class="mch"><div class="mci" style="background:var(--elec-l)">&#x2600;&#xFE0F;</div><div class="mct">Net Metering / Solar / DG</div></div><div class="mcb">
+        <div class="fi"><div class="fis s"></div><div class="fit">Net metering: import billed, export credited at FIT rate</div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">Negative bill (credit) rolls forward to next month</div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">Virtual net metering for group housing society</div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">DG set consumption billing + emission cess</div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">Renewable energy obligation (REO) compliance tracking</div></div>
+      </div></div>
+    </div>
+  </div>
+  <div id="e-eht" class="tp">
+    <div class="mgrid">
+      <div class="mc"><div class="mch"><div class="mci" style="background:var(--elec-l)">&#x1F3ED;</div><div class="mct">HT Industrial Billing</div></div><div class="mcb">
+        <div class="fi"><div class="fis b"></div><div class="fit">HT connection: sanctioned load (kW) + demand charge per kVA</div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">Maximum demand (MD) billing with recorded MD each month</div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">Power factor penalty: PF below 0.85 attracts surcharge</div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">Power factor incentive: PF above 0.95 gets rebate</div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">Excess demand charge for over-drawl beyond sanctioned load</div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">Night tariff incentive for load-shifting consumers</div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">Load shedding compensation billing to DISCOM</div></div>
+      </div></div>
+    </div>
+  </div>
+  <div id="e-etar" class="tp">
+    <div class="ach">
+      <div class="acht">Electricity Tariff Structure - Complete Specification</div>
+      <div class="acg">
+        <div class="ab"><div class="abt" style="color:var(--elec)">LT-1 Domestic</div>
+          <div class="abi"><div class="abd"></div>Meter rent: &#8377;45/month</div>
+          <div class="abi"><div class="abd"></div>0-100 kWh: &#8377;3.50/kWh</div>
+          <div class="abi"><div class="abd"></div>101-300 kWh: &#8377;5.00/kWh</div>
+          <div class="abi"><div class="abd"></div>&gt;300 kWh: &#8377;7.50/kWh</div>
+          <div class="abi"><div class="abd"></div>Electricity duty: 15% on energy</div>
+          <div class="abi"><div class="abd"></div>GST: 18% on meter rent</div>
+          <div class="abi"><div class="abd"></div>FPPC: quarterly surcharge</div>
+        </div>
+        <div class="ab"><div class="abt" style="color:var(--elec)">LT-2 Commercial</div>
+          <div class="abi"><div class="abd"></div>Fixed: &#8377;150/kW/month</div>
+          <div class="abi"><div class="abd"></div>Energy: &#8377;8.50/kWh flat</div>
+          <div class="abi"><div class="abd"></div>Electricity duty: 15%</div>
+          <div class="abi"><div class="abd"></div>Over-load: 2x rate</div>
+        </div>
+        <div class="ab"><div class="abt" style="color:var(--elec)">HT-1 Industrial (11kV)</div>
+          <div class="abi"><div class="abd"></div>Demand: &#8377;250/kVA/month</div>
+          <div class="abi"><div class="abd"></div>Energy: &#8377;6.50/kWh</div>
+          <div class="abi"><div class="abd"></div>PF penalty: &lt;0.85</div>
+          <div class="abi"><div class="abd"></div>PF incentive: &gt;0.95</div>
+          <div class="abi"><div class="abd"></div>TOD peak: +&#8377;1.50/kWh</div>
+        </div>
+        <div class="ab"><div class="abt" style="color:var(--elec)">Net Metering</div>
+          <div class="abi"><div class="abd"></div>Import billed at normal rate</div>
+          <div class="abi"><div class="abd"></div>Export credited at FIT rate</div>
+          <div class="abi"><div class="abd"></div>Net bill = import - export</div>
+          <div class="abi"><div class="abd"></div>Credit rolls to next period</div>
+        </div>
+        <div class="ab"><div class="abt" style="color:var(--elec)">Surcharges</div>
+          <div class="abi"><div class="abd"></div>FPPC surcharge quarterly</div>
+          <div class="abi"><div class="abd"></div>Regulatory surcharge</div>
+          <div class="abi"><div class="abd"></div>Late payment: 2%/month</div>
+          <div class="abi"><div class="abd"></div>Reconnection: &#8377;250</div>
+          <div class="abi"><div class="abd"></div>Theft assessment: provisional</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="e-esm" class="tp">
+    <div class="mgrid">
+      <div class="mc"><div class="mch"><div class="mci" style="background:var(--elec-l)">&#x1F4E1;</div><div class="mct">AMI / Smart Meter Integration</div></div><div class="mcb">
+        <div class="fi"><div class="fis s"></div><div class="fit">Smart meter data ingestion: 15-min interval reads</div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">EDM: load profiles and energy balance per feeder</div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">Remote meter connect / disconnect command via HES</div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">Prepaid meter top-up and balance management</div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">Power quality events: voltage sag, outage detection</div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">MDMS integration via REST API</div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">TOD billing auto-computed from interval data</div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">Tamper event alerts from meter firmware</div></div>
+      </div></div>
+    </div>
+  </div>
+  <div id="e-edis" class="tp">
+    <div class="mgrid">
+      <div class="mc"><div class="mch"><div class="mci" style="background:var(--elec-l)">&#x1F3D7;&#xFE0F;</div><div class="mct">DISCOM Operations</div></div><div class="mcb">
+        <div class="fi"><div class="fis b"></div><div class="fit">Grid zone + feeder + transformer hierarchy master</div></div>
+        <div class="fi"><div class="fis m"></div><div class="fit">Feeder-wise AT&amp;C loss calculation</div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">DT-wise consumer mapping and energy accounting</div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">Load forecasting per feeder from consumption history</div></div>
+        <div class="fi"><div class="fis m"></div><div class="fit">RDSS MIS reporting for state electricity regulator</div></div>
+        <div class="fi"><div class="fis m"></div><div class="fit">ACS-ARR gap analysis for CERC/SERC submission</div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">Revenue protection: vigilance work order + provisional billing</div></div>
+      </div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== WATER ====== -->
+<div id="s-water" class="page" style="display:none">
+  <div class="sec-hd" style="color:var(--water)">&#x1F4A7; Enerza Water - Full Module Specification</div>
+  <div class="sec-sb">Municipal water supply, sewerage, industrial water. NRW tracking. MoHUA AMRUT 2.0 compliant.</div>
+  <div class="tbr" id="wt">
+    <div class="tb wa a" onclick="sw('w','wc',this)">Domestic Supply</div>
+    <div class="tb wa" onclick="sw('w','wtar',this)">Tariff Engine</div>
+    <div class="tb wa" onclick="sw('w','wnrw',this)">NRW &amp; Network</div>
+    <div class="tb wa" onclick="sw('w','wsew',this)">Sewerage</div>
+    <div class="tb wa" onclick="sw('w','wcomp',this)">AMRUT 2.0</div>
+  </div>
+  <div id="w-wc" class="tp a">
+    <div class="mgrid">
+      <div class="mc"><div class="mch"><div class="mci" style="background:var(--water-l)">&#x1F6B0;</div><div class="mct">Domestic Water Supply</div></div><div class="mcb">
+        <div class="fi"><div class="fis b"></div><div class="fit">Domestic connection: pipe size / supply zone / meter type</div></div>
+        <div class="fi"><div class="fis b"></div><div class="fit">Slab billing: 0-10 KL &#8377;8 / >10 KL &#8377;14 + fixed &#8377;80</div></div>
+        <div class="fi"><div class="fis b"></div><div class="fit">Water tax 5% on total bill</div></div>
+        <div class="fi"><div class="fis m"></div><div class="fit">Zone-wise supply hours scheduling + consumer SMS alert</div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">BPL lifeline: 0-5 KL free (concessional rate)</div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">Per capita consumption benchmark vs actuals by zone</div></div>
+      </div></div>
+      <div class="mc"><div class="mch"><div class="mci" style="background:var(--water-l)">&#x1F3D7;&#xFE0F;</div><div class="mct">Commercial &amp; Bulk Water</div></div><div class="mcb">
+        <div class="fi"><div class="fis b"></div><div class="fit">Commercial connection: pipe size / purpose / tariff category</div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">Bulk supply to townships: single meter + sub-metering</div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">Industrial effluent penalty: treated vs untreated volume</div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">Construction water: temporary connection + fixed-term billing</div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">Water tanker billing for un-piped areas</div></div>
+      </div></div>
+    </div>
+  </div>
+  <div id="w-wtar" class="tp">
+    <div class="ach">
+      <div class="acht">Water Tariff Structure - Complete Specification</div>
+      <div class="acg">
+        <div class="ab"><div class="abt" style="color:var(--water)">W1 Domestic</div>
+          <div class="abi"><div class="abd"></div>Fixed: &#8377;80/month</div>
+          <div class="abi"><div class="abd"></div>BPL: 0-5 KL free (lifeline)</div>
+          <div class="abi"><div class="abd"></div>0-10 KL: &#8377;8/KL</div>
+          <div class="abi"><div class="abd"></div>&gt;10 KL: &#8377;14/KL</div>
+          <div class="abi"><div class="abd"></div>Water tax: 5% on total</div>
+          <div class="abi"><div class="abd"></div>Sewerage: 30% of water bill</div>
+        </div>
+        <div class="ab"><div class="abt" style="color:var(--water)">W2 Commercial</div>
+          <div class="abi"><div class="abd"></div>Fixed: &#8377;200/month</div>
+          <div class="abi"><div class="abd"></div>0-50 KL: &#8377;18/KL</div>
+          <div class="abi"><div class="abd"></div>&gt;50 KL: &#8377;25/KL</div>
+          <div class="abi"><div class="abd"></div>Water tax: 10%</div>
+          <div class="abi"><div class="abd"></div>Sewerage: 40% of water bill</div>
+        </div>
+        <div class="ab"><div class="abt" style="color:var(--water)">W3 Industrial</div>
+          <div class="abi"><div class="abd"></div>Bulk negotiated rate</div>
+          <div class="abi"><div class="abd"></div>Effluent penalty &#8377;50/KL</div>
+          <div class="abi"><div class="abd"></div>ZLD incentive rebate</div>
+          <div class="abi"><div class="abd"></div>Rainwater harvest credit</div>
+        </div>
+        <div class="ab"><div class="abt" style="color:var(--water)">Connection Charges</div>
+          <div class="abi"><div class="abd"></div>Fee by pipe size (15mm-50mm)</div>
+          <div class="abi"><div class="abd"></div>Meter deposit: &#8377;1,500-5,000</div>
+          <div class="abi"><div class="abd"></div>Road cutting charges</div>
+          <div class="abi"><div class="abd"></div>ULB development charges</div>
+        </div>
+        <div class="ab"><div class="abt" style="color:var(--water)">Special Levies</div>
+          <div class="abi"><div class="abd"></div>Infrastructure cess</div>
+          <div class="abi"><div class="abd"></div>Water conservation surcharge</div>
+          <div class="abi"><div class="abd"></div>Disconnection / reconnection fee</div>
+          <div class="abi"><div class="abd"></div>Annual flat rate (unmetered)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="w-wnrw" class="tp">
+    <div class="mgrid">
+      <div class="mc"><div class="mch"><div class="mci" style="background:var(--water-l)">&#x1F30A;</div><div class="mct">Non-Revenue Water (NRW) Management</div></div><div class="mcb">
+        <div class="fi"><div class="fis s"></div><div class="fit">NRW calculation per zone: supplied vs billed vs accounted</div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">Water audit: treatment plant to consumer end tracking</div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">Leak detection from consumption anomaly alerts</div></div>
+        <div class="fi"><div class="fis m"></div><div class="fit">Distribution network GIS map: mains, branches, sub-branches</div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">Pressure monitoring at district metered areas (DMAs)</div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">NRW reduction target tracking vs actuals (AMRUT KPI)</div></div>
+      </div></div>
+    </div>
+  </div>
+  <div id="w-wsew" class="tp">
+    <div class="mgrid">
+      <div class="mc"><div class="mch"><div class="mci" style="background:var(--water-l)">&#x1F6BD;</div><div class="mct">Sewerage Billing</div></div><div class="mcb">
+        <div class="fi"><div class="fis s"></div><div class="fit">Sewerage charge: 30-40% of water consumption bill</div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">Standalone sewerage connection (no piped water)</div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">Septage management: desludging schedule + vehicle billing</div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">STP influent / effluent quality tracking</div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">Industrial trade effluent consent fee</div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">FSSM reporting for MoHUA SBM urban</div></div>
+      </div></div>
+    </div>
+  </div>
+  <div id="w-wcomp" class="tp">
+    <div class="mgrid">
+      <div class="mc"><div class="mch"><div class="mci" style="background:var(--water-l)">&#x1F4CB;</div><div class="mct">AMRUT 2.0 Compliance</div></div><div class="mcb">
+        <div class="fi"><div class="fis m"></div><div class="fit">Universal coverage: % households with FHTC (Functional HH Tap)</div></div>
+        <div class="fi"><div class="fis m"></div><div class="fit">NRW reduction target tracking vs actuals</div></div>
+        <div class="fi"><div class="fis m"></div><div class="fit">O&amp;M cost recovery ratio reporting</div></div>
+        <div class="fi"><div class="fis m"></div><div class="fit">MIS for State Nodal Agency (SNA) submission</div></div>
+        <div class="fi"><div class="fis s"></div><div class="fit">Fund utilisation report for AMRUT 2.0 grants</div></div>
+        <div class="fi"><div class="fis b"></div><div class="fit">Aadhaar e-KYC + DPDPA compliance (shared)</div></div>
+      </div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== GAP MATRIX ====== -->
+<div id="s-mat" class="page" style="display:none">
+  <div class="sec-hd">Feature Gap Matrix</div>
+  <div class="sec-sb">Complete cross-reference across all three utility products</div>
+  <div class="leg" style="margin-bottom:14px">
+    <div class="li"><div class="ld b"></div>Built</div>
+    <div class="li"><div class="ld p"></div>Partial</div>
+    <div class="li"><div class="ld m"></div>Enerza PDF gap</div>
+    <div class="li"><div class="ld s"></div>SAP IS-U gap</div>
+  </div>
+  <div class="cmpw">
+    <table class="cmp">
+      <thead><tr><th style="text-align:left">Feature</th><th>Gas</th><th>Power</th><th>Water</th><th>Source</th><th>Status</th></tr></thead>
+      <tbody id="mb"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ====== ROADMAP ====== -->
+<div id="s-rd" class="page" style="display:none">
+  <div class="sec-hd">Implementation Roadmap</div>
+  <div class="sec-sb">Sequenced build plan to close all gaps across all three utility products</div>
+  <div class="rmap">
+    <div class="rm">
+      <div class="rmp">Q1 2026 - Immediate (8 weeks)</div>
+      <div class="rmt">Core wiring + Enerza PDF gaps</div>
+      <div class="rmi"><div class="rmd q1"></div>Wire all 25 MDM screens to FastAPI (forms to DB)</div>
+      <div class="rmi"><div class="rmd q1"></div>New connection 6-step workflow + BoQ module</div>
+      <div class="rmi"><div class="rmd q1"></div>Site inspection app: GPS + photo + offline sync</div>
+      <div class="rmi"><div class="rmd q1"></div>3-tier complaint escalation + SLA breach alerts</div>
+      <div class="rmi"><div class="rmd q1"></div>SMRC meter reading dashboard (zone / MRU / reader)</div>
+      <div class="rmi"><div class="rmd q1"></div>Cash desk: POS / cheque / DD + receipt generation</div>
+      <div class="rmi"><div class="rmd q1"></div>Dynamic QR code per bill (UPI deep link)</div>
+      <div class="rmi"><div class="rmd q1"></div>Escrow + collection source-wise ledger</div>
+      <div class="rtl"><span class="rt q1">All 3 utilities</span><span class="rt q1">8 weeks</span></div>
+    </div>
+    <div class="rm">
+      <div class="rmp">Q2 2026 - Core Expansion (10 weeks)</div>
+      <div class="rmt">SAP FI-CA equivalent + service lifecycle</div>
+      <div class="rmi"><div class="rmd q2"></div>Dunning: 3-level automated notices + agency export</div>
+      <div class="rmi"><div class="rmd q2"></div>Budget billing plan: flat monthly + annual adjust</div>
+      <div class="rmi"><div class="rmd q2"></div>Installment plan for overdue consumers</div>
+      <div class="rmi"><div class="rmd q2"></div>Security deposit: interest calc + termination refund</div>
+      <div class="rmi"><div class="rmd q2"></div>Write-off / bad debt provisioning</div>
+      <div class="rmi"><div class="rmd q2"></div>Move-in / Move-out with meter transfer</div>
+      <div class="rmi"><div class="rmd q2"></div>Category change workflow + tariff recalculation</div>
+      <div class="rmi"><div class="rmd q2"></div>Account transfer / name change validation</div>
+      <div class="rtl"><span class="rt q2">Gas first, then Power/Water</span><span class="rt q2">10 weeks</span></div>
+    </div>
+    <div class="rm">
+      <div class="rmp">Q3 2026 - Utility Depth (12 weeks)</div>
+      <div class="rmt">Gas: APM | Power: AMI + TOD + MD | Water: NRW</div>
+      <div class="rmi"><div class="rmd q3"></div>Gas: APM/LNG dual-track + PNGRB GA management</div>
+      <div class="rmi"><div class="rmd q3"></div>Gas: BoQ + work programme vs PNGRB targets</div>
+      <div class="rmi"><div class="rmd q3"></div>Power: TOD billing from 15-min smart meter data</div>
+      <div class="rmi"><div class="rmd q3"></div>Power: MD billing + power factor penalty/incentive</div>
+      <div class="rmi"><div class="rmd q3"></div>Power: Net metering + solar FIT credit</div>
+      <div class="rmi"><div class="rmd q3"></div>Water: NRW calculation + non-revenue water dashboard</div>
+      <div class="rmi"><div class="rmd q3"></div>Water: Sewerage billing + FSSM reporting</div>
+      <div class="rmi"><div class="rmd q3"></div>GIS network map layer for all 3 utilities</div>
+      <div class="rtl"><span class="rt q3">Utility-specific sprints</span><span class="rt q3">12 weeks</span></div>
+    </div>
+    <div class="rm">
+      <div class="rmp">Q4 2026 - Consumer + Intelligence (16 weeks)</div>
+      <div class="rmt">Mobile app + WhatsApp + Analytics + Convergent</div>
+      <div class="rmi"><div class="rmd q4"></div>React Native consumer app for all 3 utilities</div>
+      <div class="rmi"><div class="rmd q4"></div>WhatsApp bot: bill query / payment / complaint</div>
+      <div class="rmi"><div class="rmd q4"></div>EAM integration: complaint to work order to asset</div>
+      <div class="rmi"><div class="rmd q4"></div>Convergent billing: single invoice multi-utility</div>
+      <div class="rmi"><div class="rmd q4"></div>Multilingual bills: Hindi / Gujarati / Marathi</div>
+      <div class="rmi"><div class="rmd q4"></div>Business Partner hub: one customer all 3 utilities</div>
+      <div class="rmi"><div class="rmd q4"></div>Full PNGRB / RDSS / AMRUT regulatory filing</div>
+      <div class="rmi"><div class="rmd q4"></div>Demand forecasting from EDM load profiles</div>
+      <div class="rtl"><span class="rt q4">All utilities converge</span><span class="rt q4">16 weeks</span></div>
+    </div>
+  </div>
+  <div class="divider"></div>
+  <div class="sec-hd" style="font-size:15px;margin-bottom:12px">Multi-Utility Instance Architecture</div>
+  <div class="ach">
+    <div class="acht">Separate instances, shared platform layer</div>
+    <div class="acg">
+      <div class="ab"><div class="abt" style="color:var(--gas)">Enerza Gas Instance</div>
+        <div class="abi"><div class="abd"></div>Schema: enerza_gas</div>
+        <div class="abi"><div class="abd"></div>PNGRB config: GA, APM, pressure bands</div>
+        <div class="abi"><div class="abd"></div>CNG station module enabled</div>
+        <div class="abi"><div class="abd"></div>Gas-branded consumer app + portal</div>
+        <div class="abi"><div class="abd"></div>Regulator: PNGRB Form-D / Form-E</div>
+      </div>
+      <div class="ab"><div class="abt" style="color:var(--elec)">Enerza Power Instance</div>
+        <div class="abi"><div class="abd"></div>Schema: enerza_power</div>
+        <div class="abi"><div class="abd"></div>DISCOM config: feeder / DT / grid zone</div>
+        <div class="abi"><div class="abd"></div>AMI + smart meter MDM enabled</div>
+        <div class="abi"><div class="abd"></div>TOD / PF / MD / Net Meter modules</div>
+        <div class="abi"><div class="abd"></div>Regulator: CERC / SERC filing</div>
+      </div>
+      <div class="ab"><div class="abt" style="color:var(--water)">Enerza Water Instance</div>
+        <div class="abi"><div class="abd"></div>Schema: enerza_water</div>
+        <div class="abi"><div class="abd"></div>ULB config: supply zones / treatment plants</div>
+        <div class="abi"><div class="abd"></div>Sewerage + NRW module enabled</div>
+        <div class="abi"><div class="abd"></div>AMRUT 2.0 KPI dashboard</div>
+        <div class="abi"><div class="abd"></div>Regulator: MoHUA AMRUT MIS</div>
+      </div>
+      <div class="ab"><div class="abt">Shared Services Layer</div>
+        <div class="abi"><div class="abd"></div>Single Business Partner (BP) hub</div>
+        <div class="abi"><div class="abd"></div>Shared JWT auth + RBAC</div>
+        <div class="abi"><div class="abd"></div>Shared FCM / SMS / Email notifications</div>
+        <div class="abi"><div class="abd"></div>Shared Razorpay / BBPS payment stack</div>
+        <div class="abi"><div class="abd"></div>Convergent billing (optional overlay)</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function show(id){
+  ['ov','gas','elec','water','mat','rd'].forEach(s=>{
+    var el=document.getElementById('s-'+s);
+    if(el) el.style.display=s===id?'block':'none';
+  });
+  document.querySelectorAll('.np').forEach(p=>p.classList.remove('a'));
+  var map={ov:0,gas:1,elec:2,water:3,mat:4,rd:5};
+  var pills=document.querySelectorAll('.np');
+  if(pills[map[id]]) pills[map[id]].classList.add('a');
+  window.scrollTo({top:0,behavior:'smooth'});
+  if(id==='mat') buildMat();
+}
+
+function sw(prod,tab,btn){
+  document.querySelectorAll('[id^="'+prod+'-"]').forEach(p=>{
+    if(p.classList.contains('tp')) p.classList.remove('a');
+  });
+  document.getElementById(prod+'-'+tab).classList.add('a');
+  var tbr=document.getElementById(prod==='g'?'gt':prod==='e'?'et':'wt');
+  if(tbr) tbr.querySelectorAll('.tb').forEach(b=>b.classList.remove('a'));
+  if(btn) btn.classList.add('a');
+}
+
+var MAT=[
+  ['AUTH & ACCESS',null,null,null,'cat'],
+  ['JWT auth + 7-role RBAC','y','y','y','B','b'],
+  ['Consumer login: mobile/CAN + OTP','y','y','y','B','b'],
+  ['Employee SSO with LDAP/AD','y','y','y','PDF','m'],
+  ['Field staff Android app login','y','y','y','PDF','m'],
+  ['Pay-without-login guest flow','y','y','y','PDF','m'],
+  ['Biometric login for cash agents','y','y','y','SAP','s'],
+  ['NEW CONNECTION',null,null,null,'cat'],
+  ['Connection request form + segment','y','y','y','B','b'],
+  ['Document verification workflow','y','y','y','PDF','m'],
+  ['Site inspection GPS + photo','y','y','y','PDF','m'],
+  ['Bill of Quantities (BoQ) auto-gen','y','y','y','PDF','m'],
+  ['Demand note: fee + deposit calc','y','y','y','PDF','m'],
+  ['FoC connection (govt schemes)','y','n','n','PDF','m'],
+  ['Move-in / Move-out with meter transfer','y','y','y','SAP','s'],
+  ['SERVICE REQUESTS',null,null,null,'cat'],
+  ['SR types + SLA + routing','y','y','y','B','b'],
+  ['Account transfer / name change','y','y','y','PDF','m'],
+  ['Category change + tariff recalc','y','y','y','PDF','m'],
+  ['Meter replacement + data migration','y','y','y','PDF','m'],
+  ['Connection size modification + BoQ','y','y','y','PDF','m'],
+  ['Meter location change','y','y','y','PDF','m'],
+  ['Reconnect + disconnect on arrears','y','y','y','B','b'],
+  ['Work order: schedule to close','y','y','y','SAP','s'],
+  ['COMPLAINT MANAGEMENT',null,null,null,'cat'],
+  ['Complaint categories schema','y','y','y','B','p'],
+  ['3-tier escalation + TAT per type','y','y','y','PDF','m'],
+  ['SLA breach auto-escalation','y','y','y','PDF','m'],
+  ['EAM integration for equipment faults','y','y','y','PDF','m'],
+  ['Dispute management with billing hold','y','y','y','SAP','s'],
+  ['WhatsApp/IVR omnichannel intake','y','y','y','PDF','m'],
+  ['METERING & EDM',null,null,null,'cat'],
+  ['Meter master + installation lifecycle','y','y','y','B','b'],
+  ['Actual/estimated/self-read + anomaly','y','y','y','B','b'],
+  ['Route + field reader API','y','y','y','B','b'],
+  ['SMRC zone/MRU progress dashboard','y','y','y','PDF','m'],
+  ['Meter photo + offline sync on app','y','y','y','PDF','m'],
+  ['AMI: 15-min interval reads','n','y','y','SAP','s'],
+  ['EDM: load profiles + forecasting','n','y','n','SAP','s'],
+  ['Remote meter connect/disconnect','n','y','y','SAP','s'],
+  ['Tamper / theft detection','y','y','y','SAP','s'],
+  ['NRW / UAG tracking','n','n','y','SAP','s'],
+  ['BILLING',null,null,null,'cat'],
+  ['Multi-slab tariff for all utilities','y','y','y','B','b'],
+  ['GST / duty / tax computation','y','y','y','B','b'],
+  ['Arrears + late fees + reversal','y','y','y','B','b'],
+  ['Batch billing + PDF bill','y','y','y','B','b'],
+  ['APM/LNG dual-track pricing','y','n','n','new','m'],
+  ['TOD billing (smart meters)','n','y','n','SAP','s'],
+  ['MD billing + power factor penalty','n','y','n','SAP','s'],
+  ['Net metering solar credit','n','y','n','SAP','s'],
+  ['Budget billing plan','y','y','y','SAP','s'],
+  ['Installment plan for overdue','y','y','y','SAP','s'],
+  ['Convergent billing multi-utility','y','y','y','SAP','s'],
+  ['Multilingual bills','y','y','y','new','m'],
+  ['WhatsApp bill delivery','y','y','y','PDF','m'],
+  ['COLLECTIONS & FI-CA',null,null,null,'cat'],
+  ['Multi-channel payments','y','y','y','B','b'],
+  ['Reconciliation + settlement','y','y','y','B','b'],
+  ['Refund + dispute handling','y','y','y','B','b'],
+  ['Physical cash desk + receipt','y','y','y','PDF','m'],
+  ['Dynamic QR code per bill','y','y','y','PDF','m'],
+  ['Escrow account management','y','y','y','PDF','m'],
+  ['Collection source-wise ledger','y','y','y','PDF','m'],
+  ['Dunning: 3-level + agency export','y','y','y','SAP','s'],
+  ['Security deposit + termination refund','y','y','y','SAP','s'],
+  ['Write-off + bad debt provisioning','y','y','y','SAP','s'],
+  ['Credit scoring for deposit calc','y','y','y','SAP','s'],
+  ['ANALYTICS',null,null,null,'cat'],
+  ['MIS dashboard','y','y','y','B','b'],
+  ['Cash desk executive dashboard','y','y','y','PDF','m'],
+  ['SMRC reading progress dashboard','y','y','y','PDF','m'],
+  ['Consumer 12-month usage chart','y','y','y','PDF','m'],
+  ['Demand forecasting (EDM)','n','y','n','SAP','s'],
+  ['AT&C / NRW analytics','n','y','y','SAP','s'],
+  ['Regulatory filing (PNGRB/CERC/MoHUA)','y','y','y','B','p'],
+  ['COMPLIANCE',null,null,null,'cat'],
+  ['GSTN GSTR-1 auto-generation','y','y','y','B','b'],
+  ['Aadhaar e-KYC stub','y','y','y','B','b'],
+  ['DPDPA + PII masking','y','y','y','B','b'],
+  ['PNGRB Form-D/E full forms','y','n','n','new','m'],
+  ['RDSS MIS for DISCOMs','n','y','n','new','m'],
+  ['AMRUT 2.0 MIS for ULBs','n','n','y','new','m'],
+  ['GIS network overlay','y','y','y','SAP','s'],
+];
+
+var SM={'B':'pdf','PDF':'pdf','SAP':'sap','new':'new'};
+var SL={'B':'Both','PDF':'Enerza PDF','SAP':'SAP IS-U','new':'New'};
+
+function buildMat(){
+  var b=document.getElementById('mb');
+  if(b.children.length) return;
+  MAT.forEach(function(r){
+    var tr=document.createElement('tr');
+    if(r[4]==='cat'){
+      tr.className='cr';
+      tr.innerHTML='<td colspan="6">'+r[0]+'</td>';
+    } else {
+      var ic={b:'check',p:'circle',m:'circle',s:'square'}[r[5]]||'?';
+      var ci={b:'y',p:'p',m:'n',s:'s'}[r[5]]||'n';
+      var sym={b:'&#x2713;',p:'&#x25D0;',m:'&#x25CB;',s:'&#x25A1;'}[r[5]]||'?';
+      tr.innerHTML='<td><span class="fn">'+r[0]+'</span><span class="fs '+(SM[r[3]]||'')+'">'+(SL[r[3]]||r[3])+'</span></td>'
+        +'<td><span class="ch '+(r[1]||'n')+'">'+(r[1]?'&#x2713;':'&#x25CB;')+'</span></td>'
+        +'<td><span class="ch '+(r[2]||'n')+'">'+(r[2]?'&#x2713;':'&#x25CB;')+'</span></td>'
+        +'<td><span class="ch '+(r[3]==="cat"?'':r[4]||'n')+'">'+(typeof r[4]==='string'&&r[4]!=='cat'?'&#x2713;':'&#x25CB;')+'</span></td>'
+        +'<td><span class="fs '+(SM[r[3]]||'')+'">'+(SL[r[3]]||r[3])+'</span></td>'
+        +'<td><span class="ch '+ci+'">'+sym+'</span></td>';
+    }
+    b.appendChild(tr);
+  });
+}
+</script>
+</body>
+</html>

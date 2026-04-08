@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BFS Enerza — MIS Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --ink:#0D1117;--ink2:#1E2A38;--ink3:#6B7685;--border:#E0E4EB;
+  --card:#fff;--bg:#F2F4F7;--blue:#0070F2;--navy:#1E3A5F;
+  --gas:#1D9E75;--elec:#BA7517;--water:#185FA5;--cng:#993C1D;
+  --green:#107E3E;--amber:#854F0B;--red:#A32D2D;
+  --r:10px;--mono:'DM Mono',monospace;--sans:'DM Sans',sans-serif;--disp:'Syne',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--sans);background:var(--bg);color:var(--ink);font-size:14px}
+
+.shell{background:var(--navy);height:52px;display:flex;align-items:center;
+  padding:0 28px;gap:14px;position:sticky;top:0;z-index:100}
+.brand{font-family:var(--disp);font-size:19px;font-weight:800;color:#fff}
+.brand span{color:#5BB8FF}
+.shell-sub{font-size:11px;color:rgba(255,255,255,.6);font-family:var(--mono);
+  text-transform:uppercase;letter-spacing:.5px}
+.shell-r{margin-left:auto;display:flex;gap:10px;align-items:center}
+.period-sel{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.25);
+  border-radius:6px;padding:5px 10px;font-size:12px;font-family:var(--mono);cursor:pointer}
+.refresh-btn{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);
+  border-radius:6px;padding:5px 12px;font-size:12px;cursor:pointer;font-family:var(--sans)}
+.refresh-btn:hover{background:rgba(255,255,255,.25)}
+
+.page{max-width:1440px;margin:0 auto;padding:20px 24px}
+
+/* KPI strip */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:14px;margin-bottom:20px}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:var(--r);
+  padding:14px 16px;position:relative;overflow:hidden}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.kpi.blue::before{background:var(--blue)}
+.kpi.green::before{background:var(--green)}
+.kpi.amber::before{background:var(--amber)}
+.kpi.red::before{background:var(--red)}
+.kpi.gas::before{background:var(--gas)}
+.kpi.elec::before{background:var(--elec)}
+.kpi.water::before{background:var(--water)}
+.kpi.cng::before{background:var(--cng)}
+.kpi-label{font-size:10px;text-transform:uppercase;letter-spacing:.6px;
+  color:var(--ink3);font-weight:500;margin-bottom:6px;font-family:var(--mono)}
+.kpi-val{font-size:24px;font-weight:700;font-family:var(--disp);line-height:1}
+.kpi-sub{font-size:11px;color:var(--ink3);margin-top:5px}
+.kpi-delta{font-size:11px;font-weight:500;margin-top:3px}
+.kpi-delta.up{color:var(--green)}.kpi-delta.dn{color:var(--red)}
+
+/* Layout */
+.row{display:grid;gap:16px;margin-bottom:16px}
+.row.col2{grid-template-columns:1fr 1fr}
+.row.col3{grid-template-columns:1fr 1fr 1fr}
+.row.col13{grid-template-columns:1fr 3fr}
+.row.col31{grid-template-columns:3fr 1fr}
+@media(max-width:900px){.row.col2,.row.col3,.row.col13,.row.col31{grid-template-columns:1fr}}
+
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);
+  padding:18px 20px;overflow:hidden}
+.card-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.card-title{font-family:var(--disp);font-size:14px;font-weight:700;color:var(--ink)}
+.card-sub{font-size:11px;color:var(--ink3);margin-top:2px}
+.chart-wrap{position:relative}
+
+/* Utility badges */
+.util-badge{display:inline-block;padding:2px 8px;border-radius:12px;font-family:var(--mono);
+  font-size:10px;font-weight:500;border:1px solid}
+.util-badge.gas  {background:rgba(29,158,117,.1);color:#0A5E42;border-color:rgba(29,158,117,.3)}
+.util-badge.elec {background:rgba(186,117,23,.1);color:#633800;border-color:rgba(186,117,23,.3)}
+.util-badge.water{background:rgba(24,95,165,.1);color:#0A3560;border-color:rgba(24,95,165,.3)}
+.util-badge.cng  {background:rgba(153,60,29,.1);color:#5E1A00;border-color:rgba(153,60,29,.3)}
+
+/* Aging table */
+.aging-bar{display:flex;height:10px;border-radius:5px;overflow:hidden;margin-bottom:6px;gap:2px}
+.aging-seg{height:100%;border-radius:3px;transition:width .6s}
+
+/* Collection gauge */
+.gauge-wrap{display:flex;align-items:center;justify-content:center;padding:10px 0}
+.gauge-ring{position:relative;width:140px;height:140px}
+.gauge-val{position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;text-align:center}
+.gauge-pct{font-family:var(--disp);font-size:28px;font-weight:800;color:var(--green)}
+.gauge-lbl{font-size:10px;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px}
+
+/* Status table */
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{font-size:10px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.5px;
+  color:var(--ink3);padding:6px 10px;border-bottom:1px solid var(--border);text-align:left;font-weight:500}
+.tbl td{padding:8px 10px;border-bottom:1px solid #F5F5F5}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:#F8FAFB}
+.tbl .mono{font-family:var(--mono);font-size:12px}
+.pill{display:inline-block;padding:1px 7px;border-radius:10px;font-size:10px;font-weight:500;border:1px solid}
+.pill.ok  {background:rgba(16,126,62,.1);color:#0A5E30;border-color:rgba(16,126,62,.3)}
+.pill.warn{background:rgba(133,79,11,.1);color:#633800;border-color:rgba(133,79,11,.3)}
+.pill.bad {background:rgba(163,45,45,.1);color:#7A1010;border-color:rgba(163,45,45,.3)}
+
+.section-label{font-size:11px;text-transform:uppercase;letter-spacing:.7px;
+  color:var(--ink3);font-weight:500;margin:18px 0 10px;font-family:var(--mono)}
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <div class="brand">BFS <span>Enerza</span></div>
+  <span class="shell-sub">MIS Dashboard</span>
+  <div class="shell-r">
+    <select class="period-sel" id="periodSel" onchange="updatePeriod(this.value)">
+      <option value="2026-03">March 2026</option>
+      <option value="2026-02">February 2026</option>
+      <option value="2026-01">January 2026</option>
+      <option value="2025-12">December 2025</option>
+    </select>
+    <button class="refresh-btn" onclick="refreshAll()">↻ Refresh</button>
+  </div>
+</div>
+
+<div class="page">
+
+  <!-- KPI Strip -->
+  <div class="kpi-grid">
+    <div class="kpi blue">
+      <div class="kpi-label">Active Customers</div>
+      <div class="kpi-val" id="kpi-customers">1,187</div>
+      <div class="kpi-sub">of 1,248 total</div>
+      <div class="kpi-delta up">+23 this month</div>
+    </div>
+    <div class="kpi green">
+      <div class="kpi-label">Revenue Billed</div>
+      <div class="kpi-val" id="kpi-billed">₹18.4L</div>
+      <div class="kpi-sub">March 2026</div>
+      <div class="kpi-delta up">+8.2% vs Feb</div>
+    </div>
+    <div class="kpi green">
+      <div class="kpi-label">Collected MTD</div>
+      <div class="kpi-val" id="kpi-collected">₹15.7L</div>
+      <div class="kpi-sub">85.3% efficiency</div>
+      <div class="kpi-delta up">+2.1% vs Feb</div>
+    </div>
+    <div class="kpi amber">
+      <div class="kpi-label">Overdue Balance</div>
+      <div class="kpi-val" id="kpi-overdue">₹2.1L</div>
+      <div class="kpi-sub">83 bills</div>
+      <div class="kpi-delta dn">+11 since last month</div>
+    </div>
+    <div class="kpi gas">
+      <div class="kpi-label">Gas Consumption</div>
+      <div class="kpi-val" id="kpi-gas">42,840</div>
+      <div class="kpi-sub">SCM · PNG only</div>
+      <div class="kpi-delta up">Seasonal +18%</div>
+    </div>
+    <div class="kpi elec">
+      <div class="kpi-label">Electricity Units</div>
+      <div class="kpi-val" id="kpi-elec">1.24L</div>
+      <div class="kpi-sub">kWh</div>
+      <div class="kpi-delta dn">-3% vs summer peak</div>
+    </div>
+    <div class="kpi water">
+      <div class="kpi-label">Water Consumed</div>
+      <div class="kpi-val" id="kpi-water">8,420</div>
+      <div class="kpi-sub">KL</div>
+      <div class="kpi-delta up">Stable</div>
+    </div>
+    <div class="kpi cng">
+      <div class="kpi-label">CNG Dispensed</div>
+      <div class="kpi-val" id="kpi-cng">18,640</div>
+      <div class="kpi-sub">SCM · 20 stations</div>
+      <div class="kpi-delta up">+5.4% vs Feb</div>
+    </div>
+  </div>
+
+  <!-- Row 1: Revenue trend + Collection ring -->
+  <div class="row col31">
+    <div class="card">
+      <div class="card-hdr">
+        <div>
+          <div class="card-title">Revenue trend — 12 months</div>
+          <div class="card-sub">Net billed vs collected, all utilities</div>
+        </div>
+      </div>
+      <div class="chart-wrap"><canvas id="revChart" height="80"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-hdr">
+        <div>
+          <div class="card-title">Collection efficiency</div>
+          <div class="card-sub">March 2026</div>
+        </div>
+      </div>
+      <div class="gauge-wrap">
+        <div class="gauge-ring">
+          <canvas id="gaugeChart" width="140" height="140"></canvas>
+          <div class="gauge-val">
+            <div class="gauge-pct">85.3%</div>
+            <div class="gauge-lbl">Collected</div>
+          </div>
+        </div>
+      </div>
+      <div style="font-size:12px;color:var(--ink3);text-align:center;margin-top:4px">
+        ₹15.7L of ₹18.4L billed
+      </div>
+    </div>
+  </div>
+
+  <!-- Row 2: Utility mix + Consumption trend -->
+  <div class="row col2">
+    <div class="card">
+      <div class="card-hdr">
+        <div class="card-title">Revenue by utility</div>
+        <div style="display:flex;gap:8px">
+          <span class="util-badge gas">Gas</span>
+          <span class="util-badge elec">Elec</span>
+          <span class="util-badge water">Water</span>
+          <span class="util-badge cng">CNG</span>
+        </div>
+      </div>
+      <div class="chart-wrap"><canvas id="utilityChart" height="120"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-hdr">
+        <div class="card-title">Monthly consumption trend</div>
+        <div class="card-sub">SCM / kWh / KL indexed to base 100</div>
+      </div>
+      <div class="chart-wrap"><canvas id="consChart" height="120"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Row 3: Arrears aging + Bill status -->
+  <div class="row col2">
+    <div class="card">
+      <div class="card-hdr">
+        <div>
+          <div class="card-title">Arrears aging analysis</div>
+          <div class="card-sub">Outstanding balance by age bucket</div>
+        </div>
+      </div>
+      <div class="chart-wrap"><canvas id="agingChart" height="90"></canvas></div>
+      <div style="margin-top:14px">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;font-size:12px">
+          <div style="text-align:center">
+            <div style="font-weight:500;color:var(--green)">₹48,200</div>
+            <div style="color:var(--ink3);font-size:10px">0–30 days</div>
+          </div>
+          <div style="text-align:center">
+            <div style="font-weight:500;color:var(--amber)">₹72,400</div>
+            <div style="color:var(--ink3);font-size:10px">31–60 days</div>
+          </div>
+          <div style="text-align:center">
+            <div style="font-weight:500;color:var(--red)">₹45,600</div>
+            <div style="color:var(--ink3);font-size:10px">61–90 days</div>
+          </div>
+          <div style="text-align:center">
+            <div style="font-weight:500;color:#6B0000">₹43,800</div>
+            <div style="color:var(--ink3);font-size:10px">&gt;90 days</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hdr">
+        <div>
+          <div class="card-title">Bill status breakdown</div>
+          <div class="card-sub">March 2026 billing cycle</div>
+        </div>
+      </div>
+      <div class="chart-wrap"><canvas id="billStatusChart" height="90"></canvas></div>
+      <div id="billStatusLegend" style="margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px"></div>
+    </div>
+  </div>
+
+  <!-- Row 4: Payment channels + Top overdue -->
+  <div class="row col2">
+    <div class="card">
+      <div class="card-hdr">
+        <div class="card-title">Payment channel mix</div>
+        <div class="card-sub">March 2026 — by transaction count</div>
+      </div>
+      <div class="chart-wrap"><canvas id="channelChart" height="90"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-hdr">
+        <div class="card-title">Top overdue accounts</div>
+        <div class="card-sub">Highest outstanding balance</div>
+      </div>
+      <table class="tbl">
+        <thead><tr><th>Account</th><th>Customer</th><th>Days</th><th>Balance</th><th>Status</th></tr></thead>
+        <tbody id="overdueTable"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Row 5: API partner activity + CNG station rankings -->
+  <div class="row col2">
+    <div class="card">
+      <div class="card-hdr">
+        <div class="card-title">API partner transactions</div>
+        <div class="card-sub">Last 7 days · response code distribution</div>
+      </div>
+      <div class="chart-wrap"><canvas id="apiChart" height="90"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-hdr">
+        <div class="card-title">CNG station performance</div>
+        <div class="card-sub">March 2026 · volume dispensed (SCM)</div>
+      </div>
+      <div class="chart-wrap"><canvas id="cngChart" height="90"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Row 6: Recent bills table -->
+  <div class="card" style="margin-bottom:20px">
+    <div class="card-hdr">
+      <div class="card-title">Recent bills — March 2026</div>
+      <div style="display:flex;gap:8px">
+        <select style="font-size:12px;border:1px solid var(--border);border-radius:6px;padding:4px 8px"
+                onchange="filterTable(this.value)">
+          <option value="">All utilities</option>
+          <option value="gas">Gas PNG</option>
+          <option value="elec">Electricity</option>
+          <option value="water">Water</option>
+        </select>
+      </div>
+    </div>
+    <div style="overflow-x:auto">
+      <table class="tbl" id="recentBills">
+        <thead><tr><th>Bill ID</th><th>Account</th><th>Customer</th><th>Utility</th><th>Period</th><th>Total</th><th>Paid</th><th>Balance</th><th>Status</th></tr></thead>
+        <tbody id="billsBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ─── Sample data ─────────────────────────────────────────────────────────────
+const MONTHS = ['Apr 25','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Jan 26','Feb','Mar'];
+
+const revData = {
+  billed:    [14.2,13.8,15.1,16.4,17.2,15.9,14.8,14.1,15.5,16.2,17.0,18.4],
+  collected: [12.1,11.9,13.2,14.8,15.5,14.1,12.9,12.2,13.8,14.5,15.3,15.7],
+};
+const gasConsumption  = [2820,2650,2480,2340,2200,2310,2890,3240,3680,3850,4020,4284];
+const elecConsumption = [9800,11200,12800,14200,13900,12100,10200,9400,8900,8600,9100,9800];
+const waterConsumption= [680,700,720,750,780,760,730,710,700,695,710,720];
+
+// ─── Chart defaults ───────────────────────────────────────────────────────────
+Chart.defaults.font.family = "'DM Sans', sans-serif";
+Chart.defaults.font.size   = 12;
+Chart.defaults.color       = '#6B7685';
+
+function lineOpts(title) {
+  return {
+    responsive:true, maintainAspectRatio:true,
+    plugins:{legend:{display:true,position:'top',labels:{boxWidth:12,font:{size:11}}},
+             tooltip:{mode:'index',intersect:false}},
+    scales:{x:{grid:{display:false}},y:{grid:{color:'#F0F0F0'},ticks:{callback:v=>'₹'+v+'L'}}},
+  };
+}
+
+// ─── Revenue trend ────────────────────────────────────────────────────────────
+new Chart(document.getElementById('revChart'), {
+  type:'line',
+  data:{
+    labels:MONTHS,
+    datasets:[
+      {label:'Billed',data:revData.billed,borderColor:'#0070F2',backgroundColor:'rgba(0,112,242,.06)',
+       fill:true,tension:.3,pointRadius:3},
+      {label:'Collected',data:revData.collected,borderColor:'#107E3E',backgroundColor:'rgba(16,126,62,.06)',
+       fill:true,tension:.3,pointRadius:3},
+    ]
+  },
+  options:lineOpts(),
+});
+
+// ─── Collection gauge ─────────────────────────────────────────────────────────
+new Chart(document.getElementById('gaugeChart'), {
+  type:'doughnut',
+  data:{
+    datasets:[{
+      data:[85.3,14.7],
+      backgroundColor:['#107E3E','#E8F5EE'],
+      borderWidth:0,
+      circumference:240, rotation:240,
+    }]
+  },
+  options:{
+    responsive:false, maintainAspectRatio:false, cutout:'78%',
+    plugins:{legend:{display:false},tooltip:{enabled:false}},
+  }
+});
+
+// ─── Utility revenue donut ────────────────────────────────────────────────────
+new Chart(document.getElementById('utilityChart'), {
+  type:'doughnut',
+  data:{
+    labels:['Gas PNG','Electricity','Water','CNG'],
+    datasets:[{
+      data:[52,28,12,8],
+      backgroundColor:['#1D9E75','#BA7517','#185FA5','#993C1D'],
+      borderWidth:2, borderColor:'#fff',
+    }]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:true, cutout:'60%',
+    plugins:{legend:{position:'right',labels:{boxWidth:12,font:{size:11}}},
+             tooltip:{callbacks:{label:c=>`${c.label}: ${c.parsed}%`}}}
+  }
+});
+
+// ─── Consumption trend ────────────────────────────────────────────────────────
+const norm = arr => arr.map(v=>Math.round(v/arr[0]*100));
+new Chart(document.getElementById('consChart'), {
+  type:'line',
+  data:{
+    labels:MONTHS,
+    datasets:[
+      {label:'Gas (SCM)',data:norm(gasConsumption),borderColor:'#1D9E75',tension:.3,pointRadius:2,fill:false},
+      {label:'Elec (kWh)',data:norm(elecConsumption),borderColor:'#BA7517',tension:.3,pointRadius:2,fill:false},
+      {label:'Water (KL)',data:norm(waterConsumption),borderColor:'#185FA5',tension:.3,pointRadius:2,fill:false},
+    ]
+  },
+  options:{
+    responsive:true,maintainAspectRatio:true,
+    plugins:{legend:{position:'top',labels:{boxWidth:12,font:{size:11}}}},
+    scales:{x:{grid:{display:false}},
+            y:{grid:{color:'#F0F0F0'},
+               ticks:{callback:v=>v+''},
+               title:{display:true,text:'Index (base 100)',font:{size:10}}}}
+  }
+});
+
+// ─── Arrears aging bar ────────────────────────────────────────────────────────
+new Chart(document.getElementById('agingChart'), {
+  type:'bar',
+  data:{
+    labels:['0–30 days','31–60 days','61–90 days','>90 days'],
+    datasets:[{
+      data:[48200,72400,45600,43800],
+      backgroundColor:['#107E3E','#854F0B','#A32D2D','#6B0000'],
+      borderRadius:4, barPercentage:.55,
+    }]
+  },
+  options:{
+    responsive:true,maintainAspectRatio:true,indexAxis:'y',
+    plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'₹'+c.parsed.x.toLocaleString('en-IN')}}},
+    scales:{x:{grid:{color:'#F0F0F0'},ticks:{callback:v=>'₹'+(v/100000).toFixed(1)+'L'}},
+            y:{grid:{display:false}}}
+  }
+});
+
+// ─── Bill status doughnut ────────────────────────────────────────────────────
+const billStatusChart = new Chart(document.getElementById('billStatusChart'), {
+  type:'doughnut',
+  data:{
+    labels:['Paid','Partially Paid','Generated','Overdue'],
+    datasets:[{
+      data:[68,12,7,13],
+      backgroundColor:['#107E3E','#1D9E75','#185FA5','#A32D2D'],
+      borderWidth:2,borderColor:'#fff',
+    }]
+  },
+  options:{
+    responsive:true,maintainAspectRatio:true,cutout:'55%',
+    plugins:{legend:{display:false}}
+  }
+});
+// Legend
+const bsLegend = document.getElementById('billStatusLegend');
+['Paid (68%)','Partial (12%)','Generated (7%)','Overdue (13%)'].forEach((lbl,i)=>{
+  const colors=['#107E3E','#1D9E75','#185FA5','#A32D2D'];
+  bsLegend.innerHTML+=`<div style="display:flex;align-items:center;gap:5px">
+    <div style="width:10px;height:10px;border-radius:50%;background:${colors[i]};flex-shrink:0"></div>
+    <span style="font-size:11px">${lbl}</span></div>`;
+});
+
+// ─── Payment channels ─────────────────────────────────────────────────────────
+new Chart(document.getElementById('channelChart'), {
+  type:'bar',
+  data:{
+    labels:['UPI','BBPS','Card','Net Banking','Cash'],
+    datasets:[{
+      data:[42,20,18,12,8],
+      backgroundColor:['#0070F2','#185FA5','#854F0B','#534AB7','#5F5E5A'],
+      borderRadius:5, barPercentage:.6,
+    }]
+  },
+  options:{
+    responsive:true,maintainAspectRatio:true,
+    plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.parsed.y+'%'}}},
+    scales:{x:{grid:{display:false}},y:{grid:{color:'#F0F0F0'},ticks:{callback:v=>v+'%'}}}
+  }
+});
+
+// ─── API transactions stacked bar ─────────────────────────────────────────────
+const apiDays=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+new Chart(document.getElementById('apiChart'), {
+  type:'bar',
+  data:{
+    labels:apiDays,
+    datasets:[
+      {label:'200 OK',    data:[342,289,401,368,425,198,156],backgroundColor:'#107E3E',stack:'s'},
+      {label:'400 Error', data:[12,8,15,9,18,4,3],            backgroundColor:'#854F0B',stack:'s'},
+      {label:'500 Error', data:[2,1,3,1,2,0,1],              backgroundColor:'#A32D2D',stack:'s'},
+    ]
+  },
+  options:{
+    responsive:true,maintainAspectRatio:true,
+    plugins:{legend:{position:'top',labels:{boxWidth:10,font:{size:10}}}},
+    scales:{x:{grid:{display:false},stacked:true},y:{grid:{color:'#F0F0F0'},stacked:true}}
+  }
+});
+
+// ─── CNG station horizontal bar ───────────────────────────────────────────────
+new Chart(document.getElementById('cngChart'), {
+  type:'bar', indexAxis:'y',
+  data:{
+    labels:['Navrangpura','Satellite Rd','Surat Ring Rd','Gandhinagar S11',
+            'CG Road','Adajan','Bopal','Maninagar','Gota','Thaltej'],
+    datasets:[{
+      data:[2840,2210,1980,1720,1650,1480,1340,1210,1100,980],
+      backgroundColor:'#993C1D', borderRadius:3, barPercentage:.6,
+    }]
+  },
+  options:{
+    responsive:true,maintainAspectRatio:true,
+    plugins:{legend:{display:false}},
+    scales:{x:{grid:{color:'#F0F0F0'},ticks:{callback:v=>v+' SCM'}},y:{grid:{display:false}}}
+  }
+});
+
+// ─── Overdue table ────────────────────────────────────────────────────────────
+const overdueData = [
+  ['ACCT000121','Mehta Industries Ltd','72','₹42,300','bad'],
+  ['ACCT000234','Rajesh B Sharma','65','₹18,450','bad'],
+  ['ACCT000378','Gujarat Ceramics Ltd','58','₹12,780','warn'],
+  ['ACCT000445','Sunita R Desai','45','₹9,120','warn'],
+  ['ACCT000512','Ashok N Verma','34','₹7,340','warn'],
+];
+document.getElementById('overdueTable').innerHTML = overdueData.map(r=>`
+  <tr>
+    <td class="mono">${r[0]}</td><td>${r[1]}</td>
+    <td><span class="pill ${r[4]}">${r[2]}d</span></td>
+    <td style="font-weight:500;font-family:var(--mono)">${r[3]}</td>
+    <td><span class="pill ${r[4]}">${r[4]==='bad'?'Critical':'Overdue'}</span></td>
+  </tr>`).join('');
+
+// ─── Recent bills table ───────────────────────────────────────────────────────
+const billData = [
+  ['BILL0001234','ACCT000001','Ramesh H Shah','gas','2026-03','₹529','₹529','₹0','ok'],
+  ['BILL0001235','ACCT000002','Priya N Patel','elec','2026-03','₹1,289','₹1,289','₹0','ok'],
+  ['BILL0001236','ACCT000003','Mehta Industries','gas','2026-03','₹3,851','₹1,926','₹1,925','warn'],
+  ['BILL0001237','ACCT000004','Sunita R Desai','water','2026-03','₹219','₹0','₹219','bad'],
+  ['BILL0001238','ACCT000005','Anand Infra Corp','gas','2026-03','₹892','₹892','₹0','ok'],
+  ['BILL0001239','ACCT000006','Geeta Kulkarni','elec','2026-03','₹674','₹674','₹0','ok'],
+  ['BILL0001240','ACCT000007','Gujarat Ceramics','elec','2026-03','₹8,340','₹0','₹8,340','bad'],
+  ['BILL0001241','ACCT000008','Vijay D Modi','gas','2026-03','₹445','₹445','₹0','ok'],
+];
+const utilLabel={'gas':'<span class="util-badge gas">Gas PNG</span>','elec':'<span class="util-badge elec">Electricity</span>','water':'<span class="util-badge water">Water</span>','cng':'<span class="util-badge cng">CNG</span>'};
+const statusLabel={'ok':'<span class="pill ok">Paid</span>','warn':'<span class="pill warn">Partial</span>','bad':'<span class="pill bad">Overdue</span>'};
+
+function renderBills(filter='') {
+  document.getElementById('billsBody').innerHTML = billData
+    .filter(r=>!filter||r[3]===filter)
+    .map(r=>`<tr>
+      <td class="mono">${r[0]}</td>
+      <td class="mono">${r[1]}</td>
+      <td>${r[2]}</td>
+      <td>${utilLabel[r[3]]}</td>
+      <td class="mono">${r[4]}</td>
+      <td style="font-family:var(--mono)">${r[5]}</td>
+      <td style="font-family:var(--mono);color:var(--green)">${r[6]}</td>
+      <td style="font-family:var(--mono);color:${r[7]==='₹0'?'var(--ink3)':'var(--red)'}">${r[7]}</td>
+      <td>${statusLabel[r[8]]}</td>
+    </tr>`).join('');
+}
+renderBills();
+
+function filterTable(val) { renderBills(val); }
+
+// ─── Period update ─────────────────────────────────────────────────────────────
+function updatePeriod(period) {
+  // In production: fetch from /api/v1/reports/revenue-by-month?months=12
+  console.log('Fetching data for period:', period);
+}
+
+function refreshAll() {
+  const btn = document.querySelector('.refresh-btn');
+  btn.textContent = '↻ Refreshing...';
+  setTimeout(()=>{ btn.textContent='↻ Refresh'; }, 1200);
+  // In production: re-fetch all chart data from API
+}
+</script>
+</body>
+</html>

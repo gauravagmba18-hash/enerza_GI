@@ -1,0 +1,2204 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Enerza Finance &amp; Billing Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#0D1B2A;--navy2:#1A2B3C;--gold:#9B7300;--gold-l:#FEF5D6;--gold-m:#CCA000;
+  --blue:#0051AB;--blue-l:#E6F1FF;--green:#107E3E;--green-l:#E0F5EE;
+  --red:#A32D2D;--red-l:#FFEBEB;--amber:#7A4A00;--amber-l:#FFF3E0;
+  --teal:#0A6B5E;--teal-l:#E0F5F2;--purple:#5A2D82;--purple-l:#F3EEFF;
+  --ink:#0D1117;--ink2:#1E2D3E;--ink3:#5A6675;--ink4:#8A96A2;
+  --border:#D8DDE8;--card:#fff;--bg:#F2F4F8;--sidebar:#0D1B2A;
+  --r:8px;--mono:"DM Mono","Courier New",monospace;--sans:"DM Sans","Segoe UI",sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:var(--sans);background:var(--bg);color:var(--ink);font-size:13px;line-height:1.5}
+
+/* Shell */
+.shell{display:flex;height:100vh;overflow:hidden}
+.sidebar{width:210px;background:var(--sidebar);flex-shrink:0;display:flex;flex-direction:column;overflow-y:auto}
+.main{flex:1;overflow-y:auto;display:flex;flex-direction:column}
+.sb-brand{padding:14px 14px 10px;border-bottom:1px solid rgba(255,255,255,.07)}
+.sb-logo{font-family:"Syne","Georgia",serif;font-size:15px;font-weight:800;color:#fff;display:flex;align-items:center;gap:6px}
+.sb-logo em{color:#FFD966;font-style:normal}
+.sb-tag{font-size:9px;color:rgba(255,255,255,.38);font-family:var(--mono);text-transform:uppercase;letter-spacing:.5px;margin-top:3px}
+.sb-group{padding:9px 11px 3px;font-size:9px;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:.6px;font-family:var(--mono)}
+.sb-item{display:flex;align-items:center;gap:8px;padding:7px 12px;margin:1px 7px;border-radius:6px;
+  cursor:pointer;color:rgba(255,255,255,.62);font-size:12px;transition:all .15s;line-height:1.3}
+.sb-item:hover{background:rgba(255,255,255,.08);color:#fff}
+.sb-item.a{background:rgba(255,217,102,.15);color:#FFD966}
+.sb-icon{width:18px;text-align:center;font-size:13px;flex-shrink:0}
+.sb-badge{margin-left:auto;background:var(--red);color:#fff;font-size:9px;padding:1px 5px;border-radius:8px;font-family:var(--mono)}
+.topbar{background:#fff;border-bottom:1px solid var(--border);padding:0 20px;height:46px;
+  display:flex;align-items:center;gap:12px;flex-shrink:0;position:sticky;top:0;z-index:100}
+.tb-title{font-family:"Syne","Georgia",serif;font-size:15px;font-weight:700}
+.tb-sub{font-size:11px;color:var(--ink3)}
+.tb-r{margin-left:auto;display:flex;gap:8px;align-items:center}
+
+/* Buttons */
+.btn{padding:5px 12px;border-radius:6px;font-size:12px;cursor:pointer;border:1px solid transparent;
+  font-family:var(--sans);display:inline-flex;align-items:center;gap:5px;transition:all .15s;white-space:nowrap}
+.btn-p{background:var(--navy);color:#fff;border-color:var(--navy)}.btn-p:hover{background:var(--navy2)}
+.btn-s{background:#fff;color:var(--ink2);border-color:var(--border)}.btn-s:hover{background:var(--bg)}
+.btn-g{background:var(--green);color:#fff}.btn-g:hover{opacity:.9}
+.btn-r{background:var(--red);color:#fff}.btn-r:hover{opacity:.9}
+.btn-am{background:var(--amber);color:#fff}
+.btn-gold{background:var(--gold);color:#fff}
+.btn-sm{padding:3px 9px;font-size:11px}
+.btn-xs{padding:2px 7px;font-size:10px;border-radius:4px}
+
+/* Page, Card */
+.content{padding:18px 20px;flex:1}
+.page{display:none}.page.a{display:block}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:14px}
+.card-hd{padding:11px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.card-title{font-family:"Syne","Georgia",serif;font-size:13px;font-weight:700}
+.card-sub{font-size:11px;color:var(--ink3)}
+.card-body{padding:14px 16px}
+.card-r{margin-left:auto;display:flex;gap:6px;align-items:center}
+
+/* Grids */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:13px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.g5{display:grid;grid-template-columns:repeat(5,1fr);gap:11px}
+@media(max-width:1200px){.g4{grid-template-columns:1fr 1fr 1fr}.g5{grid-template-columns:1fr 1fr 1fr}}
+@media(max-width:900px){.g2,.g3,.g4,.g5{grid-template-columns:1fr}}
+
+/* KPI */
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:12px 15px;position:relative;overflow:hidden}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.kpi.bl::before{background:var(--blue)}.kpi.gr::before{background:var(--green)}
+.kpi.rd::before{background:var(--red)}.kpi.am::before{background:var(--gold)}
+.kpi.tl::before{background:var(--teal)}.kpi.pu::before{background:var(--purple)}.kpi.nv::before{background:var(--navy)}
+.kpi-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--ink3);margin-bottom:5px;font-family:var(--mono)}
+.kpi-val{font-family:"Syne","Georgia",serif;font-size:22px;font-weight:800;line-height:1}
+.kpi-sub{font-size:11px;color:var(--ink3);margin-top:4px}
+.kpi-delta{font-size:11px;margin-top:2px;font-weight:500}
+.kpi-delta.up{color:var(--green)}.kpi-delta.dn{color:var(--red)}
+
+/* Pills */
+.pill{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:10px;
+  font-size:10px;font-weight:600;font-family:var(--mono);border:1px solid;white-space:nowrap}
+.pill.gr{background:var(--green-l);color:var(--green);border-color:rgba(16,126,62,.25)}
+.pill.bl{background:var(--blue-l);color:var(--blue);border-color:rgba(0,81,171,.25)}
+.pill.am{background:var(--amber-l);color:var(--amber);border-color:rgba(122,74,0,.25)}
+.pill.rd{background:var(--red-l);color:var(--red);border-color:rgba(163,45,45,.25)}
+.pill.pu{background:var(--purple-l);color:var(--purple);border-color:rgba(90,45,130,.25)}
+.pill.cl{background:#F0F0F0;color:#555;border-color:#DDD}
+.pill.tl{background:var(--teal-l);color:var(--teal);border-color:rgba(10,107,94,.25)}
+.pill.gd{background:var(--gold-l);color:var(--gold);border-color:rgba(155,115,0,.3)}
+
+/* Tables */
+.tbl-wrap{overflow-x:auto}
+.tbl{width:100%;border-collapse:collapse;font-size:12px}
+.tbl th{padding:8px 12px;font-size:10px;font-family:var(--mono);font-weight:500;text-transform:uppercase;
+  letter-spacing:.4px;color:var(--ink3);border-bottom:2px solid var(--border);text-align:left;background:#F8FAFB;white-space:nowrap}
+.tbl td{padding:8px 12px;border-bottom:1px solid #F5F5F7;vertical-align:middle}
+.tbl tr:hover td{background:#FAFBFC}
+.tbl tr:last-child td{border-bottom:none}
+.tbl-foot td{background:#F8FAFB;font-weight:700;border-top:2px solid var(--border)}
+.td-link{color:var(--blue);cursor:pointer;font-weight:500}
+.td-mono{font-family:var(--mono);font-size:11px}
+.td-r{text-align:right}
+.td-cr{color:var(--green);font-weight:600}
+.td-dr{color:var(--red);font-weight:600}
+.num-r{text-align:right;font-family:var(--mono);font-size:12px}
+
+/* Forms */
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.form-row.c1{grid-template-columns:1fr}
+.form-row.c3{grid-template-columns:1fr 1fr 1fr}
+.form-row.c4{grid-template-columns:1fr 1fr 1fr 1fr}
+.fg{display:flex;flex-direction:column;gap:3px}
+.fl{font-size:11px;font-weight:500;color:var(--ink2)}
+.fi,.fs,.fta{padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;
+  font-family:var(--sans);color:var(--ink);background:#fff;transition:border .15s;width:100%}
+.fi:focus,.fs:focus,.fta:focus{outline:none;border-color:var(--blue)}
+.fta{resize:vertical;min-height:64px}
+.fi-sm{padding:4px 8px;font-size:11px;font-family:var(--mono)}
+.fi-r{text-align:right;font-family:var(--mono)}
+
+/* Sections inside card */
+.sec-hd{font-size:11px;font-weight:700;color:var(--ink3);font-family:var(--mono);text-transform:uppercase;
+  letter-spacing:.5px;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+
+/* Progress */
+.prog{height:6px;background:#EAECEF;border-radius:3px;overflow:hidden;margin-top:4px}
+.pf{height:100%;border-radius:3px;transition:width .6s}
+.pf.gr{background:var(--green)}.pf.am{background:var(--gold)}.pf.rd{background:var(--red)}.pf.bl{background:var(--blue)}
+
+/* Tabs inside card */
+.ctabs{display:flex;border-bottom:1px solid var(--border);background:#FAFBFC;overflow-x:auto}
+.ct{padding:8px 15px;font-size:12px;font-weight:600;color:var(--ink3);cursor:pointer;
+  border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;white-space:nowrap}
+.ct:hover{color:var(--ink)}.ct.a{color:var(--navy);border-bottom-color:var(--navy)}
+.cpane{display:none;padding:16px}.cpane.a{display:block}
+
+/* Modal */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;display:none;align-items:flex-start;justify-content:center;padding-top:40px;overflow-y:auto}
+.modal-bg.open{display:flex}
+.modal{background:#fff;border-radius:12px;width:640px;max-width:96vw;box-shadow:0 20px 60px rgba(0,0,0,.3);margin-bottom:40px}
+.modal-lg{width:840px}
+.modal-hd{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;position:sticky;top:0;background:#fff;border-radius:12px 12px 0 0;z-index:1}
+.modal-title{font-family:"Syne","Georgia",serif;font-size:15px;font-weight:700;flex:1}
+.modal-close{width:28px;height:28px;border-radius:6px;background:var(--bg);border:1px solid var(--border);cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center}
+.modal-body{padding:18px 20px}
+.modal-ft{padding:12px 20px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;position:sticky;bottom:0;background:#fff;border-radius:0 0 12px 12px}
+
+/* Slab builder */
+.slab-builder{border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.slab-hd{display:grid;grid-template-columns:80px 120px 120px 140px 100px 80px;gap:0;background:#F0F4FA;
+  padding:7px 10px;font-size:10px;font-family:var(--mono);color:var(--ink3);text-transform:uppercase;letter-spacing:.4px;font-weight:500}
+.slab-row{display:grid;grid-template-columns:80px 120px 120px 140px 100px 80px;gap:0;
+  padding:6px 10px;border-top:1px solid #F0F0F0;align-items:center}
+.slab-row:hover{background:#FAFBFC}
+.slab-row input[type=number]{width:90%;padding:4px 7px;border:1px solid var(--border);border-radius:5px;
+  font-size:12px;font-family:var(--mono);text-align:right;background:#fff}
+.slab-row input:focus{outline:none;border-color:var(--blue)}
+.slab-del{color:var(--red);cursor:pointer;font-size:14px;padding:2px 6px}
+.slab-row select{padding:4px 7px;border:1px solid var(--border);border-radius:5px;font-size:11px;background:#fff}
+
+/* Tariff preview chart (CSS-only bar chart) */
+.tariff-chart{display:flex;align-items:flex-end;gap:3px;height:100px;padding:8px 0 0}
+.tariff-bar-wrap{display:flex;flex-direction:column;align-items:center;flex:1}
+.tariff-bar{width:100%;border-radius:3px 3px 0 0;transition:height .5s;position:relative;cursor:pointer}
+.tariff-bar-lbl{font-size:9px;color:var(--ink3);font-family:var(--mono);margin-top:4px;text-align:center}
+.tariff-bar-val{font-size:9px;font-weight:700;text-align:center;margin-bottom:2px}
+
+/* FICA - Open item row types */
+.oi-recv{border-left:3px solid var(--blue)}
+.oi-pay{border-left:3px solid var(--green)}
+.oi-dun{border-left:3px solid var(--red)}
+.oi-int{border-left:3px solid var(--purple)}
+.oi-adj{border-left:3px solid var(--gold)}
+.oi-dep{border-left:3px solid var(--teal)}
+
+/* Journal entry table */
+.je-tbl{width:100%;border-collapse:collapse;font-size:12px}
+.je-tbl th{padding:7px 12px;font-size:10px;font-family:var(--mono);font-weight:500;
+  text-transform:uppercase;letter-spacing:.4px;color:var(--ink3);background:#F0F4FA;text-align:left}
+.je-tbl td{padding:7px 12px;border-bottom:1px solid #F5F5F7}
+.je-tbl tr.je-dr td{background:#FFFAF5}
+.je-tbl tr.je-cr td{background:#F5FFFB}
+.je-tbl tr.je-total td{background:#F0F4FA;font-weight:700;border-top:2px solid var(--border)}
+.je-account{font-family:var(--mono);font-size:11px;color:var(--blue)}
+.je-amount{font-family:var(--mono);font-size:12px;font-weight:600;text-align:right}
+
+/* WO / PO lightweight */
+.wo-po-badge{padding:4px 10px;border-radius:6px;font-family:var(--mono);font-size:10px;font-weight:600}
+
+/* Timeline */
+.tl{padding-left:16px;border-left:2px solid var(--border)}
+.tl-item{position:relative;padding:0 0 14px 18px}
+.tl-item::before{content:'';position:absolute;left:-9px;top:3px;width:14px;height:14px;border-radius:50%;background:#fff;border:2px solid var(--border)}
+.tl-item.done::before{background:var(--green);border-color:var(--green)}
+.tl-item.now::before{background:var(--blue);border-color:var(--blue);box-shadow:0 0 0 3px rgba(0,81,171,.2)}
+.tl-item.pend::before{background:#fff}
+.tl-t{font-size:12px;font-weight:600;color:var(--ink)}
+.tl-s{font-size:11px;color:var(--ink3);margin-top:2px}
+.tl-ts{font-size:10px;color:var(--ink4);font-family:var(--mono)}
+
+/* ERP posting flow */
+.erp-flow{display:flex;align-items:center;gap:0;flex-wrap:wrap}
+.erp-box{border:1.5px solid var(--border);border-radius:8px;padding:10px 14px;background:#fff;
+  text-align:center;min-width:110px;position:relative}
+.erp-box.active{border-color:var(--blue);box-shadow:0 0 0 2px rgba(0,81,171,.12)}
+.erp-box.done{border-color:var(--green)}
+.erp-box.erp{border-color:var(--purple);background:var(--purple-l)}
+.erp-arrow{font-size:18px;color:var(--ink3);padding:0 8px;flex-shrink:0}
+.erp-title{font-size:11px;font-weight:600;font-family:var(--mono)}
+.erp-sub{font-size:10px;color:var(--ink3);margin-top:2px}
+
+/* Dunning levels */
+.dun-level{padding:12px 14px;border-radius:8px;border:1px solid;margin-bottom:8px;display:flex;align-items:flex-start;gap:12px}
+.dun-level.l1{background:var(--amber-l);border-color:rgba(122,74,0,.25)}
+.dun-level.l2{background:#FFF0E0;border-color:rgba(163,80,0,.3)}
+.dun-level.l3{background:var(--red-l);border-color:rgba(163,45,45,.3)}
+.dun-num{font-family:var(--mono);font-size:22px;font-weight:800;width:32px;flex-shrink:0}
+
+/* Info grid */
+.info-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:0}
+.info-item{padding:8px 12px 8px 0}
+.info-lbl{font-size:10px;color:var(--ink3);font-family:var(--mono);text-transform:uppercase;letter-spacing:.3px}
+.info-val{font-size:12px;font-weight:500;margin-top:2px}
+
+/* GL account structure visual */
+.coa-item{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #F5F5F7}
+.coa-code{font-family:var(--mono);font-size:11px;color:var(--blue);min-width:60px;font-weight:600}
+.coa-name{font-size:12px;color:var(--ink2)}
+.coa-type{font-size:10px;font-family:var(--mono);padding:1px 5px;border-radius:3px;margin-left:auto}
+.coa-type.A{background:#E6F1FF;color:var(--blue)}
+.coa-type.L{background:var(--amber-l);color:var(--amber)}
+.coa-type.R{background:var(--green-l);color:var(--green)}
+.coa-type.E{background:var(--red-l);color:var(--red)}
+.coa-indent{padding-left:20px}
+.coa-indent2{padding-left:40px}
+
+@keyframes slideUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}</style>
+</head><body>
+<div class="shell">
+<nav class="sidebar">
+<div class="sb-brand"><div class="sb-logo">⚡ <em>Enerza</em></div><div class="sb-tag">Finance &amp; Billing</div></div>
+<div class="sb-group">Finance</div>
+<div class="sb-item" onclick="nav('dash',this)"><span class="sb-icon">📊</span>Finance Dashboard</div>
+<div class="sb-item" onclick="nav('fica',this)"><span class="sb-icon">📒</span>FI-CA Register</div>
+<div class="sb-item" onclick="nav('coa',this)"><span class="sb-icon">🗂️</span>Chart of Accounts</div>
+<div class="sb-group">Billing</div>
+<div class="sb-item" onclick="nav('tariff',this)"><span class="sb-icon">⚡</span>Rate Categories</div>
+<div class="sb-item" onclick="nav('billing',this)"><span class="sb-icon">🧾</span>Billing Engine</div>
+<div class="sb-item" onclick="nav('dunning',this)"><span class="sb-icon">🔔</span>Dunning<span class="sb-badge">3</span></div>
+<div class="sb-group">Accounts</div>
+<div class="sb-item" onclick="nav('deposit',this)"><span class="sb-icon">🏦</span>Security Deposits</div>
+<div class="sb-item" onclick="nav('dispute',this)"><span class="sb-icon">⚖️</span>Disputes & Credits<span class="sb-badge">2</span></div>
+<div class="sb-item" onclick="nav('erp',this)"><span class="sb-icon">🔗</span>ERP Revenue Post</div>
+<div class="sb-group">Operations</div>
+<div class="sb-item" onclick="nav('wo',this)"><span class="sb-icon">🔧</span>Work Orders</div>
+<div class="sb-item" onclick="nav('po',this)"><span class="sb-icon">📦</span>Purchase Orders</div>
+</nav>
+<div class="main">
+<div class="topbar"><div class="tb-title">Finance Dashboard</div>
+<div class="tb-sub">FI-CA · Billing · Revenue · Collections overview</div>
+<div class="tb-r">
+<span style="font-size:11px;color:var(--ink3);font-family:var(--mono)">Period: Apr 2026</span>
+<button class="btn btn-s btn-sm" onclick="toast('Exporting finance summary to Excel...')">📥 Export</button>
+<button class="btn btn-p btn-sm" onclick="triggerERPPost()">🔗 Post to ERP</button>
+</div></div>
+<div class="content">
+<div id="p-dash" class="page a">
+<div class="g5" style="margin-bottom:14px">
+<div class="kpi bl"><div class="kpi-lbl">Revenue Billed</div><div class="kpi-val">₹18.4L</div>
+<div class="kpi-sub">Apr 2026</div><div class="kpi-delta up">↑ 8.2%</div></div>
+<div class="kpi gr"><div class="kpi-lbl">Collected MTD</div><div class="kpi-val">₹15.7L</div>
+<div class="kpi-sub">85.3% efficiency</div><div class="kpi-delta up">↑ 2.1%</div></div>
+<div class="kpi am"><div class="kpi-lbl">Open Receivables</div><div class="kpi-val">₹2.7L</div>
+<div class="kpi-sub">FI-CA open items</div><div class="kpi-delta dn">↓ target</div></div>
+<div class="kpi rd"><div class="kpi-lbl">Overdue > 60d</div><div class="kpi-val">₹48,320</div>
+<div class="kpi-sub">2 accounts</div><div class="kpi-delta dn">Agency queue: 1</div></div>
+<div class="kpi tl"><div class="kpi-lbl">ERP Posts MTD</div><div class="kpi-val">12</div>
+<div class="kpi-sub">₹15.7L posted</div><div class="kpi-delta up">All reconciled</div></div>
+</div>
+<div class="g2">
+<div class="card"><div class="card-hd"><div class="card-title">💰 Revenue Breakdown — Apr 2026</div></div>
+<div class="tbl-wrap"><table class="tbl"><thead><tr>
+<th>Component</th><th>LT Domestic</th><th>LT Commercial</th><th>HT Industrial</th><th>Total</th></tr></thead><tbody>
+<tr><td  >Energy Charges</td><td class=td-mono style=text-align:right>₹5,24,800</td><td class=td-mono style=text-align:right>₹3,12,400</td><td class=td-mono style=text-align:right>₹7,84,200</td><td class=td-mono style=text-align:right>₹16,21,400</td></tr>
+<tr><td  >Fixed / Meter Rent</td><td class=td-mono style=text-align:right>₹18,000</td><td class=td-mono style=text-align:right>₹24,500</td><td class=td-mono style=text-align:right>₹42,000</td><td class=td-mono style=text-align:right>₹84,500</td></tr>
+<tr><td  >Demand Charges (HT)</td><td class=td-mono style=text-align:right>—</td><td class=td-mono style=text-align:right>—</td><td class=td-mono style=text-align:right>₹2,18,000</td><td class=td-mono style=text-align:right>₹2,18,000</td></tr>
+<tr><td  >PF Penalty (HT)</td><td class=td-mono style=text-align:right>—</td><td class=td-mono style=text-align:right>—</td><td class=td-mono style=text-align:right>₹18,400</td><td class=td-mono style=text-align:right>₹18,400</td></tr>
+<tr><td  >Electricity Duty</td><td class=td-mono style=text-align:right>₹78,720</td><td class=td-mono style=text-align:right>₹46,860</td><td class=td-mono style=text-align:right>₹1,17,630</td><td class=td-mono style=text-align:right>₹2,43,210</td></tr>
+<tr><td  >GST on Meter Rent</td><td class=td-mono style=text-align:right>₹3,240</td><td class=td-mono style=text-align:right>₹4,410</td><td class=td-mono style=text-align:right>₹7,560</td><td class=td-mono style=text-align:right>₹15,210</td></tr>
+<tr><td  >FPPC Surcharge</td><td class=td-mono style=text-align:right>₹26,240</td><td class=td-mono style=text-align:right>₹15,620</td><td class=td-mono style=text-align:right>₹39,210</td><td class=td-mono style=text-align:right>₹81,070</td></tr>
+<tr><td  >Late Fees / Interest</td><td class=td-mono style=text-align:right>₹4,200</td><td class=td-mono style=text-align:right>₹1,800</td><td class=td-mono style=text-align:right>₹12,500</td><td class=td-mono style=text-align:right>₹18,500</td></tr>
+<tr class="tbl-foot"><td>TOTAL</td><td class="td-mono td-r">₹6,55,200</td><td class="td-mono td-r">₹4,05,590</td><td class="td-mono td-r">₹12,41,500</td><td class="td-mono td-r" style="color:var(--blue)">₹18,40,790</td></tr>
+</tbody></table></div></div>
+<div class="card"><div class="card-hd"><div class="card-title">📒 FI-CA Receivables Aging</div>
+<div class="card-r"><button class="btn btn-s btn-sm" onclick="nav('fica',null)">View Ledger →</button></div></div>
+<div class="card-body">
+<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;margin-bottom:4px">
+<span style="font-size:12px">0–30 days</span><span style="font-family:var(--mono);font-weight:600">₹1,28,400 (47%)</span></div>
+<div class="prog"><div class="pf gr" style="width:47%"></div></div></div>
+<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;margin-bottom:4px">
+<span style="font-size:12px">31–60 days</span><span style="font-family:var(--mono);font-weight:600">₹92,300 (34%)</span></div>
+<div class="prog"><div class="pf am" style="width:34%"></div></div></div>
+<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;margin-bottom:4px">
+<span style="font-size:12px">61–90 days</span><span style="font-family:var(--mono);font-weight:600">₹32,100 (12%)</span></div>
+<div class="prog"><div class="pf rd" style="width:12%"></div></div></div>
+<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;margin-bottom:4px">
+<span style="font-size:12px">> 90 days</span><span style="font-family:var(--mono);font-weight:600">₹19,800 (7%)</span></div>
+<div class="prog"><div class="pf rd" style="width:7%"></div></div></div>
+<div style="padding:10px;background:var(--bg);border-radius:6px;display:flex;justify-content:space-between">
+<span style="font-size:12px;font-weight:600">Total Open Receivables</span>
+<span style="font-family:var(--mono);font-size:14px;font-weight:700;color:var(--red)">₹2,72,600</span></div>
+</div></div>
+</div>
+<div class="g2">
+<div class="card"><div class="card-hd"><div class="card-title">🔗 ERP Revenue Posting History</div>
+<div class="card-r"><button class="btn btn-p btn-sm" onclick="nav('erp',null)">Open Module →</button></div></div>
+<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Post Ref</th><th>Date</th><th>Period</th><th>Amount</th><th>ERP Batch</th><th>Status</th></tr></thead><tbody>
+<tr><td class="td-mono td-link">ERP-JE-041</td><td style="font-size:11px">06-Apr-26</td>
+<td class="td-mono">Apr-26</td><td class="td-mono" style="font-weight:700;text-align:right">₹15,70,000</td>
+<td class="td-mono" style="font-size:10px">BATCH-0041</td><td><span class="pill gr">✓ Posted</span></td></tr>
+<tr><td class="td-mono td-link">ERP-JE-040</td><td style="font-size:11px">06-Mar-26</td>
+<td class="td-mono">Mar-26</td><td class="td-mono" style="font-weight:700;text-align:right">₹14,84,200</td>
+<td class="td-mono" style="font-size:10px">BATCH-0040</td><td><span class="pill gr">✓ Posted</span></td></tr>
+<tr><td class="td-mono td-link">ERP-JE-039</td><td style="font-size:11px">05-Feb-26</td>
+<td class="td-mono">Feb-26</td><td class="td-mono" style="font-weight:700;text-align:right">₹13,92,400</td>
+<td class="td-mono" style="font-size:10px">BATCH-0039</td><td><span class="pill gr">✓ Posted</span></td></tr>
+<tr><td class="td-mono td-link">ERP-JE-038</td><td style="font-size:11px">06-Jan-26</td>
+<td class="td-mono">Jan-26</td><td class="td-mono" style="font-weight:700;text-align:right">₹14,12,000</td>
+<td class="td-mono" style="font-size:10px">BATCH-0038</td><td><span class="pill gr">✓ Posted</span></td></tr>
+</tbody></table></div></div>
+<div class="card"><div class="card-hd"><div class="card-title">🔔 Dunning Status Summary</div>
+<div class="card-r"><button class="btn btn-s btn-sm" onclick="nav('dunning',null)">Run Dunning →</button></div></div>
+<div class="card-body">
+<div class="dun-level l1">
+<div class="dun-num">8</div>
+<div style="flex:1"><div style="font-size:12px;font-weight:600">L1 — Reminder</div>
+<div style="font-size:11px;color:var(--ink3)">SMS + Email · 15 days overdue</div></div>
+<div style="font-family:var(--mono);font-weight:700;font-size:13px">₹48,200</div></div>
+<div class="dun-level l2">
+<div class="dun-num">4</div>
+<div style="flex:1"><div style="font-size:12px;font-weight:600">L2 — Formal Warning</div>
+<div style="font-size:11px;color:var(--ink3)">Registered letter · 30 days overdue</div></div>
+<div style="font-family:var(--mono);font-weight:700;font-size:13px">₹1,24,300</div></div>
+<div class="dun-level l3">
+<div class="dun-num">2</div>
+<div style="flex:1"><div style="font-size:12px;font-weight:600">L3 — Final Notice / Legal</div>
+<div style="font-size:11px;color:var(--ink3)">Legal notice · Agency handover · 45+ days</div></div>
+<div style="font-family:var(--mono);font-weight:700;font-size:13px">₹2,66,820</div></div>
+</div></div>
+</div>
+</div>
+<div id="p-fica" class="page">
+<div class="g4" style="margin-bottom:14px">
+<div class="kpi bl"><div class="kpi-lbl">Open Items</div><div class="kpi-val">186</div></div>
+<div class="kpi rd"><div class="kpi-lbl">Total Receivable</div><div class="kpi-val">₹2.7L</div></div>
+<div class="kpi gr"><div class="kpi-lbl">Cleared MTD</div><div class="kpi-val">₹15.7L</div></div>
+<div class="kpi am"><div class="kpi-lbl">Dispute Hold</div><div class="kpi-val">₹42,800</div></div>
+</div>
+<div class="card">
+<div class="card-hd"><div class="card-title">📒 FI-CA Open Item Subledger</div>
+<div class="card-sub">Contract account receivable & payable · every financial posting per consumer</div>
+<div class="card-r" style="gap:6px">
+<select class="fs" style="font-size:11px;padding:4px 8px"><option>All Types</option><option>Receivable</option><option>Payment</option><option>Dunning Fee</option><option>Deposit</option><option>Interest</option><option>Adjustment</option></select>
+<input class="fi" placeholder="Search CA / Customer..." style="width:180px">
+<button class="btn btn-p btn-sm" onclick="openM('m-manual-post')">+ Manual Posting</button>
+</div></div>
+<div class="tbl-wrap"><table class="tbl"><thead><tr>
+<th>CA ID</th><th>Consumer</th><th>Doc Type</th><th>Doc No</th><th>Posting Date</th><th>Due Date</th><th>Debit (₹)</th><th>Credit (₹)</th><th>Balance (₹)</th><th>Status</th><th>Dunning Lvl</th><th></th></tr></thead><tbody>
+<tr class="oi-recv">
+<td class="td-mono" style="font-size:11px">CA-00421</td>
+<td style="font-size:11.5px;font-weight:500">R. Mehta</td>
+<td><span class="pill cl" style="font-size:9px">Invoice</span></td>
+<td class="td-mono" style="font-size:10px">BILL-0042311</td>
+<td style="font-size:10px;font-family:var(--mono)">08-Apr-26</td>
+<td style="font-size:10px;font-family:var(--mono);color:var(--ink3)">28-Apr-26</td>
+<td class="td-mono td-r td-dr">1,842.00</td>
+<td class="td-mono td-r td-cr">558.00</td>
+<td class="td-mono td-r" style="font-weight:700">1,284.00</td>
+<td><span class="pill bl">Open</span></td>
+<td><span class="pill cl" style="font-size:9px">—</span></td>
+<td><button class="btn btn-s btn-xs" onclick="toast('Document detail for BILL-0042311')">Detail</button></td></tr>
+<tr class="oi-pay">
+<td class="td-mono" style="font-size:11px">CA-00421</td>
+<td style="font-size:11.5px;font-weight:500">R. Mehta</td>
+<td><span class="pill cl" style="font-size:9px">Payment</span></td>
+<td class="td-mono" style="font-size:10px">RCP-8841</td>
+<td style="font-size:10px;font-family:var(--mono)">01-Apr-26</td>
+<td style="font-size:10px;font-family:var(--mono);color:var(--ink3)">—</td>
+<td class="td-mono td-r td-dr">—</td>
+<td class="td-mono td-r td-cr">558.00</td>
+<td class="td-mono td-r" style="font-weight:700"><span style="color:var(--ink3)">—</span></td>
+<td><span class="pill gr">Cleared</span></td>
+<td><span class="pill cl" style="font-size:9px">—</span></td>
+<td><button class="btn btn-s btn-xs" onclick="toast('Document detail for RCP-8841')">Detail</button></td></tr>
+<tr class="oi-dep">
+<td class="td-mono" style="font-size:11px">CA-00421</td>
+<td style="font-size:11.5px;font-weight:500">R. Mehta</td>
+<td><span class="pill cl" style="font-size:9px">Deposit</span></td>
+<td class="td-mono" style="font-size:10px">DEP-0421</td>
+<td style="font-size:10px;font-family:var(--mono)">12-Jan-21</td>
+<td style="font-size:10px;font-family:var(--mono);color:var(--ink3)">—</td>
+<td class="td-mono td-r td-dr">—</td>
+<td class="td-mono td-r td-cr">2,400.00</td>
+<td class="td-mono td-r" style="font-weight:700"><span style="color:var(--ink3)">—</span></td>
+<td><span class="pill gr">Cleared</span></td>
+<td><span class="pill cl" style="font-size:9px">—</span></td>
+<td><button class="btn btn-s btn-xs" onclick="toast('Document detail for DEP-0421')">Detail</button></td></tr>
+<tr class="oi-recv">
+<td class="td-mono" style="font-size:11px">CA-00384</td>
+<td style="font-size:11.5px;font-weight:500">Gujarat Ceramics</td>
+<td><span class="pill cl" style="font-size:9px">Invoice</span></td>
+<td class="td-mono" style="font-size:10px">BILL-0041901</td>
+<td style="font-size:10px;font-family:var(--mono)">08-Apr-26</td>
+<td style="font-size:10px;font-family:var(--mono);color:var(--red)">28-Apr-26</td>
+<td class="td-mono td-r td-dr">48,320.00</td>
+<td class="td-mono td-r td-cr">—</td>
+<td class="td-mono td-r" style="font-weight:700">48,320.00</td>
+<td><span class="pill rd">Overdue</span></td>
+<td><span class="pill am" style="font-size:9px">L2</span></td>
+<td><button class="btn btn-s btn-xs" onclick="toast('Document detail for BILL-0041901')">Detail</button></td></tr>
+<tr class="oi-dun">
+<td class="td-mono" style="font-size:11px">CA-00384</td>
+<td style="font-size:11.5px;font-weight:500">Gujarat Ceramics</td>
+<td><span class="pill cl" style="font-size:9px">Dunning Fee</span></td>
+<td class="td-mono" style="font-size:10px">DUN-0384-02</td>
+<td style="font-size:10px;font-family:var(--mono)">01-Apr-26</td>
+<td style="font-size:10px;font-family:var(--mono);color:var(--ink3)">—</td>
+<td class="td-mono td-r td-dr">720.00</td>
+<td class="td-mono td-r td-cr">—</td>
+<td class="td-mono td-r" style="font-weight:700">720.00</td>
+<td><span class="pill bl">Open</span></td>
+<td><span class="pill cl" style="font-size:9px">—</span></td>
+<td><button class="btn btn-s btn-xs" onclick="toast('Document detail for DUN-0384-02')">Detail</button></td></tr>
+<tr class="oi-int">
+<td class="td-mono" style="font-size:11px">CA-00384</td>
+<td style="font-size:11.5px;font-weight:500">Gujarat Ceramics</td>
+<td><span class="pill cl" style="font-size:9px">Interest</span></td>
+<td class="td-mono" style="font-size:10px">INT-0384-01</td>
+<td style="font-size:10px;font-family:var(--mono)">01-Apr-26</td>
+<td style="font-size:10px;font-family:var(--mono);color:var(--ink3)">—</td>
+<td class="td-mono td-r td-dr">1,208.00</td>
+<td class="td-mono td-r td-cr">—</td>
+<td class="td-mono td-r" style="font-weight:700">1,208.00</td>
+<td><span class="pill bl">Open</span></td>
+<td><span class="pill cl" style="font-size:9px">—</span></td>
+<td><button class="btn btn-s btn-xs" onclick="toast('Document detail for INT-0384-01')">Detail</button></td></tr>
+<tr class="oi-recv">
+<td class="td-mono" style="font-size:11px">CA-00601</td>
+<td style="font-size:11.5px;font-weight:500">Surat Textiles</td>
+<td><span class="pill cl" style="font-size:9px">Invoice</span></td>
+<td class="td-mono" style="font-size:10px">BILL-0041822</td>
+<td style="font-size:10px;font-family:var(--mono)">08-Mar-26</td>
+<td style="font-size:10px;font-family:var(--mono);color:var(--red)">28-Mar-26</td>
+<td class="td-mono td-r td-dr">2,18,500.00</td>
+<td class="td-mono td-r td-cr">—</td>
+<td class="td-mono td-r" style="font-weight:700">2,18,500.00</td>
+<td><span class="pill rd">Overdue</span></td>
+<td><span class="pill rd" style="font-size:9px">L3</span></td>
+<td><button class="btn btn-s btn-xs" onclick="toast('Document detail for BILL-0041822')">Detail</button></td></tr>
+<tr class="oi-dun">
+<td class="td-mono" style="font-size:11px">CA-00601</td>
+<td style="font-size:11.5px;font-weight:500">Surat Textiles</td>
+<td><span class="pill cl" style="font-size:9px">Dunning Fee</span></td>
+<td class="td-mono" style="font-size:10px">DUN-0601-03</td>
+<td style="font-size:10px;font-family:var(--mono)">01-Apr-26</td>
+<td style="font-size:10px;font-family:var(--mono);color:var(--ink3)">—</td>
+<td class="td-mono td-r td-dr">3,280.00</td>
+<td class="td-mono td-r td-cr">—</td>
+<td class="td-mono td-r" style="font-weight:700">3,280.00</td>
+<td><span class="pill bl">Open</span></td>
+<td><span class="pill cl" style="font-size:9px">—</span></td>
+<td><button class="btn btn-s btn-xs" onclick="toast('Document detail for DUN-0601-03')">Detail</button></td></tr>
+<tr class="oi-recv">
+<td class="td-mono" style="font-size:11px">CA-00512</td>
+<td style="font-size:11.5px;font-weight:500">S. Desai</td>
+<td><span class="pill cl" style="font-size:9px">Invoice</span></td>
+<td class="td-mono" style="font-size:10px">BILL-0042001</td>
+<td style="font-size:10px;font-family:var(--mono)">08-Apr-26</td>
+<td style="font-size:10px;font-family:var(--mono);color:var(--ink3)">28-Apr-26</td>
+<td class="td-mono td-r td-dr">342.00</td>
+<td class="td-mono td-r td-cr">342.00</td>
+<td class="td-mono td-r" style="font-weight:700"><span style="color:var(--ink3)">—</span></td>
+<td><span class="pill gr">Cleared</span></td>
+<td><span class="pill cl" style="font-size:9px">—</span></td>
+<td><button class="btn btn-s btn-xs" onclick="toast('Document detail for BILL-0042001')">Detail</button></td></tr>
+<tr class="oi-adj">
+<td class="td-mono" style="font-size:11px">CA-00512</td>
+<td style="font-size:11.5px;font-weight:500">S. Desai</td>
+<td><span class="pill cl" style="font-size:9px">Credit Note</span></td>
+<td class="td-mono" style="font-size:10px">CN-0512-01</td>
+<td style="font-size:10px;font-family:var(--mono)">02-Apr-26</td>
+<td style="font-size:10px;font-family:var(--mono);color:var(--ink3)">—</td>
+<td class="td-mono td-r td-dr">—</td>
+<td class="td-mono td-r td-cr">180.00</td>
+<td class="td-mono td-r" style="font-weight:700"><span style="color:var(--ink3)">—</span></td>
+<td><span class="pill tl">Applied</span></td>
+<td><span class="pill cl" style="font-size:9px">—</span></td>
+<td><button class="btn btn-s btn-xs" onclick="toast('Document detail for CN-0512-01')">Detail</button></td></tr>
+<tr class="oi-recv">
+<td class="td-mono" style="font-size:11px">CA-00318</td>
+<td style="font-size:11.5px;font-weight:500">Priya Nair</td>
+<td><span class="pill cl" style="font-size:9px">Invoice</span></td>
+<td class="td-mono" style="font-size:10px">BILL-0041998</td>
+<td style="font-size:10px;font-family:var(--mono)">08-Apr-26</td>
+<td style="font-size:10px;font-family:var(--mono);color:var(--ink3)">28-Apr-26</td>
+<td class="td-mono td-r td-dr">1,284.00</td>
+<td class="td-mono td-r td-cr">—</td>
+<td class="td-mono td-r" style="font-weight:700">1,284.00</td>
+<td><span class="pill bl">Open</span></td>
+<td><span class="pill am" style="font-size:9px">L1</span></td>
+<td><button class="btn btn-s btn-xs" onclick="toast('Document detail for BILL-0041998')">Detail</button></td></tr>
+</tbody></table></div>
+<div style="padding:12px 16px;background:#F8FAFB;border-top:1px solid var(--border);display:flex;gap:20px;align-items:center">
+<div><div style="font-size:10px;color:var(--ink3);font-family:var(--mono)">TOTAL DEBIT</div><div style="font-family:var(--mono);font-size:15px;font-weight:700;color:var(--red)">₹2,74,154</div></div>
+<div><div style="font-size:10px;color:var(--ink3);font-family:var(--mono)">TOTAL CREDIT</div><div style="font-family:var(--mono);font-size:15px;font-weight:700;color:var(--green)">₹4,038</div></div>
+<div><div style="font-size:10px;color:var(--ink3);font-family:var(--mono)">NET OPEN BALANCE</div><div style="font-family:var(--mono);font-size:15px;font-weight:700;color:var(--blue)">₹2,70,116</div></div>
+<div style="margin-left:auto;display:flex;gap:8px">
+<button class="btn btn-s btn-sm" onclick="openM('m-clear-items')">⚡ Clear Open Items</button>
+<button class="btn btn-am btn-sm" onclick="toast('FI-CA subledger exported to CSV')">📥 Export Subledger</button>
+</div></div></div>
+<div class="card" id="fica-detail">
+<div class="card-hd" style="background:linear-gradient(135deg,var(--navy),var(--navy2))">
+<div><div class="card-title" style="color:#fff">CA-00384 — Gujarat Ceramics Pvt Ltd</div>
+<div class="card-sub" style="color:rgba(255,255,255,.6)">HT-1 · CAN 56039105 · Risk: HIGH · Dunning: Level 2</div></div>
+<span class="pill rd" style="margin-left:auto">Overdue ₹48,320</span></div>
+<div id="fica-detail-tabs" class="ctabs">
+<div class="ct a" data-tab="oi" onclick="ctab('fica-detail','oi')">Open Items</div>
+<div class="ct" data-tab="hist" onclick="ctab('fica-detail','hist')">Posting History</div>
+<div class="ct" data-tab="dun" onclick="ctab('fica-detail','dun')">Dunning</div>
+<div class="ct" data-tab="dep" onclick="ctab('fica-detail','dep')">Deposits</div>
+<div class="ct" data-tab="inst" onclick="ctab('fica-detail','inst')">Instalment Plan</div>
+</div>
+<div id="fica-detail-oi" class="cpane a">
+<table class="tbl"><thead><tr><th>Doc</th><th>Type</th><th>Date</th><th>Due</th><th>Debit</th><th>Credit</th><th>Balance</th><th>Dunning</th><th>Action</th></tr></thead><tbody>
+<tr><td class="td-mono" style="font-size:10px">BILL-0041901</td>
+<td style="font-size:11px">Invoice</td><td class="td-mono" style="font-size:10px">08-Apr</td>
+<td class="td-mono" style="font-size:10px;color:var(--red)">28-Apr</td>
+<td class="td-mono td-r td-dr">₹48,320</td><td class="td-mono td-r td-cr">—</td>
+<td class="td-mono td-r" style="font-weight:700;color:var(--red)">₹48,320</td>
+<td><span class="pill rd" style="font-size:9px">L2</span></td>
+<td><button class="btn btn-s btn-xs" onclick="toast('Document detail')">View</button></td></tr>
+<tr><td class="td-mono" style="font-size:10px">DUN-0384-02</td>
+<td style="font-size:11px">Dunning Fee</td><td class="td-mono" style="font-size:10px">01-Apr</td>
+<td class="td-mono" style="font-size:10px;color:var(--ink3)">—</td>
+<td class="td-mono td-r td-dr">₹720</td><td class="td-mono td-r td-cr">—</td>
+<td class="td-mono td-r" style="font-weight:700;color:var(--red)">₹720</td>
+<td><span class="pill cl" style="font-size:9px">—</span></td>
+<td><button class="btn btn-s btn-xs" onclick="toast('Document detail')">View</button></td></tr>
+<tr><td class="td-mono" style="font-size:10px">INT-0384-01</td>
+<td style="font-size:11px">Late Interest</td><td class="td-mono" style="font-size:10px">01-Apr</td>
+<td class="td-mono" style="font-size:10px;color:var(--ink3)">—</td>
+<td class="td-mono td-r td-dr">₹1,208</td><td class="td-mono td-r td-cr">—</td>
+<td class="td-mono td-r" style="font-weight:700;color:var(--red)">₹1,208</td>
+<td><span class="pill cl" style="font-size:9px">—</span></td>
+<td><button class="btn btn-s btn-xs" onclick="toast('Document detail')">View</button></td></tr>
+<tr><td class="td-mono" style="font-size:10px">BILL-0041200</td>
+<td style="font-size:11px">Invoice (Mar)</td><td class="td-mono" style="font-size:10px">08-Mar</td>
+<td class="td-mono" style="font-size:10px;color:var(--ink3)">28-Mar</td>
+<td class="td-mono td-r td-dr">₹46,800</td><td class="td-mono td-r td-cr">₹46,800</td>
+<td class="td-mono td-r" style="font-weight:700;color:var(--ink3)">—</td>
+<td><span class="pill cl" style="font-size:9px">—</span></td>
+<td><button class="btn btn-s btn-xs" onclick="toast('Document detail')">View</button></td></tr>
+</tbody></table></div>
+<div id="fica-detail-hist" class="cpane">
+<table class="tbl"><thead><tr><th>Date</th><th>Transaction</th><th>Amount</th><th>User</th><th>Reference</th></tr></thead><tbody>
+<tr><td class="td-mono" style="font-size:10px">01-Apr-26</td><td style="font-size:11.5px">Late interest charged @ 18% p.a.</td>
+<td class="td-mono" style="font-weight:600;color:var(--red)">₹1,208 Dr</td>
+<td style="font-size:11px;color:var(--ink3)">Scheduler</td>
+<td class="td-mono" style="font-size:10px">INT-0384-01</td></tr>
+<tr><td class="td-mono" style="font-size:10px">01-Apr-26</td><td style="font-size:11.5px">Dunning Level 2 notice generated</td>
+<td class="td-mono" style="font-weight:600;color:var(--red)">₹720 Dr</td>
+<td style="font-size:11px;color:var(--ink3)">Dunning Engine</td>
+<td class="td-mono" style="font-size:10px">DUN-0384-02</td></tr>
+<tr><td class="td-mono" style="font-size:10px">08-Apr-26</td><td style="font-size:11.5px">Invoice generated — Apr 2026</td>
+<td class="td-mono" style="font-weight:600;color:var(--red)">₹48,320 Dr</td>
+<td style="font-size:11px;color:var(--ink3)">Billing Engine</td>
+<td class="td-mono" style="font-size:10px">BILL-0041901</td></tr>
+<tr><td class="td-mono" style="font-size:10px">28-Mar-26</td><td style="font-size:11.5px">Overdue flag set — L1→L2 escalation</td>
+<td class="td-mono" style="font-weight:600;color:var(--green)">—</td>
+<td style="font-size:11px;color:var(--ink3)">Scheduler</td>
+<td class="td-mono" style="font-size:10px">DUN-0384-01</td></tr>
+<tr><td class="td-mono" style="font-size:10px">08-Mar-26</td><td style="font-size:11.5px">Invoice generated — Mar 2026</td>
+<td class="td-mono" style="font-weight:600;color:var(--red)">₹46,800 Dr</td>
+<td style="font-size:11px;color:var(--ink3)">Billing Engine</td>
+<td class="td-mono" style="font-size:10px">BILL-0041200</td></tr>
+<tr><td class="td-mono" style="font-size:10px">08-Mar-26</td><td style="font-size:11.5px">Payment received — UPI</td>
+<td class="td-mono" style="font-weight:600;color:var(--green)">₹46,800 Cr</td>
+<td style="font-size:11px;color:var(--ink3)">Consumer</td>
+<td class="td-mono" style="font-size:10px">TXN-8821-RZP</td></tr>
+</tbody></table></div>
+<div id="fica-detail-dun" class="cpane">
+<div class="tl">
+<div class="tl-item done"><div class="tl-t">Level 1 Reminder</div>
+<div class="tl-s">SMS sent: "Your bill of ₹46,800 is overdue. Pay now."</div><div class="tl-ts">15-Mar-26 08:00</div></div>
+<div class="tl-item done"><div class="tl-t">Level 1 Reminder — No Response</div>
+<div class="tl-s">Balance still outstanding after 7 days.</div><div class="tl-ts">22-Mar-26 08:00</div></div>
+<div class="tl-item done"><div class="tl-t">Level 2 Formal Warning</div>
+<div class="tl-s">Registered letter + email: payment within 15 days or service disconnected.</div><div class="tl-ts">01-Apr-26 09:00</div></div>
+<div class="tl-item pend"><div class="tl-t">Level 3 Final Notice (Pending)</div>
+<div class="tl-s">Legal notice + agency handover if unpaid by 16-Apr-26.</div><div class="tl-ts">16-Apr-26 (scheduled)</div></div>
+</div>
+<div style="margin-top:12px;display:flex;gap:8px">
+<button class="btn btn-s" onclick="toast('Promise-to-pay recorded: 10-Apr-26')">Record Promise-to-Pay</button>
+<button class="btn btn-am" onclick="toast('L3 advanced immediately. Legal notice queued.')">Advance to L3</button>
+<button class="btn btn-s" onclick="toast('Dunning suspended — dispute ID DIS-0384-01')">Suspend (Dispute)</button>
+</div></div>
+<div id="fica-detail-dep" class="cpane">
+<div style="display:flex;gap:14px;flex-wrap:wrap">
+<div class="info-item"><div class="info-lbl">Principal Deposit</div><div class="info-val">₹12,000</div></div>
+<div class="info-item"><div class="info-lbl">Interest Accrued</div><div class="info-val">₹4,644</div></div>
+<div class="info-item"><div class="info-lbl">Current Value</div><div class="info-val">₹16,644</div></div>
+<div class="info-item"><div class="info-lbl">Interest Rate</div><div class="info-val">7.25% p.a. (RBI)</div></div>
+<div class="info-item"><div class="info-lbl">Deposit Date</div><div class="info-val">12-Jan-2021</div></div>
+<div class="info-item"><div class="info-lbl">Valid Until</div><div class="info-val">On Termination</div></div>
+</div>
+<div style="margin-top:10px;padding:10px;background:var(--amber-l);border-radius:6px;font-size:11px;color:var(--amber)">
+⚠ Additional deposit demand recommended: 2× avg monthly bill ≈ ₹96,000. Current deposit insufficient.
+<button class="btn btn-am btn-sm" style="margin-left:10px" onclick="toast('Additional deposit notice sent: ₹84,000 top-up required')">Send Notice</button></div>
+</div>
+<div id="fica-detail-inst" class="cpane">
+<div style="padding:10px;background:var(--blue-l);border-radius:6px;font-size:12px;color:var(--blue);margin-bottom:12px">
+No active instalment plan for this account. Total overdue: ₹50,248. Create a plan to avoid agency handover.
+</div>
+<div class="form-row">
+<div class="fg"><label class="fl">Total Overdue Amount</label><input class="fi fi-r" type="number" value="50248" id="ip-total" oninput="calcInstalment()"/></div>
+<div class="fg"><label class="fl">Number of Instalments</label><input class="fi fi-r" type="number" value="6" id="ip-n" min="2" max="24" oninput="calcInstalment()"/></div>
+</div>
+<div style="padding:10px;background:var(--green-l);border-radius:6px;font-size:12px;color:var(--green);margin-bottom:10px">
+Monthly instalment: <strong id="ip-each">₹8,375.00 / month</strong></div>
+<button class="btn btn-g" onclick="toast('Instalment plan IP-0384-01 created. 6 × ₹8,375 schedule generated.','success')">✓ Create Instalment Plan</button>
+</div>
+</div>
+</div>
+<div id="p-tariff" class="page">
+<div class="card"><div class="card-hd"><div class="card-title">⚡ Rate Category Register</div>
+<div class="card-sub">Step-up slab · time-of-day · demand · seasonal · minimum billing — all configurable per category</div>
+<div class="card-r"><button class="btn btn-p btn-sm" onclick="openM('m-new-rate')">+ New Rate Category</button></div></div>
+<div class="tbl-wrap"><table class="tbl"><thead><tr>
+<th>Rate Plan ID</th><th>Category Name</th><th>Consumer Class</th><th>Tariff Type</th><th>Slabs</th><th>TOD</th><th>MD Billing</th><th>Min Bill</th><th>SERC Ref</th><th>Effective From</th><th>Status</th><th>Actions</th></tr></thead><tbody>
+<tr>
+<td class="td-mono td-link" onclick="openM('m-edit-rate')">RP-LT1-DOM</td>
+<td style="font-weight:500">LT-1 Domestic</td>
+<td><span class="pill cl" style="font-size:9px">Residential</span></td>
+<td style="font-size:11px">Step-up (3 slabs)</td>
+<td style="text-align:center;font-family:var(--mono)">3</td>
+<td style="text-align:center"><span class="pill cl" style="font-size:9px">No</span></td>
+<td style="text-align:center"><span class="pill cl" style="font-size:9px">No</span></td>
+<td style="font-size:11px;font-family:var(--mono)">₹45/month</td>
+<td class="td-mono" style="font-size:10px">SERC/2023/T-01</td>
+<td class="td-mono" style="font-size:11px">01-Apr-2023</td>
+<td><span class="pill gr">Active</span></td>
+<td><button class="btn btn-s btn-xs" onclick="openM('m-edit-rate')">Edit</button> 
+<button class="btn btn-s btn-xs" onclick="toast('Tariff effective-date history shown')">History</button></td>
+</tr>
+<tr>
+<td class="td-mono td-link" onclick="openM('m-edit-rate')">RP-LT2-COM</td>
+<td style="font-weight:500">LT-2 Commercial</td>
+<td><span class="pill cl" style="font-size:9px">Commercial</span></td>
+<td style="font-size:11px">Step-up (2 slabs)</td>
+<td style="text-align:center;font-family:var(--mono)">2</td>
+<td style="text-align:center"><span class="pill cl" style="font-size:9px">No</span></td>
+<td style="text-align:center"><span class="pill cl" style="font-size:9px">No</span></td>
+<td style="font-size:11px;font-family:var(--mono)">₹150/kW/month</td>
+<td class="td-mono" style="font-size:10px">SERC/2023/T-02</td>
+<td class="td-mono" style="font-size:11px">01-Apr-2023</td>
+<td><span class="pill gr">Active</span></td>
+<td><button class="btn btn-s btn-xs" onclick="openM('m-edit-rate')">Edit</button> 
+<button class="btn btn-s btn-xs" onclick="toast('Tariff effective-date history shown')">History</button></td>
+</tr>
+<tr>
+<td class="td-mono td-link" onclick="openM('m-edit-rate')">RP-LT3-AGR</td>
+<td style="font-weight:500">LT-3 Agriculture</td>
+<td><span class="pill cl" style="font-size:9px">Agriculture</span></td>
+<td style="font-size:11px">Flat + Seasonal</td>
+<td style="text-align:center;font-family:var(--mono)">1</td>
+<td style="text-align:center"><span class="pill cl" style="font-size:9px">No</span></td>
+<td style="text-align:center"><span class="pill cl" style="font-size:9px">No</span></td>
+<td style="font-size:11px;font-family:var(--mono)">24hr flat ₹800/HP</td>
+<td class="td-mono" style="font-size:10px">SERC/2023/T-03</td>
+<td class="td-mono" style="font-size:11px">01-Apr-2023</td>
+<td><span class="pill gr">Active</span></td>
+<td><button class="btn btn-s btn-xs" onclick="openM('m-edit-rate')">Edit</button> 
+<button class="btn btn-s btn-xs" onclick="toast('Tariff effective-date history shown')">History</button></td>
+</tr>
+<tr>
+<td class="td-mono td-link" onclick="openM('m-edit-rate')">RP-HT1-IND</td>
+<td style="font-weight:500">HT-1 Industrial 11kV</td>
+<td><span class="pill cl" style="font-size:9px">HV Industrial</span></td>
+<td style="font-size:11px">Step + MD + PF + TOD</td>
+<td style="text-align:center;font-family:var(--mono)">4</td>
+<td style="text-align:center"><span class="pill tl" style="font-size:9px">Yes</span></td>
+<td style="text-align:center"><span class="pill pu" style="font-size:9px">Yes</span></td>
+<td style="font-size:11px;font-family:var(--mono)">75% CMD</td>
+<td class="td-mono" style="font-size:10px">SERC/2023/T-04</td>
+<td class="td-mono" style="font-size:11px">01-Apr-2023</td>
+<td><span class="pill gr">Active</span></td>
+<td><button class="btn btn-s btn-xs" onclick="openM('m-edit-rate')">Edit</button> 
+<button class="btn btn-s btn-xs" onclick="toast('Tariff effective-date history shown')">History</button></td>
+</tr>
+<tr>
+<td class="td-mono td-link" onclick="openM('m-edit-rate')">RP-HT2-BLK</td>
+<td style="font-weight:500">HT-2 Bulk LT</td>
+<td><span class="pill cl" style="font-size:9px">Bulk Supply</span></td>
+<td style="font-size:11px">2-slab</td>
+<td style="text-align:center;font-family:var(--mono)">2</td>
+<td style="text-align:center"><span class="pill cl" style="font-size:9px">No</span></td>
+<td style="text-align:center"><span class="pill pu" style="font-size:9px">Yes</span></td>
+<td style="font-size:11px;font-family:var(--mono)">60% CMD</td>
+<td class="td-mono" style="font-size:10px">SERC/2023/T-05</td>
+<td class="td-mono" style="font-size:11px">01-Apr-2023</td>
+<td><span class="pill gr">Active</span></td>
+<td><button class="btn btn-s btn-xs" onclick="openM('m-edit-rate')">Edit</button> 
+<button class="btn btn-s btn-xs" onclick="toast('Tariff effective-date history shown')">History</button></td>
+</tr>
+<tr>
+<td class="td-mono td-link" onclick="openM('m-edit-rate')">RP-LT1-BPL</td>
+<td style="font-weight:500">LT-1 BPL Subsidised</td>
+<td><span class="pill cl" style="font-size:9px">BPL Domestic</span></td>
+<td style="font-size:11px">Step-up (lifeline+2)</td>
+<td style="text-align:center;font-family:var(--mono)">3</td>
+<td style="text-align:center"><span class="pill cl" style="font-size:9px">No</span></td>
+<td style="text-align:center"><span class="pill cl" style="font-size:9px">No</span></td>
+<td style="font-size:11px;font-family:var(--mono)">0–30 kWh free</td>
+<td class="td-mono" style="font-size:10px">SERC/2024/T-01</td>
+<td class="td-mono" style="font-size:11px">01-Jan-2024</td>
+<td><span class="pill gr">Active</span></td>
+<td><button class="btn btn-s btn-xs" onclick="openM('m-edit-rate')">Edit</button> 
+<button class="btn btn-s btn-xs" onclick="toast('Tariff effective-date history shown')">History</button></td>
+</tr>
+<tr>
+<td class="td-mono td-link" onclick="openM('m-edit-rate')">RP-LT1-DOM-NEW</td>
+<td style="font-weight:500">LT-1 Domestic (Revised)</td>
+<td><span class="pill cl" style="font-size:9px">Residential</span></td>
+<td style="font-size:11px">Step-up (3 slabs)</td>
+<td style="text-align:center;font-family:var(--mono)">3</td>
+<td style="text-align:center"><span class="pill cl" style="font-size:9px">No</span></td>
+<td style="text-align:center"><span class="pill cl" style="font-size:9px">No</span></td>
+<td style="font-size:11px;font-family:var(--mono)">₹50/month</td>
+<td class="td-mono" style="font-size:10px">SERC/2026/T-01</td>
+<td class="td-mono" style="font-size:11px">01-Apr-2026</td>
+<td><span class="pill am">Draft</span></td>
+<td><button class="btn btn-s btn-xs" onclick="openM('m-edit-rate')">Edit</button> 
+<button class="btn btn-s btn-xs" onclick="toast('Tariff effective-date history shown')">History</button></td>
+</tr>
+</tbody></table></div></div>
+<div class="card" id="slab-editor-card">
+<div class="card-hd"><div class="card-title">⚙️ Slab Editor — RP-LT1-DOM (LT-1 Domestic)</div>
+<div class="card-sub">Step-up tariff: each slab rate applies ONLY to units within that band (not cumulative)</div>
+<div class="card-r"><button class="btn btn-s btn-sm" onclick="addSlab('rp-edit')">+ Add Slab</button></div></div>
+<div class="card-body">
+<div class="g3" style="margin-bottom:16px">
+<div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px">
+<div class="info-lbl">Fixed Monthly Charge</div>
+<input class="fi fi-r" style="margin:4px 0;font-size:15px;font-weight:700" value="₹ 45.00"/>
+<div style="font-size:10px;color:var(--ink4)">Per connection regardless of consumption</div></div>
+<div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px">
+<div class="info-lbl">Minimum Bill Amount</div>
+<input class="fi fi-r" style="margin:4px 0;font-size:15px;font-weight:700" value="₹ 45.00"/>
+<div style="font-size:10px;color:var(--ink4)">Bill cannot be less than this (meter rent only)</div></div>
+<div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px">
+<div class="info-lbl">Minimum Units Guaranteed</div>
+<input class="fi fi-r" style="margin:4px 0;font-size:15px;font-weight:700" value="30 kWh"/>
+<div style="font-size:10px;color:var(--ink4)">Charged even if consumption < 30 kWh</div></div>
+</div>
+<div class="slab-builder">
+<div class="slab-hd"><div>Seq</div><div>From (units)</div><div>To (units)</div><div>Rate (₹ / unit)</div><div>UOM</div><div></div></div>
+<div id="rp-edit-body">
+<div class="slab-row" id="slab-rp-edit-pre1">
+<input type="number" class="slab-seq" value="1" style="width:55px"/>
+<input type="number" class="slab-from fi-r" value="0"/>
+<input type="number" class="slab-to fi-r" value="100" placeholder="∞"/>
+<input type="number" class="slab-rate fi-r" step="0.0001" value="3.50" oninput="updateTariffChart('rp-edit')"/>
+<select class="slab-uom"><option selected>kWh</option><option>kVA</option><option>KL</option><option>SCM</option></select>
+<span class="slab-del" onclick="removeSlab('slab-rp-edit-pre1')">🗑</span></div>
+<div class="slab-row" id="slab-rp-edit-pre2">
+<input type="number" class="slab-seq" value="2" style="width:55px"/>
+<input type="number" class="slab-from fi-r" value="100"/>
+<input type="number" class="slab-to fi-r" value="300" placeholder="∞"/>
+<input type="number" class="slab-rate fi-r" step="0.0001" value="5.00" oninput="updateTariffChart('rp-edit')"/>
+<select class="slab-uom"><option selected>kWh</option><option>kVA</option><option>KL</option><option>SCM</option></select>
+<span class="slab-del" onclick="removeSlab('slab-rp-edit-pre2')">🗑</span></div>
+<div class="slab-row" id="slab-rp-edit-pre3">
+<input type="number" class="slab-seq" value="3" style="width:55px"/>
+<input type="number" class="slab-from fi-r" value="300"/>
+<input type="number" class="slab-to fi-r" value="" placeholder="∞"/>
+<input type="number" class="slab-rate fi-r" step="0.0001" value="7.50" oninput="updateTariffChart('rp-edit')"/>
+<select class="slab-uom"><option selected>kWh</option><option>kVA</option><option>KL</option><option>SCM</option></select>
+<span class="slab-del" onclick="removeSlab('slab-rp-edit-pre3')">🗑</span></div>
+</div></div>
+<div class="g2" style="margin-top:14px">
+<div><div class="sec-hd">Tariff step-up visualisation</div>
+<div class="tariff-chart" id="chart-rp-edit"></div>
+<div style="font-size:10px;color:var(--ink4);margin-top:6px">Bar height = rate per unit. Each bar = one slab range. Rates update live as you edit above.</div>
+</div>
+<div><div class="sec-hd">Additional charges & taxes</div>
+<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #F5F5F7">
+<div><div style="font-size:12px">Electricity Duty</div><div style="font-size:10px;color:var(--ink3)">% of energy charge</div></div>
+<input class="fi fi-r" style="width:110px;font-size:12px" value="15%"/></div>
+<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #F5F5F7">
+<div><div style="font-size:12px">GST on Fixed Charges</div><div style="font-size:10px;color:var(--ink3)">% of fixed charge</div></div>
+<input class="fi fi-r" style="width:110px;font-size:12px" value="18%"/></div>
+<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #F5F5F7">
+<div><div style="font-size:12px">FPPC Surcharge (Q1-26)</div><div style="font-size:10px;color:var(--ink3)">Flat on all kWh</div></div>
+<input class="fi fi-r" style="width:110px;font-size:12px" value="₹0.09/kWh"/></div>
+<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #F5F5F7">
+<div><div style="font-size:12px">Late Payment Interest</div><div style="font-size:10px;color:var(--ink3)">On overdue balance</div></div>
+<input class="fi fi-r" style="width:110px;font-size:12px" value="2% / month"/></div>
+<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #F5F5F7">
+<div><div style="font-size:12px">Reconnection Charge</div><div style="font-size:10px;color:var(--ink3)">Flat one-time</div></div>
+<input class="fi fi-r" style="width:110px;font-size:12px" value="₹250"/></div>
+</div>
+</div>
+<div style="margin-top:14px"><div class="sec-hd">Time of Day (TOD) Configuration — HT consumers only</div>
+<div class="tbl-wrap"><table class="tbl"><thead><tr><th>TOD Period</th><th>Day Type</th><th>Start</th><th>End</th><th>Rate (₹/kWh)</th><th>Multiplier</th><th>Active</th></tr></thead><tbody>
+<tr><td style="font-weight:500">Peak</td><td style="font-size:11px">Weekday</td>
+<td class="td-mono">06:00</td><td class="td-mono">22:00</td>
+<td><input class="fi fi-r" style="width:80px" value="8.50"/></td>
+<td class="td-mono" style="color:var(--ink3)">1.30×</td>
+<td><input type="checkbox" checked/></td></tr>
+<tr><td style="font-weight:500">Off-Peak</td><td style="font-size:11px">Weekday</td>
+<td class="td-mono">22:00</td><td class="td-mono">06:00</td>
+<td><input class="fi fi-r" style="width:80px" value="5.50"/></td>
+<td class="td-mono" style="color:var(--ink3)">0.85×</td>
+<td><input type="checkbox" checked/></td></tr>
+<tr><td style="font-weight:500">Night</td><td style="font-size:11px">Weekday</td>
+<td class="td-mono">00:00</td><td class="td-mono">05:00</td>
+<td><input class="fi fi-r" style="width:80px" value="4.00"/></td>
+<td class="td-mono" style="color:var(--ink3)">0.62×</td>
+<td><input type="checkbox" checked/></td></tr>
+<tr><td style="font-weight:500">Weekend Flat</td><td style="font-size:11px">Weekend</td>
+<td class="td-mono">00:00</td><td class="td-mono">24:00</td>
+<td><input class="fi fi-r" style="width:80px" value="6.00"/></td>
+<td class="td-mono" style="color:var(--ink3)">0.92×</td>
+<td><input type="checkbox" checked/></td></tr>
+<tr><td style="font-weight:500">Holiday</td><td style="font-size:11px">Holiday</td>
+<td class="td-mono">00:00</td><td class="td-mono">24:00</td>
+<td><input class="fi fi-r" style="width:80px" value="5.00"/></td>
+<td class="td-mono" style="color:var(--ink3)">0.77×</td>
+<td><input type="checkbox" checked/></td></tr>
+</tbody></table></div>
+<div style="margin-top:14px"><div class="sec-hd">Power Factor Configuration — HT consumers</div>
+<div class="g4">
+<div class="fg"><label class="fl">Target PF</label><input class="fi fi-r" value="0.90"/></div>
+<div class="fg"><label class="fl">Penalty threshold (PF <)</label><input class="fi fi-r" value="0.85"/></div>
+<div class="fg"><label class="fl">Incentive threshold (PF >)</label><input class="fi fi-r" value="0.95"/></div>
+<div class="fg"><label class="fl">Max penalty cap</label><input class="fi fi-r" value="15% of energy"/></div>
+</div>
+<div style="margin-top:8px;padding:10px;background:var(--blue-l);border-radius:6px;font-size:11px;color:var(--blue)">
+Penalty: for every 0.01 PF below 0.85 → +1% surcharge on energy bill.  Incentive: for every 0.01 PF above 0.95 → -0.5% rebate. Both capped at limits above.
+</div></div>
+<div style="display:flex;gap:8px;margin-top:14px;padding-top:12px;border-top:1px solid var(--border)">
+<button class="btn btn-g" onclick="toast('Rate plan RP-LT1-DOM saved. Effective 01-Apr-2026.','success')">✓ Save Rate Plan</button>
+<button class="btn btn-s" onclick="openM('m-sim-bill')">🧪 Simulate Bill</button>
+<button class="btn btn-s" onclick="toast('Tariff published and version history created')">📤 Publish</button>
+</div>
+</div></div>
+</div>
+<div id="p-billing" class="page">
+<div class="g4" style="margin-bottom:14px">
+<div class="kpi bl"><div class="kpi-lbl">Bills This Cycle</div><div class="kpi-val">1,248</div></div>
+<div class="kpi gr"><div class="kpi-lbl">Total Amount</div><div class="kpi-val">₹18.4L</div></div>
+<div class="kpi am"><div class="kpi-lbl">Estimated Reads</div><div class="kpi-val">142 (11.4%)</div></div>
+<div class="kpi rd"><div class="kpi-lbl">Errors</div><div class="kpi-val">3</div></div>
+</div>
+<div class="g2">
+<div class="card"><div class="card-hd"><div class="card-title">🧾 Batch Billing Run</div>
+<div class="card-sub">Monthly cycle · dry-run preview · error isolation · ERP posting on completion</div></div>
+<div class="card-body">
+<div class="form-row">
+<div class="fg"><label class="fl">Billing Period</label><input class="fi" value="2026-04"/></div>
+<div class="fg"><label class="fl">Bill Date</label><input class="fi" type="date" value="2026-04-08"/></div>
+</div><div class="form-row">
+<div class="fg"><label class="fl">Run Mode</label><select class="fs"><option>Dry Run (preview, no persist)</option><option>Full Run</option><option>Partial (specific MRU)</option></select></div>
+<div class="fg"><label class="fl">Specific Rate Plan (optional)</label><select class="fs"><option>All plans</option><option>RP-LT1-DOM</option><option>RP-HT1-IND</option></select></div>
+</div>
+<div style="padding:10px;background:var(--bg);border-radius:6px;font-size:11px;margin-bottom:12px">
+<div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px">
+<div style="text-align:center"><div style="font-family:var(--mono);font-size:14px;font-weight:700">1,248</div><div style="font-size:10px;color:var(--ink3)">Active Connections</div></div>
+<div style="text-align:center"><div style="font-family:var(--mono);font-size:14px;font-weight:700">1,106</div><div style="font-size:10px;color:var(--ink3)">Pending Reads</div></div>
+<div style="text-align:center"><div style="font-family:var(--mono);font-size:14px;font-weight:700">142</div><div style="font-size:10px;color:var(--ink3)">Estimated Reads</div></div>
+<div style="text-align:center"><div style="font-family:var(--mono);font-size:14px;font-weight:700">₹2.1L</div><div style="font-size:10px;color:var(--ink3)">Prior Arrears</div></div>
+</div></div>
+<button class="btn btn-g" style="width:100%" onclick="toast('Batch billing run started. 1,248 connections queued. Monitor in Run Log.','success')">▶ Start Batch Run</button>
+</div></div>
+<div class="card"><div class="card-hd"><div class="card-title">🔧 Special Bill Types</div></div><div class="card-body">
+<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #F5F5F7">
+<div style="flex:1"><div style="font-size:12px;font-weight:500">Manual Bill</div>
+<div style="font-size:11px;color:var(--ink3)">Create ad-hoc bill for a single consumer — reconnection charge, inspection fee, etc.</div></div>
+<button class="btn btn-s btn-sm" onclick="toast('Manual Bill wizard opened')">Create Manual Bill</button></div>
+<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #F5F5F7">
+<div style="flex:1"><div style="font-size:12px;font-weight:500">Supplementary Bill</div>
+<div style="font-size:11px;color:var(--ink3)">Issue additional charge for mid-period tariff revision or corrected read.</div></div>
+<button class="btn btn-s btn-sm" onclick="toast('Supplementary Bill wizard opened')">Create Supplementary</button></div>
+<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #F5F5F7">
+<div style="flex:1"><div style="font-size:12px;font-weight:500">Final Bill (Move-Out)</div>
+<div style="font-size:11px;color:var(--ink3)">Close account: prorate from last read date to vacating date, offset deposit.</div></div>
+<button class="btn btn-s btn-sm" onclick="toast('Final Bill (Move-Out) wizard opened')">Create Final Bill</button></div>
+<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #F5F5F7">
+<div style="flex:1"><div style="font-size:12px;font-weight:500">Opening Bill (Move-In)</div>
+<div style="font-size:11px;color:var(--ink3)">First bill from connection activation date to next cycle end.</div></div>
+<button class="btn btn-s btn-sm" onclick="toast('Opening Bill (Move-In) wizard opened')">Create Opening Bill</button></div>
+<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #F5F5F7">
+<div style="flex:1"><div style="font-size:12px;font-weight:500">Credit Note</div>
+<div style="font-size:11px;color:var(--ink3)">Reverse a charge — billing error, goodwill, court direction.</div></div>
+<button class="btn btn-s btn-sm" onclick="toast('Credit Note wizard opened')">Issue Credit Note</button></div>
+<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #F5F5F7">
+<div style="flex:1"><div style="font-size:12px;font-weight:500">Bill Reversal</div>
+<div style="font-size:11px;color:var(--ink3)">Cancel a bill and re-issue corrected version with full audit trail.</div></div>
+<button class="btn btn-s btn-sm" onclick="toast('Bill Reversal wizard opened')">Reverse & Re-bill</button></div>
+</div></div>
+</div>
+<div class="g2">
+<div class="card"><div class="card-hd"><div class="card-title">📅 Budget Billing Plan</div>
+<div class="card-sub">Equal monthly payments — annual reconciliation bill at year end</div>
+<div class="card-r"><button class="btn btn-p btn-sm" onclick="toast('Budget billing enrollment opened')">Enroll Consumer</button></div></div>
+<div class="card-body">
+<div class="form-row">
+<div class="fg"><label class="fl">Consumer CAN</label><input class="fi" value="56039281"/></div>
+<div class="fg"><label class="fl">Budget Year</label><input class="fi" value="2026"/></div>
+</div>
+<div class="form-row">
+<div class="fg"><label class="fl">Avg Monthly Consumption (kWh)</label><input class="fi" type="number" value="210"/></div>
+<div class="fg"><label class="fl">Monthly Budget Amount (₹)</label><input class="fi" type="number" value="1320" id="bbp-amount"/></div>
+</div>
+<div style="padding:10px;background:var(--green-l);border-radius:6px;font-size:11px;color:var(--green);margin-bottom:10px">
+Consumer pays ₹1,320 / month (×12 = ₹15,840). Actual billed at year-end: if higher → debit note; if lower → credit note. Consumption is tracked monthly but not billed.
+</div>
+<button class="btn btn-g" onclick="toast('Budget billing plan BBP-0421 enrolled. 12 equal payments scheduled.','success')">✓ Enroll in Budget Billing</button>
+</div></div>
+<div class="card"><div class="card-hd"><div class="card-title">⚖️ Minimum Billing Configuration</div>
+<div class="card-sub">BR-028 — Minimum bill, minimum charge, minimum demand — per rate plan</div></div>
+<div class="card-body">
+<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Rate Plan</th><th>Min Bill Rule</th><th>Min Amount / Units</th><th>Exemptions</th></tr></thead><tbody>
+<tr><td class="td-mono" style="font-size:11px">RP-LT1-DOM</td><td style="font-size:11.5px">Fixed monthly charge (meter rent)</td>
+<td class="td-mono" style="font-weight:600">₹45 / month</td>
+<td style="font-size:11px;color:var(--ink3)">BPL if zero units used</td></tr>
+<tr><td class="td-mono" style="font-size:11px">RP-LT1-BPL</td><td style="font-size:11.5px">Lifeline — 0–30 kWh free, then slab</td>
+<td class="td-mono" style="font-weight:600">0 (first 30 kWh free)</td>
+<td style="font-size:11px;color:var(--ink3)">None</td></tr>
+<tr><td class="td-mono" style="font-size:11px">RP-LT2-COM</td><td style="font-size:11.5px">Min demand = 75% of sanctioned kW</td>
+<td class="td-mono" style="font-weight:600">75% of contracted load / month</td>
+<td style="font-size:11px;color:var(--ink3)">None</td></tr>
+<tr><td class="td-mono" style="font-size:11px">RP-HT1-IND</td><td style="font-size:11.5px">Contract demand = 75% of CMD</td>
+<td class="td-mono" style="font-weight:600">75% CMD × demand rate</td>
+<td style="font-size:11px;color:var(--ink3)">Force majeure only</td></tr>
+<tr><td class="td-mono" style="font-size:11px">RP-LT3-AGR</td><td style="font-size:11.5px">Flat seasonal charge by HP</td>
+<td class="td-mono" style="font-weight:600">₹800 / HP (pump set)</td>
+<td style="font-size:11px;color:var(--ink3)">Drought year waiver</td></tr>
+</tbody></table></div>
+<div style="margin-top:10px;padding:9px;background:var(--amber-l);border-radius:6px;font-size:11px;color:var(--amber)">
+BR-029: Bill explanation auto-generated when minimum bill rule triggers: "Your consumption of X kWh is below the minimum of Y kWh. Minimum bill of ₹Z applies per SERC Tariff Order SERC/2023/T-01."
+</div></div></div>
+</div>
+</div>
+<div id="p-dunning" class="page">
+<div class="g4" style="margin-bottom:14px">
+<div class="kpi rd"><div class="kpi-lbl">Overdue Accounts</div><div class="kpi-val">18</div><div class="kpi-sub">across all levels</div></div>
+<div class="kpi rd"><div class="kpi-lbl">Total Overdue</div><div class="kpi-val">₹3.39L</div><div class="kpi-sub">incl interest</div></div>
+<div class="kpi rd"><div class="kpi-lbl">Level 3 — Critical</div><div class="kpi-val">2</div><div class="kpi-sub">Agency/legal</div></div>
+<div class="kpi gr"><div class="kpi-lbl">Collected via Dunning (MTD)</div><div class="kpi-val">₹48,200</div><div class="kpi-sub">from 6 accounts</div></div>
+</div>
+<div class="card"><div class="card-hd"><div class="card-title">🔔 Dunning Level Definitions</div>
+<div class="card-sub">Three-level automated dunning — configurable triggers, channels, fees, and escalation</div></div>
+<div class="card-body">
+<div class="dun-level l1"><div class="dun-num">1</div>
+<div style="flex:1"><div style="font-size:13px;font-weight:700;margin-bottom:4px">Level 1 — Reminder</div>
+<div style="display:flex;gap:16px;flex-wrap:wrap">
+<div><div style="font-size:10px;font-family:var(--mono);color:var(--ink3)">Trigger</div>
+<div style="font-size:11px;font-weight:500">15–29 days overdue</div></div>
+<div><div style="font-size:10px;font-family:var(--mono);color:var(--ink3)">Channels</div>
+<div style="font-size:11px;font-weight:500">SMS + Email + App push</div></div>
+<div><div style="font-size:10px;font-family:var(--mono);color:var(--ink3)">Fee</div>
+<div style="font-size:11px;font-weight:500">No dunning fee</div></div>
+<div><div style="font-size:10px;font-family:var(--mono);color:var(--ink3)">Action</div>
+<div style="font-size:11px;font-weight:500">Reminder: pay now to avoid service impact</div></div>
+</div></div></div>
+<div class="dun-level l2"><div class="dun-num">2</div>
+<div style="flex:1"><div style="font-size:13px;font-weight:700;margin-bottom:4px">Level 2 — Formal Warning</div>
+<div style="display:flex;gap:16px;flex-wrap:wrap">
+<div><div style="font-size:10px;font-family:var(--mono);color:var(--ink3)">Trigger</div>
+<div style="font-size:11px;font-weight:500">30–44 days overdue</div></div>
+<div><div style="font-size:10px;font-family:var(--mono);color:var(--ink3)">Channels</div>
+<div style="font-size:11px;font-weight:500">Registered letter + WhatsApp + Email</div></div>
+<div><div style="font-size:10px;font-family:var(--mono);color:var(--ink3)">Fee</div>
+<div style="font-size:11px;font-weight:500">₹250 dunning fee added</div></div>
+<div><div style="font-size:10px;font-family:var(--mono);color:var(--ink3)">Action</div>
+<div style="font-size:11px;font-weight:500">Formal notice: pay within 15 days or service will be disconnected</div></div>
+</div></div></div>
+<div class="dun-level l3"><div class="dun-num">3</div>
+<div style="flex:1"><div style="font-size:13px;font-weight:700;margin-bottom:4px">Level 3 — Final Notice / Legal</div>
+<div style="display:flex;gap:16px;flex-wrap:wrap">
+<div><div style="font-size:10px;font-family:var(--mono);color:var(--ink3)">Trigger</div>
+<div style="font-size:11px;font-weight:500">45+ days overdue</div></div>
+<div><div style="font-size:10px;font-family:var(--mono);color:var(--ink3)">Channels</div>
+<div style="font-size:11px;font-weight:500">Registered post + Legal dept</div></div>
+<div><div style="font-size:10px;font-family:var(--mono);color:var(--ink3)">Fee</div>
+<div style="font-size:11px;font-weight:500">₹500 dunning fee + 18% p.a. interest</div></div>
+<div><div style="font-size:10px;font-family:var(--mono);color:var(--ink3)">Action</div>
+<div style="font-size:11px;font-weight:500">Service disconnected. Account handed to collection agency. Legal action initiated if > 90 days.</div></div>
+</div></div></div>
+</div></div>
+<div class="card"><div class="card-hd"><div class="card-title">▶ Run Dunning Proposal</div>
+<div class="card-sub">Reviews all overdue accounts, assigns level, generates notices</div>
+<div class="card-r"><button class="btn btn-r" id="dun-run-btn" onclick="runDunning()">↻ Run Dunning</button></div></div>
+<div class="card-body">
+<div class="form-row">
+<div class="fg"><label class="fl">Run Date</label><input class="fi" type="date" value="2026-04-06"/></div>
+<div class="fg"><label class="fl">Scope</label><select class="fs"><option>All overdue accounts</option><option>Level 1 only</option><option>Level 3 — critical only</option></select></div>
+</div>
+<div class="tbl-wrap"><table class="tbl"><thead><tr>
+<th>CA ID</th><th>Consumer</th><th>Overdue Amount</th><th>Days Overdue</th><th>Dunning Level</th><th>Action</th><th>Status</th></tr></thead>
+<tbody id="dun-results">
+<tr><td colspan="7" style="text-align:center;color:var(--ink3);padding:20px">Click "Run Dunning" to execute the dunning proposal run...</td></tr>
+</tbody></table></div>
+</div></div>
+<div class="card"><div class="card-hd"><div class="card-title">🤝 Promise-to-Pay Register</div>
+<div class="card-sub">Suspend dunning when consumer commits to payment by a date</div>
+<div class="card-r"><button class="btn btn-p btn-sm" onclick="toast('Promise-to-Pay created: CA suspended from dunning')">+ Record PTP</button></div></div>
+<div class="tbl-wrap"><table class="tbl"><thead><tr><th>CA</th><th>Consumer</th><th>Amount</th><th>Promise Date</th><th>Recorded By</th><th>Status</th><th>Action</th></tr></thead><tbody>
+<tr><td class="td-mono">CA-00384</td><td style="font-size:11.5px">Gujarat Ceramics</td>
+<td class="td-mono" style="font-weight:700">₹48,320</td>
+<td class="td-mono">10-Apr-2026</td><td style="font-size:11px">Anand V</td>
+<td><span class="pill am" style="font-size:9px">Active — Dunning Suspended</span></td>
+<td><button class="btn btn-s btn-xs" onclick="toast('PTP updated')">Update</button></td></tr>
+<tr><td class="td-mono">CA-00215</td><td style="font-size:11.5px">M. Sharma</td>
+<td class="td-mono" style="font-weight:700">₹48,400</td>
+<td class="td-mono">05-Apr-2026</td><td style="font-size:11px">Pramila S</td>
+<td><span class="pill gr" style="font-size:9px">Kept — Paid</span></td>
+<td><button class="btn btn-s btn-xs" onclick="toast('PTP updated')">Update</button></td></tr>
+<tr><td class="td-mono">CA-00188</td><td style="font-size:11.5px">V. Shah Ind</td>
+<td class="td-mono" style="font-weight:700">₹12,800</td>
+<td class="td-mono">01-Apr-2026</td><td style="font-size:11px">Suresh P</td>
+<td><span class="pill rd" style="font-size:9px">Broken — Dunning Resumed</span></td>
+<td><button class="btn btn-s btn-xs" onclick="toast('PTP updated')">Update</button></td></tr>
+</tbody></table></div></div>
+</div>
+<div id="p-deposit" class="page">
+<div class="g4" style="margin-bottom:14px">
+<div class="kpi bl"><div class="kpi-lbl">Deposits Held</div><div class="kpi-val">1,248</div></div>
+<div class="kpi gr"><div class="kpi-lbl">Total Principal</div><div class="kpi-val">₹62.4L</div></div>
+<div class="kpi tl"><div class="kpi-lbl">Total Interest Accrued</div><div class="kpi-val">₹8.1L</div></div>
+<div class="kpi am"><div class="kpi-lbl">Refunds Due (Pending)</div><div class="kpi-val">₹4.2L</div></div>
+</div>
+<div class="card"><div class="card-hd"><div class="card-title">🏦 Security Deposit Register</div>
+<div class="card-sub">Principal + interest accrual (RBI savings rate) · refund on termination · additional demand</div>
+<div class="card-r"><button class="btn btn-p btn-sm" onclick="openM('m-new-deposit')">+ New Deposit</button></div></div>
+<div class="tbl-wrap"><table class="tbl"><thead><tr>
+<th>Deposit ID</th><th>CA / Consumer</th><th>Type</th><th>Principal (₹)</th><th>Deposit Date</th><th>Interest Rate</th><th>Accrued Int (₹)</th><th>Current Value (₹)</th><th>Status</th><th>Actions</th></tr></thead><tbody>
+<tr><td class="td-mono">DEP-0421</td>
+<td style="font-size:11.5px">CA-00421 / R. Mehta</td>
+<td style="font-size:11px">Standard</td>
+<td class="td-mono td-r">2,400</td>
+<td class="td-mono" style="font-size:11px">12-Jan-2021</td>
+<td class="td-mono">7.25%</td>
+<td class="td-mono td-r" style="color:var(--teal);font-weight:600">374.40</td>
+<td class="td-mono td-r" style="font-weight:700">2,774.40</td>
+<td><span class="pill gr" style="font-size:9px">Active</span></td>
+<td><button class="btn btn-s btn-xs" onclick="openM('m-deposit-detail')">Detail</button>
+</td></tr>
+<tr><td class="td-mono">DEP-0384</td>
+<td style="font-size:11.5px">CA-00384 / Gujarat Ceramics</td>
+<td style="font-size:11px">HT Enhanced</td>
+<td class="td-mono td-r">12,000</td>
+<td class="td-mono" style="font-size:11px">15-Mar-2021</td>
+<td class="td-mono">7.25%</td>
+<td class="td-mono td-r" style="color:var(--teal);font-weight:600">4,644.00</td>
+<td class="td-mono td-r" style="font-weight:700">16,644.00</td>
+<td><span class="pill am" style="font-size:9px">Active · Inadequate</span></td>
+<td><button class="btn btn-s btn-xs" onclick="openM('m-deposit-detail')">Detail</button>
+ <button class="btn btn-am btn-xs" onclick="toast('Additional deposit notice sent')">+ Notice</button>
+</td></tr>
+<tr><td class="td-mono">DEP-0512</td>
+<td style="font-size:11.5px">CA-00512 / S. Desai</td>
+<td style="font-size:11px">Standard</td>
+<td class="td-mono td-r">2,400</td>
+<td class="td-mono" style="font-size:11px">08-Jun-2020</td>
+<td class="td-mono">7.25%</td>
+<td class="td-mono td-r" style="color:var(--teal);font-weight:600">455.20</td>
+<td class="td-mono td-r" style="font-weight:700">2,855.20</td>
+<td><span class="pill gr" style="font-size:9px">Active</span></td>
+<td><button class="btn btn-s btn-xs" onclick="openM('m-deposit-detail')">Detail</button>
+</td></tr>
+<tr><td class="td-mono">DEP-0601</td>
+<td style="font-size:11.5px">CA-00601 / Surat Textiles</td>
+<td style="font-size:11px">HT Enhanced</td>
+<td class="td-mono td-r">48,000</td>
+<td class="td-mono" style="font-size:11px">01-Apr-2018</td>
+<td class="td-mono">7.25%</td>
+<td class="td-mono td-r" style="color:var(--teal);font-weight:600">24,840.00</td>
+<td class="td-mono td-r" style="font-weight:700">72,840.00</td>
+<td><span class="pill gr" style="font-size:9px">Active · Overdue Offset</span></td>
+<td><button class="btn btn-s btn-xs" onclick="openM('m-deposit-detail')">Detail</button>
+</td></tr>
+<tr><td class="td-mono">DEP-0318</td>
+<td style="font-size:11.5px">CA-00318 / Priya Nair</td>
+<td style="font-size:11px">Standard</td>
+<td class="td-mono td-r">2,400</td>
+<td class="td-mono" style="font-size:11px">22-Sep-2019</td>
+<td class="td-mono">7.25%</td>
+<td class="td-mono td-r" style="color:var(--teal);font-weight:600">497.80</td>
+<td class="td-mono td-r" style="font-weight:700">2,897.80</td>
+<td><span class="pill gr" style="font-size:9px">Active</span></td>
+<td><button class="btn btn-s btn-xs" onclick="openM('m-deposit-detail')">Detail</button>
+</td></tr>
+<tr><td class="td-mono">DEP-0180</td>
+<td style="font-size:11.5px">CA-00180 / K. Patel</td>
+<td style="font-size:11px">Standard</td>
+<td class="td-mono td-r">2,400</td>
+<td class="td-mono" style="font-size:11px">10-Feb-2015</td>
+<td class="td-mono">7.25%</td>
+<td class="td-mono td-r" style="color:var(--teal);font-weight:600">2,119.20</td>
+<td class="td-mono td-r" style="font-weight:700">4,519.20</td>
+<td><span class="pill bl" style="font-size:9px">Refund Pending</span></td>
+<td><button class="btn btn-s btn-xs" onclick="openM('m-deposit-detail')">Detail</button>
+ <button class="btn btn-g btn-xs" onclick="toast('Refund processed via NEFT','success')">Refund</button>
+</td></tr>
+</tbody></table></div>
+<div style="padding:14px 16px;background:#F8FAFB;border-top:1px solid var(--border)">
+<div class="sec-hd">Simple Interest Calculator</div>
+<div class="form-row c4">
+<div class="fg"><label class="fl">Principal Deposit (₹)</label>
+<input class="fi fi-r" id="dep-principal" type="number" value="2400" oninput="calcInterest()"/>
+</div>
+<div class="fg"><label class="fl">Annual Rate (%)</label>
+<input class="fi fi-r" id="dep-rate" type="number" value="7.25" oninput="calcInterest()"/>
+</div>
+<div class="fg"><label class="fl">Period (years)</label>
+<input class="fi fi-r" id="dep-years" type="number" value="5.25" oninput="calcInterest()"/>
+</div>
+<div class="fg"><label class="fl">Accrued Interest</label>
+<div id="dep-interest-result" style="padding:7px 10px;background:#fff;border:1px solid var(--border);border-radius:6px;font-family:var(--mono);font-size:14px;font-weight:700;color:var(--teal)">—</div>
+</div>
+</div></div></div>
+</div>
+<div id="p-dispute" class="page">
+<div class="g4" style="margin-bottom:14px">
+<div class="kpi bl"><div class="kpi-lbl">Open Disputes</div><div class="kpi-val">8</div></div>
+<div class="kpi am"><div class="kpi-lbl">Total Disputed Amount</div><div class="kpi-val">₹42,800</div></div>
+<div class="kpi tl"><div class="kpi-lbl">Credit Notes MTD</div><div class="kpi-val">₹12,400</div></div>
+<div class="kpi gr"><div class="kpi-lbl">Avg Resolution</div><div class="kpi-val">14.2 days</div></div>
+</div>
+<div class="card"><div class="card-hd"><div class="card-title">⚖️ Dispute Register</div>
+<div class="card-sub">Billing disputes with financial hold · linked to reads / bills / tariff logic · resolution workflow</div>
+<div class="card-r"><button class="btn btn-p btn-sm" onclick="openM('m-new-dispute')">+ Raise Dispute</button></div></div>
+<div class="tbl-wrap"><table class="tbl"><thead><tr>
+<th>Dispute ID</th><th>CA / Consumer</th><th>Type</th><th>Disputed Amount</th><th>Raised On</th><th>Financial Hold</th><th>Assigned To</th><th>Status</th><th>Action</th></tr></thead><tbody>
+<tr><td class="td-mono td-link">DIS-0384-01</td>
+<td style="font-size:11.5px">CA-00384 / Gujarat Ceramics</td>
+<td style="font-size:11px">Tariff Category Error</td>
+<td class="td-mono" style="font-weight:700">₹12,400</td>
+<td class="td-mono" style="font-size:11px">01-Apr-26</td>
+<td><span class="pill rd" style="font-size:9px">Yes</span></td>
+<td style="font-size:11px">Billing Dept</td>
+<td><span class="pill am">Investigation</span></td>
+<td><button class="btn btn-s btn-xs" onclick="openM('m-resolve-dispute')">Resolve</button>
+ <button class="btn btn-s btn-xs" onclick="toast('Credit note issued')">Credit Note</button>
+</td></tr>
+<tr><td class="td-mono td-link">DIS-0512-01</td>
+<td style="font-size:11.5px">CA-00512 / S. Desai</td>
+<td style="font-size:11px">Payment Not Reflected</td>
+<td class="td-mono" style="font-weight:700">₹342</td>
+<td class="td-mono" style="font-size:11px">02-Apr-26</td>
+<td><span class="pill cl" style="font-size:9px">No</span></td>
+<td style="font-size:11px">Finance</td>
+<td><span class="pill gr">Resolved</span></td>
+<td><button class="btn btn-s btn-xs" onclick="openM('m-resolve-dispute')">Resolve</button>
+</td></tr>
+<tr><td class="td-mono td-link">DIS-0215-01</td>
+<td style="font-size:11.5px">CA-00215 / M. Sharma</td>
+<td style="font-size:11px">Meter Reading Disputed</td>
+<td class="td-mono" style="font-weight:700">₹4,200</td>
+<td class="td-mono" style="font-size:11px">28-Mar-26</td>
+<td><span class="pill rd" style="font-size:9px">Yes</span></td>
+<td style="font-size:11px">Tech + Billing</td>
+<td><span class="pill bl">Field Check Pending</span></td>
+<td><button class="btn btn-s btn-xs" onclick="openM('m-resolve-dispute')">Resolve</button>
+ <button class="btn btn-s btn-xs" onclick="toast('Credit note issued')">Credit Note</button>
+</td></tr>
+<tr><td class="td-mono td-link">DIS-0188-01</td>
+<td style="font-size:11.5px">CA-00188 / Textile Mills</td>
+<td style="font-size:11px">Tariff Revision Impact</td>
+<td class="td-mono" style="font-weight:700">₹26,200</td>
+<td class="td-mono" style="font-size:11px">15-Mar-26</td>
+<td><span class="pill rd" style="font-size:9px">Yes</span></td>
+<td style="font-size:11px">Manager Approval</td>
+<td><span class="pill pu">Awaiting Decision</span></td>
+<td><button class="btn btn-s btn-xs" onclick="openM('m-resolve-dispute')">Resolve</button>
+ <button class="btn btn-s btn-xs" onclick="toast('Credit note issued')">Credit Note</button>
+</td></tr>
+</tbody></table></div>
+<div class="card"><div class="card-hd"><div class="card-title">📄 Credit Note Register</div>
+<div class="card-sub">Adjustments, reversals, goodwill credits · linked to FI-CA open items</div></div>
+<div class="tbl-wrap"><table class="tbl"><thead><tr><th>CN No</th><th>Consumer</th><th>Reason</th><th>Amount</th><th>Issued On</th><th>Applied To</th><th>Status</th></tr></thead><tbody>
+<tr><td class="td-mono">CN-0512-01</td><td style="font-size:11.5px">S. Desai</td>
+<td style="font-size:11px">Payment posted twice — refund of dup</td>
+<td class="td-mono td-r" style="color:var(--teal);font-weight:700">₹342</td>
+<td class="td-mono" style="font-size:11px">02-Apr-26</td>
+<td class="td-mono" style="font-size:10px">BILL-0042001</td>
+<td><span class="pill gr">Applied</span></td></tr>
+<tr><td class="td-mono">CN-0421-01</td><td style="font-size:11.5px">R. Mehta</td>
+<td style="font-size:11px">Meter replacement proration</td>
+<td class="td-mono td-r" style="color:var(--teal);font-weight:700">₹180</td>
+<td class="td-mono" style="font-size:11px">05-Mar-26</td>
+<td class="td-mono" style="font-size:10px">BILL-0041200</td>
+<td><span class="pill gr">Applied</span></td></tr>
+<tr><td class="td-mono">CN-0384-01</td><td style="font-size:11.5px">Gujarat Ceramics</td>
+<td style="font-size:11px">Tariff category dispute — partial</td>
+<td class="td-mono td-r" style="color:var(--teal);font-weight:700">₹8,400</td>
+<td class="td-mono" style="font-size:11px">15-Apr-26</td>
+<td class="td-mono" style="font-size:10px">BILL-0041901</td>
+<td><span class="pill am">Pending</span></td></tr>
+</tbody></table></div></div>
+</div>
+<div id="p-erp" class="page">
+<div class="g4" style="margin-bottom:14px">
+<div class="kpi bl"><div class="kpi-lbl">Revenue to Post</div><div class="kpi-val">₹15,70,000</div><div class="kpi-sub">Apr 2026 collected</div></div>
+<div class="kpi gr"><div class="kpi-lbl">GL Accounts Mapped</div><div class="kpi-val">18</div><div class="kpi-sub">All charges mapped</div></div>
+<div class="kpi tl"><div class="kpi-lbl">Last Post</div><div class="kpi-val">06-Mar-26</div><div class="kpi-sub">ERP-JE-040</div></div>
+<div class="kpi pu"><div class="kpi-lbl">ERP System</div><div class="kpi-val">SAP FI / Oracle</div><div class="kpi-sub">REST integration</div></div>
+</div>
+<div class="card"><div class="card-hd"><div class="card-title">🔗 Revenue Posting Flow</div>
+<div class="card-sub">Single aggregated journal entry posted to ERP each billing cycle. FI-CA detail stays in Enerza.</div></div>
+<div class="card-body">
+<div class="erp-flow" style="justify-content:center;flex-wrap:wrap;gap:6px">
+<div class="erp-box done">
+<div style="font-size:18px;margin-bottom:4px">✅</div>
+<div class="erp-title">FI-CA Subledger</div>
+<div class="erp-sub">Bills · Payments · Adjustments</div>
+<div class="erp-step-status" id="s1" style="font-size:11px;margin-top:4px;font-family:var(--mono)"></div></div>
+<div class="erp-arrow">→</div>
+<div class="erp-box done">
+<div style="font-size:18px;margin-bottom:4px">✅</div>
+<div class="erp-title">Revenue Aggregation</div>
+<div class="erp-sub">Group by GL account · utility segment · period</div>
+<div class="erp-step-status" id="s2" style="font-size:11px;margin-top:4px;font-family:var(--mono)"></div></div>
+<div class="erp-arrow">→</div>
+<div class="erp-box active">
+<div style="font-size:18px;margin-bottom:4px">▶</div>
+<div class="erp-title">Journal Entry Build</div>
+<div class="erp-sub">DR Receivable · CR Revenue accounts · CR Tax</div>
+<div class="erp-step-status" id="s3" style="font-size:11px;margin-top:4px;font-family:var(--mono)"></div></div>
+<div class="erp-arrow">→</div>
+<div class="erp-box ">
+<div style="font-size:18px;margin-bottom:4px">⭕</div>
+<div class="erp-title">ERP API Call</div>
+<div class="erp-sub">REST POST /api/journals · OAuth2</div>
+<div class="erp-step-status" id="s4" style="font-size:11px;margin-top:4px;font-family:var(--mono)"></div></div>
+<div class="erp-arrow">→</div>
+<div class="erp-box erp">
+<div style="font-size:18px;margin-bottom:4px">🔗</div>
+<div class="erp-title">ERP Confirmed</div>
+<div class="erp-sub">Batch ref returned · reconcile</div>
+<div class="erp-step-status" id="s5" style="font-size:11px;margin-top:4px;font-family:var(--mono)"></div></div>
+</div></div></div>
+<div class="card"><div class="card-hd"><div class="card-title">📋 Journal Entry Preview — Apr 2026</div>
+<div class="card-sub">One journal entry aggregates all FI-CA revenue postings for the period. ERP sees only this.</div>
+<div class="card-r">
+<button class="btn btn-p" id="erp-post-btn" onclick="triggerERPPost()">🔗 Post to ERP</button></div></div>
+<div class="card-body">
+<div class="g4" style="margin-bottom:14px">
+<div class="info-item"><div class="info-lbl">Document Type</div><div class="info-val td-mono" style="font-size:12px">Revenue Journal (RJ)</div></div>
+<div class="info-item"><div class="info-lbl">Period</div><div class="info-val td-mono" style="font-size:12px">Apr 2026 (4/2026)</div></div>
+<div class="info-item"><div class="info-lbl">Posting Date</div><div class="info-val td-mono" style="font-size:12px">06-Apr-2026</div></div>
+<div class="info-item"><div class="info-lbl">Reference</div><div class="info-val td-mono" style="font-size:12px">ERP-JE-20260406</div></div>
+</div>
+<table class="je-tbl"><thead><tr>
+<th>Line</th><th>GL Account</th><th>Account Name</th><th>Cost Centre</th><th>Debit (₹)</th><th>Credit (₹)</th><th>Tax Code</th><th>Reference</th></tr></thead><tbody>
+<tr class="je-dr"><td class="td-mono" style="font-size:11px">DR</td>
+<td class="je-account">110100</td>
+<td style="font-size:12px">Trade Receivable — Electricity</td>
+<td class="td-mono" style="font-size:10px">DIST-ELEC</td>
+<td class="td-mono td-r" style="font-weight:700;color:var(--red)">15,70,000.00</td>
+<td class="td-mono td-r" style="color:var(--ink3)">—</td>
+<td class="td-mono" style="font-size:10px">—</td>
+<td class="td-mono" style="font-size:10px">FI-CA cleared Apr-26</td></tr>
+<tr class="je-cr"><td class="td-mono" style="font-size:11px">CR</td>
+<td class="je-account">400100</td>
+<td style="font-size:12px">Energy Revenue — LT Domestic</td>
+<td class="td-mono" style="font-size:10px">DIST-LT</td>
+<td class="td-mono td-r" style="color:var(--ink3)">—</td>
+<td class="td-mono td-r" style="font-weight:700;color:var(--green)">5,24,800.00</td>
+<td class="td-mono" style="font-size:10px">V0</td>
+<td class="td-mono" style="font-size:10px">BILL-LT1-APR26</td></tr>
+<tr class="je-cr"><td class="td-mono" style="font-size:11px">CR</td>
+<td class="je-account">400200</td>
+<td style="font-size:12px">Energy Revenue — LT Commercial</td>
+<td class="td-mono" style="font-size:10px">DIST-LT</td>
+<td class="td-mono td-r" style="color:var(--ink3)">—</td>
+<td class="td-mono td-r" style="font-weight:700;color:var(--green)">3,12,400.00</td>
+<td class="td-mono" style="font-size:10px">V0</td>
+<td class="td-mono" style="font-size:10px">BILL-LT2-APR26</td></tr>
+<tr class="je-cr"><td class="td-mono" style="font-size:11px">CR</td>
+<td class="je-account">400300</td>
+<td style="font-size:12px">Energy Revenue — HT Industrial</td>
+<td class="td-mono" style="font-size:10px">DIST-HT</td>
+<td class="td-mono td-r" style="color:var(--ink3)">—</td>
+<td class="td-mono td-r" style="font-weight:700;color:var(--green)">7,84,200.00</td>
+<td class="td-mono" style="font-size:10px">V0</td>
+<td class="td-mono" style="font-size:10px">BILL-HT1-APR26</td></tr>
+<tr class="je-cr"><td class="td-mono" style="font-size:11px">CR</td>
+<td class="je-account">400400</td>
+<td style="font-size:12px">Fixed Charges Revenue</td>
+<td class="td-mono" style="font-size:10px">DIST-LT</td>
+<td class="td-mono td-r" style="color:var(--ink3)">—</td>
+<td class="td-mono td-r" style="font-weight:700;color:var(--green)">84,500.00</td>
+<td class="td-mono" style="font-size:10px">V0</td>
+<td class="td-mono" style="font-size:10px">BILL-FIXED-APR26</td></tr>
+<tr class="je-cr"><td class="td-mono" style="font-size:11px">CR</td>
+<td class="je-account">400500</td>
+<td style="font-size:12px">Demand Charge Revenue</td>
+<td class="td-mono" style="font-size:10px">DIST-HT</td>
+<td class="td-mono td-r" style="color:var(--ink3)">—</td>
+<td class="td-mono td-r" style="font-weight:700;color:var(--green)">2,18,000.00</td>
+<td class="td-mono" style="font-size:10px">V0</td>
+<td class="td-mono" style="font-size:10px">BILL-MD-APR26</td></tr>
+<tr class="je-cr"><td class="td-mono" style="font-size:11px">CR</td>
+<td class="je-account">400600</td>
+<td style="font-size:12px">PF Penalty Revenue</td>
+<td class="td-mono" style="font-size:10px">DIST-HT</td>
+<td class="td-mono td-r" style="color:var(--ink3)">—</td>
+<td class="td-mono td-r" style="font-weight:700;color:var(--green)">18,400.00</td>
+<td class="td-mono" style="font-size:10px">V0</td>
+<td class="td-mono" style="font-size:10px">BILL-PF-APR26</td></tr>
+<tr class="je-cr"><td class="td-mono" style="font-size:11px">CR</td>
+<td class="je-account">400700</td>
+<td style="font-size:12px">FPPC Surcharge Revenue</td>
+<td class="td-mono" style="font-size:10px">DIST-ALL</td>
+<td class="td-mono td-r" style="color:var(--ink3)">—</td>
+<td class="td-mono td-r" style="font-weight:700;color:var(--green)">81,070.00</td>
+<td class="td-mono" style="font-size:10px">V0</td>
+<td class="td-mono" style="font-size:10px">FPPC-Q1-APR26</td></tr>
+<tr class="je-cr"><td class="td-mono" style="font-size:11px">CR</td>
+<td class="je-account">210100</td>
+<td style="font-size:12px">GST Payable — Output Tax</td>
+<td class="td-mono" style="font-size:10px">TAX-DEPT</td>
+<td class="td-mono td-r" style="color:var(--ink3)">—</td>
+<td class="td-mono td-r" style="font-weight:700;color:var(--green)">15,210.00</td>
+<td class="td-mono" style="font-size:10px">V1</td>
+<td class="td-mono" style="font-size:10px">GST-APR26</td></tr>
+<tr class="je-cr"><td class="td-mono" style="font-size:11px">CR</td>
+<td class="je-account">210200</td>
+<td style="font-size:12px">Electricity Duty Payable</td>
+<td class="td-mono" style="font-size:10px">TAX-DEPT</td>
+<td class="td-mono td-r" style="color:var(--ink3)">—</td>
+<td class="td-mono td-r" style="font-weight:700;color:var(--green)">2,43,210.00</td>
+<td class="td-mono" style="font-size:10px">V2</td>
+<td class="td-mono" style="font-size:10px">DUTY-APR26</td></tr>
+<tr class="je-cr"><td class="td-mono" style="font-size:11px">CR</td>
+<td class="je-account">400800</td>
+<td style="font-size:12px">Late Payment Interest Revenue</td>
+<td class="td-mono" style="font-size:10px">DIST-ALL</td>
+<td class="td-mono td-r" style="color:var(--ink3)">—</td>
+<td class="td-mono td-r" style="font-weight:700;color:var(--green)">18,500.00</td>
+<td class="td-mono" style="font-size:10px">V0</td>
+<td class="td-mono" style="font-size:10px">INTEREST-APR26</td></tr>
+<tr class="je-cr"><td class="td-mono" style="font-size:11px">CR</td>
+<td class="je-account">499900</td>
+<td style="font-size:12px">Revenue — Rounding</td>
+<td class="td-mono" style="font-size:10px">DIST-ALL</td>
+<td class="td-mono td-r" style="color:var(--ink3)">—</td>
+<td class="td-mono td-r" style="font-weight:700;color:var(--green)">710.00</td>
+<td class="td-mono" style="font-size:10px">—</td>
+<td class="td-mono" style="font-size:10px">ROUND-APR26</td></tr>
+<tr class="je-total"><td colspan="4">TOTALS</td>
+<td class="td-mono td-r" style="color:var(--red)">₹15,70,000.00</td>
+<td class="td-mono td-r" style="color:var(--green)">₹15,70,000.00</td>
+<td colspan="2" style="font-size:11px;color:var(--green)">✓ BALANCED</td></tr>
+</tbody></table>
+<div style="margin-top:14px"><div class="sec-hd">ERP Posting Log</div>
+<div id="erp-log" style="background:#0D1B2A;color:#A8E6B0;font-family:var(--mono);font-size:11px;border-radius:8px;padding:12px;min-height:80px;max-height:180px;overflow-y:auto">
+<div style="color:rgba(168,230,176,.5)">Waiting for ERP post trigger. Click "Post to ERP" above to start.</div>
+</div></div>
+<div style="margin-top:14px"><div class="sec-hd">GL Account Mapping Configuration</div>
+<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Charge Type</th><th>Consumer Class</th><th>GL Account (Credit)</th><th>Cost Centre</th><th>Tax Code</th><th>ERP Reference Field</th></tr></thead><tbody>
+<tr><td style=font-size:11px >Energy Charge</td><td style=font-size:11px >LT Domestic</td><td class=je-account >400100 — LT Dom Revenue</td><td style=font-size:11px >DIST-LT</td><td style=font-size:11px style=font-size:10px;font-family:var(--mono)>V0 (Exempt)</td><td style=font-size:11px style=font-size:10px;font-family:var(--mono)>BILLING_TYPE=LT1_ENERGY</td></tr>
+<tr><td style=font-size:11px >Energy Charge</td><td style=font-size:11px >HT Industrial</td><td class=je-account >400300 — HT Ind Revenue</td><td style=font-size:11px >DIST-HT</td><td style=font-size:11px style=font-size:10px;font-family:var(--mono)>V0 (Exempt)</td><td style=font-size:11px style=font-size:10px;font-family:var(--mono)>BILLING_TYPE=HT1_ENERGY</td></tr>
+<tr><td style=font-size:11px >Fixed Charge</td><td style=font-size:11px >All LT</td><td class=je-account >400400 — Fixed Charges</td><td style=font-size:11px >DIST-LT</td><td style=font-size:11px style=font-size:10px;font-family:var(--mono)>V0 (Exempt)</td><td style=font-size:11px style=font-size:10px;font-family:var(--mono)>BILLING_TYPE=FIXED</td></tr>
+<tr><td style=font-size:11px >Demand Charge</td><td style=font-size:11px >HT</td><td class=je-account >400500 — Demand Revenue</td><td style=font-size:11px >DIST-HT</td><td style=font-size:11px style=font-size:10px;font-family:var(--mono)>V0 (Exempt)</td><td style=font-size:11px style=font-size:10px;font-family:var(--mono)>BILLING_TYPE=MD</td></tr>
+<tr><td style=font-size:11px >Electricity Duty</td><td style=font-size:11px >All</td><td class=je-account >210200 — Duty Payable</td><td style=font-size:11px >TAX-DEPT</td><td style=font-size:11px style=font-size:10px;font-family:var(--mono)>V2 (Duty)</td><td style=font-size:11px style=font-size:10px;font-family:var(--mono)>TAX_TYPE=DUTY</td></tr>
+<tr><td style=font-size:11px >GST Output</td><td style=font-size:11px >Fixed/Services</td><td class=je-account >210100 — GST Payable</td><td style=font-size:11px >TAX-DEPT</td><td style=font-size:11px style=font-size:10px;font-family:var(--mono)>V1 (GST18)</td><td style=font-size:11px style=font-size:10px;font-family:var(--mono)>TAX_TYPE=GST</td></tr>
+<tr><td style=font-size:11px >FPPC Surcharge</td><td style=font-size:11px >All</td><td class=je-account >400700 — FPPC Revenue</td><td style=font-size:11px >DIST-ALL</td><td style=font-size:11px style=font-size:10px;font-family:var(--mono)>V0</td><td style=font-size:11px style=font-size:10px;font-family:var(--mono)>BILLING_TYPE=FPPC</td></tr>
+<tr><td style=font-size:11px >Late Interest</td><td style=font-size:11px >All</td><td class=je-account >400800 — Interest Revenue</td><td style=font-size:11px >DIST-ALL</td><td style=font-size:11px style=font-size:10px;font-family:var(--mono)>V0</td><td style=font-size:11px style=font-size:10px;font-family:var(--mono)>BILLING_TYPE=INTEREST</td></tr>
+<tr><td style=font-size:11px >Accounts Receivable</td><td style=font-size:11px >All</td><td class=je-account >110100 — Trade Receivable</td><td style=font-size:11px >DIST-ELEC</td><td style=font-size:11px style=font-size:10px;font-family:var(--mono)>—</td><td style=font-size:11px style=font-size:10px;font-family:var(--mono)>PAYMENT_CLEARED</td></tr>
+</tbody></table></div>
+</div></div>
+</div>
+<div id="p-coa" class="page">
+<div class="card"><div class="card-hd"><div class="card-title">🗂️ Chart of Accounts — Utility Electricity</div>
+<div class="card-sub">GL account structure for distribution utility. A=Asset L=Liability R=Revenue E=Expense</div></div>
+<div class="card-body">
+<div style="background:var(--navy);color:#fff;padding:6px 12px;border-radius:6px;margin:10px 0 6px;font-family:var(--mono);font-size:11px;font-weight:700">1xxxxx — ASSETS</div>
+<div class="coa-item coa-indent">
+<div class="coa-code">110000</div>
+<div style="flex:1"><div class="coa-name">Trade Receivables</div>
+<div style="font-size:10px;color:var(--ink3)">Bills receivable from consumers</div>
+</div>
+<span class="coa-type A">A</span>
+</div>
+<div class="coa-item coa-indent2">
+<div class="coa-code">110100</div>
+<div style="flex:1"><div class="coa-name">Trade Receivable — Electricity</div>
+<div style="font-size:10px;color:var(--ink3)">FI-CA cleared amount</div>
+</div>
+<span class="coa-type A">A</span>
+</div>
+<div class="coa-item coa-indent2">
+<div class="coa-code">110200</div>
+<div style="flex:1"><div class="coa-name">Trade Receivable — Deposits</div>
+<div style="font-size:10px;color:var(--ink3)">Security deposits on consumer accounts</div>
+</div>
+<span class="coa-type A">A</span>
+</div>
+<div class="coa-item coa-indent">
+<div class="coa-code">115000</div>
+<div style="flex:1"><div class="coa-name">Unbilled Revenue</div>
+<div style="font-size:10px;color:var(--ink3)">Accrued but not yet billed</div>
+</div>
+<span class="coa-type A">A</span>
+</div>
+<div class="coa-item coa-indent">
+<div class="coa-code">120000</div>
+<div style="flex:1"><div class="coa-name">Prepaid Expenses</div>
+<div style="font-size:10px;color:var(--ink3)">Insurance, maintenance contracts prepaid</div>
+</div>
+<span class="coa-type A">A</span>
+</div>
+<div style="background:var(--navy);color:#fff;padding:6px 12px;border-radius:6px;margin:10px 0 6px;font-family:var(--mono);font-size:11px;font-weight:700">2xxxxx — LIABILITIES</div>
+<div class="coa-item coa-indent">
+<div class="coa-code">210100</div>
+<div style="flex:1"><div class="coa-name">GST Output Tax Payable</div>
+<div style="font-size:10px;color:var(--ink3)">GST collected on meter rent etc</div>
+</div>
+<span class="coa-type L">L</span>
+</div>
+<div class="coa-item coa-indent">
+<div class="coa-code">210200</div>
+<div style="flex:1"><div class="coa-name">Electricity Duty Payable</div>
+<div style="font-size:10px;color:var(--ink3)">State levy collected</div>
+</div>
+<span class="coa-type L">L</span>
+</div>
+<div class="coa-item coa-indent">
+<div class="coa-code">210300</div>
+<div style="flex:1"><div class="coa-name">Security Deposit Liability</div>
+<div style="font-size:10px;color:var(--ink3)">Consumer deposits held</div>
+</div>
+<span class="coa-type L">L</span>
+</div>
+<div class="coa-item coa-indent">
+<div class="coa-code">210400</div>
+<div style="flex:1"><div class="coa-name">Advance from Consumers</div>
+<div style="font-size:10px;color:var(--ink3)">Prepaid consumer credits</div>
+</div>
+<span class="coa-type L">L</span>
+</div>
+<div class="coa-item coa-indent">
+<div class="coa-code">215000</div>
+<div style="flex:1"><div class="coa-name">Deferred Revenue</div>
+<div style="font-size:10px;color:var(--ink3)">Budget billing — monthly advance collected</div>
+</div>
+<span class="coa-type L">L</span>
+</div>
+<div style="background:var(--navy);color:#fff;padding:6px 12px;border-radius:6px;margin:10px 0 6px;font-family:var(--mono);font-size:11px;font-weight:700">4xxxxx — REVENUE</div>
+<div class="coa-item coa-indent">
+<div class="coa-code">400100</div>
+<div style="flex:1"><div class="coa-name">Energy Revenue — LT Domestic</div>
+<div style="font-size:10px;color:var(--ink3)">kWh billed to residential consumers</div>
+</div>
+<span class="coa-type R">R</span>
+</div>
+<div class="coa-item coa-indent">
+<div class="coa-code">400200</div>
+<div style="flex:1"><div class="coa-name">Energy Revenue — LT Commercial</div>
+<div style="font-size:10px;color:var(--ink3)">kWh billed to commercial consumers</div>
+</div>
+<span class="coa-type R">R</span>
+</div>
+<div class="coa-item coa-indent">
+<div class="coa-code">400300</div>
+<div style="flex:1"><div class="coa-name">Energy Revenue — HT Industrial</div>
+<div style="font-size:10px;color:var(--ink3)">kWh billed to HT industrial</div>
+</div>
+<span class="coa-type R">R</span>
+</div>
+<div class="coa-item coa-indent">
+<div class="coa-code">400400</div>
+<div style="flex:1"><div class="coa-name">Fixed Charges Revenue</div>
+<div style="font-size:10px;color:var(--ink3)">Meter rent + customer charge</div>
+</div>
+<span class="coa-type R">R</span>
+</div>
+<div class="coa-item coa-indent">
+<div class="coa-code">400500</div>
+<div style="flex:1"><div class="coa-name">Demand Charge Revenue</div>
+<div style="font-size:10px;color:var(--ink3)">Maximum demand kVA billing</div>
+</div>
+<span class="coa-type R">R</span>
+</div>
+<div class="coa-item coa-indent">
+<div class="coa-code">400600</div>
+<div style="flex:1"><div class="coa-name">Power Factor Penalty Revenue</div>
+<div style="font-size:10px;color:var(--ink3)">PF penalty from HT consumers</div>
+</div>
+<span class="coa-type R">R</span>
+</div>
+<div class="coa-item coa-indent">
+<div class="coa-code">400700</div>
+<div style="flex:1"><div class="coa-name">FPPC Surcharge Revenue</div>
+<div style="font-size:10px;color:var(--ink3)">Fuel & power purchase cost pass-through</div>
+</div>
+<span class="coa-type R">R</span>
+</div>
+<div class="coa-item coa-indent">
+<div class="coa-code">400800</div>
+<div style="flex:1"><div class="coa-name">Late Interest Revenue</div>
+<div style="font-size:10px;color:var(--ink3)">18% p.a. on overdue balances</div>
+</div>
+<span class="coa-type R">R</span>
+</div>
+<div class="coa-item coa-indent">
+<div class="coa-code">400900</div>
+<div style="flex:1"><div class="coa-name">Other Revenue</div>
+<div style="font-size:10px;color:var(--ink3)">Reconnection fees, meter tests</div>
+</div>
+<span class="coa-type R">R</span>
+</div>
+<div style="background:var(--navy);color:#fff;padding:6px 12px;border-radius:6px;margin:10px 0 6px;font-family:var(--mono);font-size:11px;font-weight:700">5xxxxx — EXPENSES</div>
+<div class="coa-item coa-indent">
+<div class="coa-code">510000</div>
+<div style="flex:1"><div class="coa-name">Power Purchase Cost</div>
+<div style="font-size:10px;color:var(--ink3)">Units purchased from SLDC/GenCos</div>
+</div>
+<span class="coa-type E">E</span>
+</div>
+<div class="coa-item coa-indent">
+<div class="coa-code">520000</div>
+<div style="flex:1"><div class="coa-name">O&M Expenses — Distribution</div>
+<div style="font-size:10px;color:var(--ink3)">Field maintenance, materials</div>
+</div>
+<span class="coa-type E">E</span>
+</div>
+<div class="coa-item coa-indent">
+<div class="coa-code">530000</div>
+<div style="flex:1"><div class="coa-name">Bad Debt Expense</div>
+<div style="font-size:10px;color:var(--ink3)">Write-offs from write-off register</div>
+</div>
+<span class="coa-type E">E</span>
+</div>
+<div class="coa-item coa-indent">
+<div class="coa-code">540000</div>
+<div style="flex:1"><div class="coa-name">Dunning & Collection Cost</div>
+<div style="font-size:10px;color:var(--ink3)">Collection agency fees</div>
+</div>
+<span class="coa-type E">E</span>
+</div>
+<div class="coa-item coa-indent">
+<div class="coa-code">550000</div>
+<div style="flex:1"><div class="coa-name">Depreciation — Distribution Assets</div>
+<div style="font-size:10px;color:var(--ink3)">DT, cables, meters</div>
+</div>
+<span class="coa-type E">E</span>
+</div>
+<div style="background:var(--navy);color:#fff;padding:6px 12px;border-radius:6px;margin:10px 0 6px;font-family:var(--mono);font-size:11px;font-weight:700">9xxxxx — CONTRA / SPECIAL</div>
+<div class="coa-item coa-indent">
+<div class="coa-code">910000</div>
+<div style="flex:1"><div class="coa-name">Revenue Clearing — ERP Post</div>
+<div style="font-size:10px;color:var(--ink3)">Staging account for ERP batches</div>
+</div>
+<span class="coa-type R">R</span>
+</div>
+<div class="coa-item coa-indent">
+<div class="coa-code">499900</div>
+<div style="flex:1"><div class="coa-name">Revenue Rounding</div>
+<div style="font-size:10px;color:var(--ink3)">Sub-rupee rounding adjustment</div>
+</div>
+<span class="coa-type R">R</span>
+</div>
+</div></div>
+</div>
+<div id="p-wo" class="page">
+<div style="padding:10px;background:var(--blue-l);border:1px solid rgba(0,81,171,.2);border-radius:8px;font-size:12px;color:var(--blue);margin-bottom:14px">
+ℹ Work Orders are executed in Enerza Field Service. This screen is the ERP integration shell — it syncs WO header, cost summary, and material consumption to your ERP system (SAP PM / Oracle MCS). Operational WO detail lives in the Field Ops module.
+</div>
+<div class="g4" style="margin-bottom:14px">
+<div class="kpi bl"><div class="kpi-lbl">Open WOs</div><div class="kpi-val">26</div></div>
+<div class="kpi gr"><div class="kpi-lbl">Completed MTD</div><div class="kpi-val">238</div></div>
+<div class="kpi am"><div class="kpi-lbl">Material Cost MTD</div><div class="kpi-val">₹4.2L</div></div>
+<div class="kpi rd"><div class="kpi-lbl">ERP Sync Pending</div><div class="kpi-val">3</div></div>
+</div>
+<div class="card"><div class="card-hd"><div class="card-title">🔧 Work Order Register (ERP Shell)</div>
+<div class="card-sub">Header info + cost summary + material usage. Full execution in Field Ops module.</div>
+<div class="card-r"><button class="btn btn-p btn-sm" onclick="openM('m-new-wo')">+ Create WO</button></div></div>
+<div class="tbl-wrap"><table class="tbl"><thead><tr>
+<th>WO No</th><th>Type</th><th>Source</th><th>Consumer / Asset</th><th>Assigned To</th><th>Material Cost</th><th>Labour Cost</th><th>Total Cost</th><th>ERP Status</th><th>WO Status</th></tr></thead><tbody>
+<tr><td class="td-mono td-link">WO-4421</td><td style="font-size:11.5px">Service Restoration</td>
+<td class="td-mono" style="font-size:10px">CMP-20241</td>
+<td style="font-size:11px">Rajesh Mehta — CAN 56039281</td>
+<td style="font-size:11px">Manoj Kumar</td>
+<td class="td-mono td-r">₹82</td><td class="td-mono td-r">₹400</td>
+<td class="td-mono td-r" style="font-weight:700">₹482</td>
+<td><span class="pill am" style="font-size:9px">⏳ Pending sync</span></td>
+<td><span class="pill am">In Progress</span></td></tr>
+<tr><td class="td-mono td-link">WO-4430</td><td style="font-size:11.5px">Meter Replacement</td>
+<td class="td-mono" style="font-size:10px">SR-1812</td>
+<td style="font-size:11px">Priya Nair — CAN 56030099</td>
+<td style="font-size:11px">Dinesh Patel</td>
+<td class="td-mono td-r">₹1,800</td><td class="td-mono td-r">₹600</td>
+<td class="td-mono td-r" style="font-weight:700">₹2,400</td>
+<td><span class="pill am" style="font-size:9px">⏳ Pending sync</span></td>
+<td><span class="pill bl">Assigned</span></td></tr>
+<tr><td class="td-mono td-link">WO-4418</td><td style="font-size:11.5px">New Connection</td>
+<td class="td-mono" style="font-size:10px">NCA-0891</td>
+<td style="font-size:11px">Vikram Shah — Bopal</td>
+<td style="font-size:11px">Sundar Rao</td>
+<td class="td-mono td-r">₹3,754</td><td class="td-mono td-r">₹800</td>
+<td class="td-mono td-r" style="font-weight:700">₹4,554</td>
+<td><span class="pill am" style="font-size:9px">⏳ Pending</span></td>
+<td><span class="pill bl">Assigned</span></td></tr>
+<tr><td class="td-mono td-link">WO-4398</td><td style="font-size:11.5px">Network Repair</td>
+<td class="td-mono" style="font-size:10px">CMP-20215</td>
+<td style="font-size:11px">Feeder F-12 — Adajan</td>
+<td style="font-size:11px">Pavan Singh</td>
+<td class="td-mono td-r">₹8,400</td><td class="td-mono td-r">₹2,000</td>
+<td class="td-mono td-r" style="font-weight:700">₹10,400</td>
+<td><span class="pill gr" style="font-size:9px">✓ ERP-WO-8821</span></td>
+<td><span class="pill gr">Completed</span></td></tr>
+<tr><td class="td-mono td-link">WO-4390</td><td style="font-size:11.5px">Meter Reading</td>
+<td class="td-mono" style="font-size:10px">SCH-MRU-04</td>
+<td style="font-size:11px">Route MRU-04 (48 meters)</td>
+<td style="font-size:11px">Kavita Shah</td>
+<td class="td-mono td-r">₹0</td><td class="td-mono td-r">₹1,200</td>
+<td class="td-mono td-r" style="font-weight:700">₹1,200</td>
+<td><span class="pill gr" style="font-size:9px">✓ ERP-WO-8810</span></td>
+<td><span class="pill gr">Completed</span></td></tr>
+</tbody></table></div>
+<div style="padding:12px 16px;background:#F8FAFB;border-top:1px solid var(--border);display:flex;gap:8px">
+<button class="btn btn-p btn-sm" onclick="toast('3 work orders synced to ERP. WO numbers assigned.','success')">🔗 Sync Pending WOs to ERP</button>
+<button class="btn btn-s btn-sm" onclick="toast('WO cost report exported')">📥 Export Cost Report</button>
+</div></div>
+</div>
+<div id="p-po" class="page">
+<div style="padding:10px;background:var(--blue-l);border:1px solid rgba(0,81,171,.2);border-radius:8px;font-size:12px;color:var(--blue);margin-bottom:14px">
+ℹ Purchase Orders are raised in your ERP (SAP MM / Oracle Procurement). Enerza receives material from GRN against those POs. This shell shows PO reference, items, and GRN match status for materials used in field work.
+</div>
+<div class="g4" style="margin-bottom:14px">
+<div class="kpi bl"><div class="kpi-lbl">Open POs</div><div class="kpi-val">8</div></div>
+<div class="kpi am"><div class="kpi-lbl">PO Value (Open)</div><div class="kpi-val">₹24.8L</div></div>
+<div class="kpi rd"><div class="kpi-lbl">GRN Pending</div><div class="kpi-val">3 POs</div></div>
+<div class="kpi gr"><div class="kpi-lbl">3-Way Match Done</div><div class="kpi-val">5 POs</div></div>
+</div>
+<div class="card"><div class="card-hd"><div class="card-title">📦 Purchase Order Register (ERP Shell)</div>
+<div class="card-sub">PO raised in ERP · GRN received in Enerza · 3-way match in ERP</div>
+<div class="card-r"><button class="btn btn-p btn-sm" onclick="toast('PO creation wizard launched in ERP')">+ Raise PO in ERP</button></div></div>
+<div class="tbl-wrap"><table class="tbl"><thead><tr>
+<th>PO No</th><th>Supplier</th><th>Item Description</th><th>Qty Ordered</th><th>Unit Rate</th><th>PO Value</th><th>GRN Qty</th><th>GRN Status</th><th>3-Way Match</th><th>ERP Ref</th></tr></thead><tbody>
+<tr><td class="td-mono td-link">PO-0041</td>
+<td style="font-size:11.5px">Secure Meters Ltd</td>
+<td style="font-size:11px">Single Phase Static Meter (Secure Elite)</td>
+<td class="td-mono td-r">100 Nos</td>
+<td class="td-mono td-r">₹1,800</td>
+<td class="td-mono td-r" style="font-weight:700">₹1,80,000</td>
+<td class="td-mono td-r">98 Nos</td>
+<td><span class="pill am" style="font-size:9px">Partial GRN</span></td>
+<td style="font-size:11px">Pending payment auth</td>
+<td class="td-mono" style="font-size:10px">ERP-PO-MM-0041</td></tr>
+<tr><td class="td-mono td-link">PO-0040</td>
+<td style="font-size:11.5px">National Cables Ltd</td>
+<td style="font-size:11px">Service Cable 10mm² XLPE (500m drums)</td>
+<td class="td-mono td-r">5000 Mtr</td>
+<td class="td-mono td-r">₹42/m</td>
+<td class="td-mono td-r" style="font-weight:700">₹2,10,000</td>
+<td class="td-mono td-r">5000 Mtr</td>
+<td><span class="pill gr" style="font-size:9px">GRN Complete</span></td>
+<td style="font-size:11px">✓ 3-Way Matched</td>
+<td class="td-mono" style="font-size:10px">ERP-PO-MM-0040</td></tr>
+<tr><td class="td-mono td-link">PO-0039</td>
+<td style="font-size:11.5px">Havells India Ltd</td>
+<td style="font-size:11px">MCB 32A Single Pole (box of 10)</td>
+<td class="td-mono td-r">50 Box</td>
+<td class="td-mono td-r">₹2,800</td>
+<td class="td-mono td-r" style="font-weight:700">₹1,40,000</td>
+<td class="td-mono td-r">50 Box</td>
+<td><span class="pill gr" style="font-size:9px">GRN Complete</span></td>
+<td style="font-size:11px">✓ 3-Way Matched</td>
+<td class="td-mono" style="font-size:10px">ERP-PO-MM-0039</td></tr>
+<tr><td class="td-mono td-link">PO-0038</td>
+<td style="font-size:11.5px">Genus Power Infra</td>
+<td style="font-size:11px">Smart Meter GPRS Module (Genus MX)</td>
+<td class="td-mono td-r">200 Nos</td>
+<td class="td-mono td-r">₹4,200</td>
+<td class="td-mono td-r" style="font-weight:700">₹8,40,000</td>
+<td class="td-mono td-r">192 Nos</td>
+<td><span class="pill am" style="font-size:9px">Short GRN</span></td>
+<td style="font-size:11px">⚠ Variance — 8 Nos short</td>
+<td class="td-mono" style="font-size:10px">ERP-PO-MM-0038</td></tr>
+<tr><td class="td-mono td-link">PO-0037</td>
+<td style="font-size:11.5px">L&T Metering Div</td>
+<td style="font-size:11px">3-Phase HT Meter CT Operated</td>
+<td class="td-mono td-r">20 Nos</td>
+<td class="td-mono td-r">₹8,400</td>
+<td class="td-mono td-r" style="font-weight:700">₹1,68,000</td>
+<td class="td-mono td-r">0</td>
+<td><span class="pill bl" style="font-size:9px">Awaiting delivery</span></td>
+<td style="font-size:11px">Pending GRN</td>
+<td class="td-mono" style="font-size:10px">ERP-PO-MM-0037</td></tr>
+</tbody></table></div>
+<div style="padding:12px 16px;background:#F8FAFB;border-top:1px solid var(--border);display:flex;gap:8px">
+<button class="btn btn-s btn-sm" onclick="toast('GRN-to-PO matching report exported')">📥 GRN Match Report</button>
+<button class="btn btn-s btn-sm" onclick="toast('PO status synced from ERP')">↻ Sync from ERP</button>
+</div></div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- Manual Posting -->
+<div class="modal-bg" id="m-manual-post" onclick="if(event.target===this)closeM('m-manual-post')">
+<div class="modal"><div class="modal-hd">
+  <div class="modal-title">Manual FI-CA Posting</div>
+  <button class="modal-close" onclick="closeM('m-manual-post')">✕</button></div>
+<div class="modal-body">
+  <div class="form-row">
+    <div class="fg"><label class="fl">Contract Account (CA)</label><input class="fi" placeholder="CA-XXXXX or search consumer"/></div>
+    <div class="fg"><label class="fl">Document Type</label><select class="fs"><option>Adjustment (Credit)</option><option>Adjustment (Debit)</option><option>Dunning Fee</option><option>Interest Charge</option><option>Reconnection Fee</option><option>Write-Off</option></select></div>
+  </div>
+  <div class="form-row">
+    <div class="fg"><label class="fl">Amount (₹)</label><input class="fi fi-r" type="number" placeholder="0.00"/></div>
+    <div class="fg"><label class="fl">Posting Date</label><input class="fi" type="date" value="2026-04-06"/></div>
+  </div>
+  <div class="form-row">
+    <div class="fg"><label class="fl">GL Account (Credit)</label><select class="fs"><option>400900 — Other Revenue</option><option>499900 — Revenue Rounding</option><option>210100 — GST Payable</option></select></div>
+    <div class="fg"><label class="fl">Reference / Reason</label><input class="fi" placeholder="Internal reference..."/></div>
+  </div>
+  <div class="fg"><label class="fl">Posting Note (Audit Trail)</label><textarea class="fta" placeholder="Reason for manual posting — required for audit"></textarea></div>
+</div>
+<div class="modal-ft">
+  <button class="btn btn-s" onclick="closeM('m-manual-post')">Cancel</button>
+  <button class="btn btn-g" onclick="closeM('m-manual-post');toast('Manual posting created. FI-CA updated. Audit logged.','success')">Post Document</button>
+</div></div></div>
+
+<!-- Clear Open Items -->
+<div class="modal-bg" id="m-clear-items" onclick="if(event.target===this)closeM('m-clear-items')">
+<div class="modal"><div class="modal-hd">
+  <div class="modal-title">Clear Open Items</div>
+  <button class="modal-close" onclick="closeM('m-clear-items')">✕</button></div>
+<div class="modal-body">
+  <p style="font-size:12px;color:var(--ink3);margin-bottom:12px">Match incoming payments against open receivable items. FIFO (oldest first) or consumer-nominated.</p>
+  <div class="form-row">
+    <div class="fg"><label class="fl">CA / Consumer</label><input class="fi" value="CA-00421 / R. Mehta"/></div>
+    <div class="fg"><label class="fl">Payment Reference</label><input class="fi" value="TXN-8841-RZP"/></div>
+  </div>
+  <div class="form-row">
+    <div class="fg"><label class="fl">Payment Amount (₹)</label><input class="fi fi-r" type="number" value="558"/></div>
+    <div class="fg"><label class="fl">Clearing Method</label><select class="fs"><option>FIFO (oldest first)</option><option>Consumer nominated bill</option><option>Partial — split across items</option></select></div>
+  </div>
+  <div style="background:var(--bg);border-radius:6px;padding:10px;font-size:11px;margin-top:8px">
+    <div style="font-weight:600;margin-bottom:6px">Items to clear:</div>
+    <div style="display:flex;justify-content:space-between;padding:4px 0">
+      <span>BILL-0042311 — Apr 2026</span><span class="td-mono" style="color:var(--red)">₹1,842 Dr</span>
+    </div>
+    <div style="padding:8px 0;border-top:1px solid var(--border);display:flex;justify-content:space-between">
+      <span style="font-weight:600">Payment applied: ₹558. Remaining: ₹1,284 (partially cleared)</span>
+    </div>
+  </div>
+</div>
+<div class="modal-ft">
+  <button class="btn btn-s" onclick="closeM('m-clear-items')">Cancel</button>
+  <button class="btn btn-g" onclick="closeM('m-clear-items');toast('₹558 cleared against BILL-0042311. FI-CA updated.','success')">✓ Clear Items</button>
+</div></div></div>
+
+<!-- New Rate Category -->
+<div class="modal-bg" id="m-new-rate" onclick="if(event.target===this)closeM('m-new-rate')">
+<div class="modal modal-lg"><div class="modal-hd">
+  <div class="modal-title">New Rate Category</div>
+  <button class="modal-close" onclick="closeM('m-new-rate')">✕</button></div>
+<div class="modal-body">
+  <div class="form-row">
+    <div class="fg"><label class="fl">Rate Plan Code *</label><input class="fi" placeholder="e.g. RP-LT1-NEW"/></div>
+    <div class="fg"><label class="fl">Category Name *</label><input class="fi" placeholder="e.g. LT-1 Domestic Revised"/></div>
+  </div>
+  <div class="form-row c3">
+    <div class="fg"><label class="fl">Consumer Class *</label><select class="fs"><option>Residential</option><option>Commercial</option><option>HV Industrial</option><option>Agriculture</option><option>BPL/Subsidised</option><option>Bulk LT</option></select></div>
+    <div class="fg"><label class="fl">Tariff Type</label><select class="fs"><option>Step-Up Slab</option><option>Flat Rate</option><option>Step + MD + TOD</option><option>Seasonal Flat</option><option>Budget Billing</option></select></div>
+    <div class="fg"><label class="fl">SERC Order Reference</label><input class="fi" placeholder="SERC/2026/T-01"/></div>
+  </div>
+  <div class="form-row">
+    <div class="fg"><label class="fl">Effective From</label><input class="fi" type="date" value="2026-04-01"/></div>
+    <div class="fg"><label class="fl">Effective To (blank = open)</label><input class="fi" type="date"/></div>
+  </div>
+  <div style="margin-top:10px"><div class="sec-hd">Slabs (Step-Up Tariff)</div>
+    <div class="slab-builder">
+      <div class="slab-hd"><div>Seq</div><div>From (units)</div><div>To (units)</div><div>Rate (₹/unit)</div><div>UOM</div><div></div></div>
+      <div id="rp-new-body"></div>
+    </div>
+    <button class="btn btn-s btn-sm" style="margin-top:8px" onclick="addSlab('rp-new')">+ Add Slab</button>
+  </div>
+  <div style="margin-top:10px;padding:10px;background:var(--bg);border-radius:6px">
+    <div class="sec-hd">Visual Preview</div>
+    <div class="tariff-chart" id="chart-rp-new" style="min-height:60px">
+      <div style="color:var(--ink3);font-size:11px;align-self:center">Add slabs above to see chart</div>
+    </div>
+  </div>
+</div>
+<div class="modal-ft">
+  <button class="btn btn-s" onclick="closeM('m-new-rate')">Cancel</button>
+  <button class="btn btn-g" onclick="closeM('m-new-rate');toast('Rate category created in DRAFT. Publish to activate.','success')">Create Rate Category</button>
+</div></div></div>
+
+<!-- Edit Rate (same as Edit slab - just opens existing) -->
+<div class="modal-bg" id="m-edit-rate" onclick="if(event.target===this)closeM('m-edit-rate')">
+<div class="modal"><div class="modal-hd">
+  <div class="modal-title">Edit Rate Plan — RP-LT1-DOM</div>
+  <button class="modal-close" onclick="closeM('m-edit-rate')">✕</button></div>
+<div class="modal-body">
+  <p style="font-size:12px;color:var(--ink3)">Use the inline slab editor on the Rate Categories page for full edit capability. This modal handles metadata changes only.</p>
+  <div class="form-row">
+    <div class="fg"><label class="fl">Category Name</label><input class="fi" value="LT-1 Domestic"/></div>
+    <div class="fg"><label class="fl">SERC Order Reference</label><input class="fi" value="SERC/2023/T-01"/></div>
+  </div>
+  <div class="form-row">
+    <div class="fg"><label class="fl">Effective From</label><input class="fi" type="date" value="2023-04-01"/></div>
+    <div class="fg"><label class="fl">Status</label><select class="fs"><option>Active</option><option>Draft</option><option>Inactive</option></select></div>
+  </div>
+</div>
+<div class="modal-ft">
+  <button class="btn btn-s" onclick="closeM('m-edit-rate')">Cancel</button>
+  <button class="btn btn-g" onclick="closeM('m-edit-rate');toast('Metadata updated.','success')">Save</button>
+</div></div></div>
+
+<!-- Simulate Bill -->
+<div class="modal-bg" id="m-sim-bill" onclick="if(event.target===this)closeM('m-sim-bill')">
+<div class="modal"><div class="modal-hd">
+  <div class="modal-title">Bill Simulation — RP-LT1-DOM</div>
+  <button class="modal-close" onclick="closeM('m-sim-bill')">✕</button></div>
+<div class="modal-body">
+  <div class="form-row">
+    <div class="fg"><label class="fl">Units Consumed (kWh)</label><input class="fi fi-r" type="number" value="284" id="sim-units"/></div>
+    <div class="fg"><label class="fl">Consumer Category</label><select class="fs"><option>Residential (R1)</option><option>BPL</option></select></div>
+  </div>
+  <div style="background:var(--bg);border-radius:8px;padding:12px;margin-top:10px">
+    <div class="sec-hd">Simulated Bill Breakdown</div>
+    <table style="width:100%;font-size:12px">
+      <tr><td>Meter Rent (Fixed)</td><td class="td-mono td-r">₹45.00</td></tr>
+      <tr><td>0–100 kWh × ₹3.50</td><td class="td-mono td-r">₹350.00</td></tr>
+      <tr><td>100–284 kWh × ₹5.00</td><td class="td-mono td-r">₹920.00</td></tr>
+      <tr><td>Electricity Duty (15% on energy)</td><td class="td-mono td-r">₹190.50</td></tr>
+      <tr><td>GST on Meter Rent (18%)</td><td class="td-mono td-r">₹8.10</td></tr>
+      <tr><td>FPPC Surcharge (₹0.09 × 284)</td><td class="td-mono td-r">₹25.56</td></tr>
+      <tr style="font-weight:700;border-top:2px solid var(--border)"><td>TOTAL BILL</td><td class="td-mono td-r" style="color:var(--blue);font-size:15px">₹1,539.16</td></tr>
+    </table>
+  </div>
+  <div style="margin-top:8px;font-size:11px;color:var(--ink3)">Note: This is a simulation. No bill is created.</div>
+</div>
+<div class="modal-ft">
+  <button class="btn btn-s" onclick="closeM('m-sim-bill')">Close</button>
+</div></div></div>
+
+<!-- Dispute resolution -->
+<div class="modal-bg" id="m-resolve-dispute" onclick="if(event.target===this)closeM('m-resolve-dispute')">
+<div class="modal"><div class="modal-hd">
+  <div class="modal-title">Resolve Dispute — DIS-0384-01</div>
+  <button class="modal-close" onclick="closeM('m-resolve-dispute')">✕</button></div>
+<div class="modal-body">
+  <div style="background:var(--amber-l);border-radius:6px;padding:10px;font-size:11px;color:var(--amber);margin-bottom:12px">
+    Dispute: Gujarat Ceramics — Tariff Category Error. Disputed Amount: ₹12,400. Financial hold active.</div>
+  <div class="form-row">
+    <div class="fg"><label class="fl">Resolution Outcome</label><select class="fs"><option>Upheld — Issue credit note</option><option>Rejected — No adjustment</option><option>Partial — Partial credit</option></select></div>
+    <div class="fg"><label class="fl">Credit Note Amount (₹)</label><input class="fi fi-r" type="number" value="8400"/></div>
+  </div>
+  <div class="fg" style="margin-bottom:10px"><label class="fl">Resolution Notes (mandatory)</label>
+    <textarea class="fta" placeholder="Explain the outcome and basis for credit/rejection...">Tariff was incorrectly applied at HT-2 rate instead of HT-1 for Q3. Credit note issued for differential: ₹8,400. Reapply correct tariff from 01-Jan-26.</textarea></div>
+  <div class="form-row">
+    <div class="fg"><label class="fl">Lift Financial Hold</label><select class="fs"><option>Yes — Resume dunning if balance outstanding</option><option>No — Keep hold pending payment</option></select></div>
+    <div class="fg"><label class="fl">Resolution Date</label><input class="fi" type="date" value="2026-04-06"/></div>
+  </div>
+</div>
+<div class="modal-ft">
+  <button class="btn btn-s" onclick="closeM('m-resolve-dispute')">Cancel</button>
+  <button class="btn btn-g" onclick="closeM('m-resolve-dispute');toast('DIS-0384-01 resolved. Credit note CN-0384-01 raised for ₹8,400. Financial hold lifted.','success')">✓ Resolve &amp; Issue Credit</button>
+</div></div></div>
+
+<!-- New Deposit -->
+<div class="modal-bg" id="m-new-deposit" onclick="if(event.target===this)closeM('m-new-deposit')">
+<div class="modal"><div class="modal-hd">
+  <div class="modal-title">New Security Deposit</div>
+  <button class="modal-close" onclick="closeM('m-new-deposit')">✕</button></div>
+<div class="modal-body">
+  <div class="form-row">
+    <div class="fg"><label class="fl">Contract Account (CA)</label><input class="fi" placeholder="CA-XXXXX"/></div>
+    <div class="fg"><label class="fl">Deposit Type</label><select class="fs"><option>Initial (New Connection)</option><option>Additional (Enhancement)</option><option>Revised (Annual Review)</option></select></div>
+  </div>
+  <div class="form-row">
+    <div class="fg"><label class="fl">Deposit Amount (₹)</label><input class="fi fi-r" type="number" value="2400"/></div>
+    <div class="fg"><label class="fl">Interest Rate (% p.a.)</label><input class="fi fi-r" type="number" value="7.25" step="0.01"/></div>
+  </div>
+  <div class="form-row">
+    <div class="fg"><label class="fl">Payment Reference</label><input class="fi" placeholder="Receipt / transaction reference"/></div>
+    <div class="fg"><label class="fl">Deposit Date</label><input class="fi" type="date" value="2026-04-08"/></div>
+  </div>
+</div>
+<div class="modal-ft">
+  <button class="btn btn-s" onclick="closeM('m-new-deposit')">Cancel</button>
+  <button class="btn btn-g" onclick="closeM('m-new-deposit');toast('Security deposit DEP-1249 created. FI-CA open item posted.','success')">✓ Create Deposit</button>
+</div></div></div>
+
+<!-- Deposit detail -->
+<div class="modal-bg" id="m-deposit-detail" onclick="if(event.target===this)closeM('m-deposit-detail')">
+<div class="modal"><div class="modal-hd">
+  <div class="modal-title">Deposit Detail — DEP-0421</div>
+  <button class="modal-close" onclick="closeM('m-deposit-detail')">✕</button></div>
+<div class="modal-body">
+  <div class="info-grid" style="margin-bottom:12px">
+    <div class="info-item"><div class="info-lbl">Principal</div><div class="info-val">₹2,400.00</div></div>
+    <div class="info-item"><div class="info-lbl">Rate p.a.</div><div class="info-val">7.25%</div></div>
+    <div class="info-item"><div class="info-lbl">Deposit Date</div><div class="info-val">12-Jan-2021</div></div>
+    <div class="info-item"><div class="info-lbl">Years Held</div><div class="info-val">5.25 years</div></div>
+    <div class="info-item"><div class="info-lbl">Accrued Interest</div><div class="info-val" style="color:var(--teal)">₹374.40</div></div>
+    <div class="info-item"><div class="info-lbl">Current Value</div><div class="info-val" style="font-weight:700">₹2,774.40</div></div>
+  </div>
+  <table style="width:100%;font-size:11px;border-collapse:collapse">
+    <thead><tr style="background:#F0F4FA"><th style="padding:6px;text-align:left">Date</th><th style="padding:6px;text-align:left">Event</th><th style="padding:6px;text-align:right">Amount</th></tr></thead>
+    <tbody>
+    <tr><td style="padding:5px">12-Jan-2021</td><td style="padding:5px">Initial deposit — New Connection</td><td class="td-mono td-r" style="padding:5px;color:var(--green)">₹2,400.00 Cr</td></tr>
+    <tr><td style="padding:5px">31-Dec-2021</td><td style="padding:5px">Interest accrual Year 1</td><td class="td-mono td-r" style="padding:5px;color:var(--teal)">₹60.60 Cr</td></tr>
+    <tr><td style="padding:5px">31-Dec-2022</td><td style="padding:5px">Interest accrual Year 2</td><td class="td-mono td-r" style="padding:5px;color:var(--teal)">₹174.00 Cr</td></tr>
+    <tr><td style="padding:5px">31-Dec-2023</td><td style="padding:5px">Interest accrual Year 3 + 4 + 5.25</td><td class="td-mono td-r" style="padding:5px;color:var(--teal)">₹139.80 Cr</td></tr>
+    </tbody>
+  </table>
+</div>
+<div class="modal-ft">
+  <button class="btn btn-s" onclick="closeM('m-deposit-detail')">Close</button>
+  <button class="btn btn-am btn-sm" onclick="closeM('m-deposit-detail');toast('Additional deposit notice sent')">+ Additional Demand</button>
+  <button class="btn btn-r btn-sm" onclick="closeM('m-deposit-detail');toast('Deposit refund initiated via NEFT')">Initiate Refund</button>
+</div></div></div>
+
+<!-- WO Create -->
+<div class="modal-bg" id="m-new-wo" onclick="if(event.target===this)closeM('m-new-wo')">
+<div class="modal"><div class="modal-hd">
+  <div class="modal-title">Create Work Order</div>
+  <button class="modal-close" onclick="closeM('m-new-wo')">✕</button></div>
+<div class="modal-body">
+  <div class="form-row">
+    <div class="fg"><label class="fl">WO Type</label><select class="fs"><option>Service Restoration</option><option>Meter Replacement</option><option>New Connection</option><option>Disconnection</option><option>Inspection</option><option>Maintenance</option></select></div>
+    <div class="fg"><label class="fl">Priority</label><select class="fs"><option>High</option><option>Medium</option><option>Low</option></select></div>
+  </div>
+  <div class="form-row">
+    <div class="fg"><label class="fl">Source (Complaint / SR)</label><input class="fi" placeholder="CMP-XXXXX or SR-XXXXX"/></div>
+    <div class="fg"><label class="fl">Assign To</label><select class="fs"><option>Manoj Kumar (Zone-A)</option><option>Dinesh Patel (Zone-B)</option><option>Auto-assign by zone</option></select></div>
+  </div>
+  <div class="form-row">
+    <div class="fg"><label class="fl">Estimated Material Cost (₹)</label><input class="fi fi-r" type="number" value="0"/></div>
+    <div class="fg"><label class="fl">Estimated Labour Cost (₹)</label><input class="fi fi-r" type="number" value="0"/></div>
+  </div>
+  <div class="fg"><label class="fl">ERP WO Reference (if pre-created in ERP)</label><input class="fi" placeholder="ERP-WO-XXXXX (optional)"/></div>
+</div>
+<div class="modal-ft">
+  <button class="btn btn-s" onclick="closeM('m-new-wo')">Cancel</button>
+  <button class="btn btn-g" onclick="closeM('m-new-wo');toast('WO created. Will sync to ERP on completion.','success')">Create WO</button>
+</div></div></div>
+
+<!-- Dispute raise -->
+<div class="modal-bg" id="m-new-dispute" onclick="if(event.target===this)closeM('m-new-dispute')">
+<div class="modal"><div class="modal-hd">
+  <div class="modal-title">Raise Billing Dispute</div>
+  <button class="modal-close" onclick="closeM('m-new-dispute')">✕</button></div>
+<div class="modal-body">
+  <div class="form-row">
+    <div class="fg"><label class="fl">Consumer CAN</label><input class="fi" placeholder="CAN or search by name"/></div>
+    <div class="fg"><label class="fl">Dispute Type</label><select class="fs"><option>Meter Reading Error</option><option>Tariff Category Error</option><option>Payment Not Reflected</option><option>Wrong Tariff Applied</option><option>Estimated Bill Disputed</option><option>Duplicate Bill</option></select></div>
+  </div>
+  <div class="form-row">
+    <div class="fg"><label class="fl">Bill Reference</label><input class="fi" placeholder="BILL-XXXXXXX"/></div>
+    <div class="fg"><label class="fl">Disputed Amount (₹)</label><input class="fi fi-r" type="number" placeholder="0.00"/></div>
+  </div>
+  <div class="fg" style="margin-bottom:10px"><label class="fl">Dispute Description</label>
+    <textarea class="fta" placeholder="Describe the dispute, evidence, and consumer's claim..."></textarea></div>
+  <div class="form-row">
+    <div class="fg"><label class="fl">Place Financial Hold?</label><select class="fs"><option>Yes — suspend dunning on this account</option><option>No — dunning continues</option></select></div>
+    <div class="fg"><label class="fl">Assign To</label><select class="fs"><option>Billing Department</option><option>Finance Manager</option><option>Technical (meter check)</option></select></div>
+  </div>
+</div>
+<div class="modal-ft">
+  <button class="btn btn-s" onclick="closeM('m-new-dispute')">Cancel</button>
+  <button class="btn btn-p" onclick="closeM('m-new-dispute');toast('Dispute DIS-0601-01 raised. Financial hold applied. Dunning suspended.','success')">Raise Dispute</button>
+</div></div></div>
+
+<script>
+function nav(id, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('a'));
+  document.querySelectorAll('.sb-item').forEach(i => i.classList.remove('a'));
+  const pg = document.getElementById('p-' + id);
+  if (pg) pg.classList.add('a');
+  if (btn) btn.classList.add('a');
+  const map = {
+    dash:    ['Finance Dashboard','FI-CA · Billing · Revenue · Collections overview'],
+    fica:    ['FI-CA Contract Accounting','Open items · Dunning · Deposits · Write-off · Disputes'],
+    tariff:  ['Rate Category & Step Tariff','Step-up / slab / TOD / demand tariff maintenance'],
+    billing: ['Billing Engine','Batch run · Manual bill · Reversal · Budget billing · Instalment'],
+    dunning: ['Dunning & Collections','Automated dunning levels · Promise-to-pay · Collections strategy'],
+    deposit: ['Security Deposit Register','Deposit ledger · Interest accrual · Refund processing'],
+    dispute: ['Dispute & Credit Management','Billing disputes · Credit notes · Adjustments'],
+    erp:     ['ERP Revenue Posting','Single posting to ERP · GL mapping · Journal entry · Reconciliation'],
+    wo:      ['Work Order (ERP Shell)','WO header · status · cost summary · ERP integration stub'],
+    po:      ['Purchase Order (ERP Shell)','PO header · line items · GRN match · ERP integration stub'],
+    coa:     ['Chart of Accounts','GL account structure · utility segments · posting keys'],
+  };
+  const tb = document.querySelector('.tb-title');
+  const ts = document.querySelector('.tb-sub');
+  if (tb && map[id]) tb.textContent = map[id][0];
+  if (ts && map[id]) ts.textContent = map[id][1];
+}
+
+function openM(id) { document.getElementById(id).classList.add('open'); }
+function closeM(id) { document.getElementById(id).classList.remove('open'); }
+
+function ctab(container, tab) {
+  const c = document.getElementById(container);
+  if (!c) return;
+  c.querySelectorAll('.ct').forEach(t => t.classList.remove('a'));
+  c.querySelectorAll('.cpane').forEach(p => p.classList.remove('a'));
+  const btn = c.querySelector(`.ct[data-tab="${tab}"]`);
+  const pane = document.getElementById(container + '-' + tab);
+  if (btn) btn.classList.add('a');
+  if (pane) pane.classList.add('a');
+}
+
+function toast(msg, type = 'info') {
+  const t = document.createElement('div');
+  const colors = { info:'#1E2D3E', success:'#107E3E', warn:'#7A4A00', error:'#A32D2D' };
+  t.style.cssText = `position:fixed;bottom:20px;right:20px;background:${colors[type]};color:#fff;padding:10px 16px;border-radius:8px;font-size:12px;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.2);max-width:360px;animation:slideUp .3s`;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3500);
+}
+
+/* ── Slab builder ── */
+let slabCount = 0;
+function addSlab(tableId) {
+  slabCount++;
+  const id = `slab-${tableId}-${slabCount}`;
+  const tbody = document.getElementById(tableId + '-body');
+  if (!tbody) return;
+  const row = document.createElement('div');
+  row.className = 'slab-row';
+  row.id = id;
+  const prev = tbody.lastElementChild;
+  const prevTo = prev ? prev.querySelector('.slab-to')?.value : '0';
+  row.innerHTML = `
+    <input type="number" class="slab-seq" value="${tbody.children.length + 1}" style="width:55px"/>
+    <input type="number" class="slab-from fi-r" value="${prevTo || 0}" placeholder="From units"/>
+    <input type="number" class="slab-to fi-r" placeholder="To units (blank=∞)"/>
+    <input type="number" class="slab-rate fi-r" step="0.0001" placeholder="Rate"/>
+    <select class="slab-uom"><option>kWh</option><option>kVA</option><option>KL</option><option>SCM</option><option>Month</option></select>
+    <span class="slab-del" onclick="removeSlab('${id}')">🗑</span>`;
+  tbody.appendChild(row);
+  updateTariffChart(tableId);
+}
+function removeSlab(id) {
+  const el = document.getElementById(id);
+  const tableId = id.split('-')[1];
+  if (el) el.remove();
+  updateTariffChart(tableId);
+}
+function updateTariffChart(tableId) {
+  const rows = document.querySelectorAll(`#${tableId}-body .slab-row`);
+  const chart = document.getElementById(`chart-${tableId}`);
+  if (!chart) return;
+  const colors = ['#0051AB','#107E3E','#9B7300','#A32D2D','#5A2D82','#0A6B5E'];
+  chart.innerHTML = '';
+  let maxRate = 0;
+  const rates = [];
+  rows.forEach(r => {
+    const rate = parseFloat(r.querySelector('.slab-rate')?.value) || 0;
+    const from = r.querySelector('.slab-from')?.value || '0';
+    const to = r.querySelector('.slab-to')?.value || '∞';
+    rates.push({ rate, from, to });
+    if (rate > maxRate) maxRate = rate;
+  });
+  if (maxRate === 0) maxRate = 1;
+  rates.forEach((r, i) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'tariff-bar-wrap';
+    const pct = Math.round((r.rate / maxRate) * 88);
+    const val = document.createElement('div');
+    val.className = 'tariff-bar-val';
+    val.style.fontSize = '9px'; val.style.color = colors[i % colors.length]; val.style.fontFamily = 'var(--mono)';
+    val.textContent = r.rate ? `₹${r.rate}` : '';
+    const bar = document.createElement('div');
+    bar.className = 'tariff-bar';
+    bar.style.cssText = `height:${pct}px;background:${colors[i % colors.length]};min-height:4px`;
+    bar.title = `Slab ${i+1}: ${r.from}–${r.to} @ ₹${r.rate}`;
+    const lbl = document.createElement('div');
+    lbl.className = 'tariff-bar-lbl';
+    lbl.textContent = `${r.from}–${r.to}`;
+    wrap.appendChild(val);
+    wrap.appendChild(bar);
+    wrap.appendChild(lbl);
+    chart.appendChild(wrap);
+  });
+}
+
+/* ── ERP Posting ── */
+function triggerERPPost() {
+  const btn = document.getElementById('erp-post-btn');
+  if (!btn) return;
+  btn.textContent = '⏳ Posting...';
+  btn.disabled = true;
+  const steps = document.querySelectorAll('.erp-step-status');
+  let i = 0;
+  const messages = [
+    'Aggregating billing data...',
+    'Validating GL accounts...',
+    'Building journal entry...',
+    'Posting to ERP (REST API)...',
+    'ERP confirmed. Reference: ERP-JE-20260406-0041',
+  ];
+  const interval = setInterval(() => {
+    if (i < steps.length) {
+      steps[i].textContent = i < steps.length - 1 ? '⏳' : '✓';
+      steps[i].style.color = i < steps.length - 1 ? 'var(--amber)' : 'var(--green)';
+    }
+    const log = document.getElementById('erp-log');
+    if (log && messages[i]) {
+      log.innerHTML += `<div style="padding:3px 0;border-bottom:1px solid #F5F5F7;display:flex;gap:10px">
+        <span style="color:var(--ink3);font-family:var(--mono);min-width:80px">${new Date().toLocaleTimeString()}</span>
+        <span>${messages[i]}</span>
+        <span style="margin-left:auto;color:${i===messages.length-1?'var(--green)':'var(--amber)'};font-family:var(--mono)">${i===messages.length-1?'SUCCESS':'OK'}</span>
+      </div>`;
+      log.scrollTop = log.scrollHeight;
+    }
+    i++;
+    if (i >= steps.length + 1) {
+      clearInterval(interval);
+      btn.textContent = '✓ Posted — ERP-JE-20260406-0041';
+      btn.className = 'btn btn-g';
+      toast('Revenue posted to ERP successfully. Reference: ERP-JE-20260406-0041', 'success');
+    }
+  }, 700);
+}
+
+/* ── Dunning run ── */
+function runDunning() {
+  const btn = document.getElementById('dun-run-btn');
+  if (!btn) return;
+  btn.textContent = '⏳ Running...';
+  btn.disabled = true;
+  setTimeout(() => {
+    const tbody = document.getElementById('dun-results');
+    if (tbody) {
+      tbody.innerHTML = `
+        <tr><td class="td-mono">CA-00384</td><td>Gujarat Ceramics</td><td class="td-mono">₹48,320</td><td>68 days</td>
+          <td><span class="pill rd">Level 3</span></td><td>Legal Notice</td>
+          <td><span class="pill gr">Notice Queued</span></td></tr>
+        <tr><td class="td-mono">CA-00601</td><td>Surat Textiles</td><td class="td-mono">₹2,18,500</td><td>92 days</td>
+          <td><span class="pill rd">Level 3</span></td><td>Agency Handover</td>
+          <td><span class="pill gr">Agency Export</span></td></tr>
+        <tr><td class="td-mono">CA-00512</td><td>Sunita Desai</td><td class="td-mono">₹342</td><td>28 days</td>
+          <td><span class="pill am">Level 1</span></td><td>SMS + Email Reminder</td>
+          <td><span class="pill gr">Sent</span></td></tr>
+        <tr><td class="td-mono">CA-00318</td><td>Priya Nair</td><td class="td-mono">₹1,284</td><td>35 days</td>
+          <td><span class="pill am">Level 2</span></td><td>Formal Warning Letter</td>
+          <td><span class="pill gr">Notice Queued</span></td></tr>`;
+    }
+    btn.textContent = '↻ Run Dunning';
+    btn.disabled = false;
+    toast('Dunning run complete: 4 accounts processed, 2 notices sent, 1 agency export', 'success');
+  }, 2200);
+}
+
+/* ── Deposit interest ── */
+function calcInterest() {
+  const principal = parseFloat(document.getElementById('dep-principal')?.value) || 2400;
+  const rate = parseFloat(document.getElementById('dep-rate')?.value) || 7.25;
+  const years = parseFloat(document.getElementById('dep-years')?.value) || 5.25;
+  const interest = Math.round(principal * rate / 100 * years * 100) / 100;
+  const el = document.getElementById('dep-interest-result');
+  if (el) el.textContent = '₹' + interest.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+}
+
+/* ── Instalment calculator ── */
+function calcInstalment() {
+  const total = parseFloat(document.getElementById('ip-total')?.value) || 10000;
+  const n = parseInt(document.getElementById('ip-n')?.value) || 6;
+  const each = Math.ceil(total / n * 100) / 100;
+  const el = document.getElementById('ip-each');
+  if (el) el.textContent = '₹' + each.toLocaleString('en-IN', { minimumFractionDigits: 2 }) + ' / month';
+}
+
+window.addEventListener('load', () => {
+  nav('dash', document.querySelector('.sb-item'));
+  calcInterest();
+  calcInstalment();
+  /* Initialize default slabs */
+  ['rp-edit', 'rp-new'].forEach(id => {
+    const body = document.getElementById(id + '-body');
+    if (body && body.children.length === 0) {
+      for (let i = 0; i < 3; i++) addSlab(id);
+    }
+  });
+});
+</script>
+</body></html>

@@ -1,0 +1,102 @@
+
+<style>
+#erd4 svg { max-width:100%; }
+#erd4 svg.erDiagram .row-rect-odd path,
+#erd4 svg.erDiagram .row-rect-odd rect,
+#erd4 svg.erDiagram .row-rect-even path,
+#erd4 svg.erDiagram .row-rect-even rect { stroke: none !important; }
+</style>
+<div id="erd4" style="overflow-x:auto;padding:4px 0"></div>
+<script type="module">
+import mermaid from 'https://esm.sh/mermaid@11/dist/mermaid.esm.min.mjs';
+const dark = matchMedia('(prefers-color-scheme: dark)').matches;
+await document.fonts.ready;
+mermaid.initialize({startOnLoad:false,theme:'base',fontFamily:'"Anthropic Sans",sans-serif',themeVariables:{darkMode:dark,fontSize:'13px',fontFamily:'"Anthropic Sans",sans-serif',lineColor:dark?'#9c9a92':'#73726c',textColor:dark?'#c2c0b6':'#3d3d3a'}});
+const {svg} = await mermaid.render('erd4-svg',`erDiagram
+    BILL ||--o{ PAYMENT_ORDER : "settled by"
+    PAYMENT_CHANNEL ||--o{ PAYMENT_ORDER : "via"
+    PAYMENT_GATEWAY ||--o{ PAYMENT_ORDER : "processed by"
+    PAYMENT_ORDER ||--o{ GATEWAY_TXN : "generates"
+    PAYMENT_GATEWAY ||--o{ SETTLEMENT : "settled in"
+    SETTLEMENT ||--o{ GATEWAY_TXN : "covers"
+    PAYMENT_ORDER ||--o| REFUND : "refunded as"
+    GATEWAY_TXN ||--o| SUSPENSE_RECORD : "filed as"
+
+    PAYMENT_CHANNEL {
+        varchar channel_id PK
+        varchar channel_name
+        varchar channel_type
+        varchar provider
+        varchar status
+    }
+    PAYMENT_GATEWAY {
+        varchar gateway_id PK
+        varchar provider
+        varchar merchant_id
+        varchar callback_url
+        varchar environment
+        varchar status
+    }
+    PAYMENT_ORDER {
+        varchar order_id PK
+        varchar bill_id FK
+        varchar account_id FK
+        varchar channel_id FK
+        varchar gateway_id FK
+        decimal amount
+        decimal convenience_fee
+        varchar status
+        timestamp initiated_at
+    }
+    GATEWAY_TXN {
+        varchar txn_id PK
+        varchar order_id FK
+        varchar settlement_id FK
+        varchar gateway_ref
+        varchar gateway_status
+        timestamp response_at
+        timestamp settled_at
+    }
+    SETTLEMENT {
+        varchar settlement_id PK
+        varchar gateway_id FK
+        date settlement_date
+        decimal gross_amount
+        decimal net_amount
+        int matched_count
+        int exception_count
+    }
+    REFUND {
+        varchar refund_id PK
+        varchar order_id FK
+        varchar reason_code
+        decimal amount
+        varchar status
+        timestamp initiated_at
+    }
+    SUSPENSE_RECORD {
+        varchar suspense_id PK
+        varchar txn_id FK
+        varchar reason
+        decimal amount
+        varchar resolution_status
+        timestamp created_at
+    }
+    BILL {
+        varchar bill_id PK
+    }
+`);
+document.getElementById('erd4').innerHTML = svg;
+document.querySelectorAll('#erd4 svg.erDiagram .node').forEach(node=>{
+  const p=node.querySelector('path[d]');if(!p)return;
+  const d=p.getAttribute('d'),nums=d.match(/-?[\d.]+/g)?.map(Number);
+  if(!nums||nums.length<8)return;
+  const xs=[nums[0],nums[2],nums[4],nums[6]],ys=[nums[1],nums[3],nums[5],nums[7]];
+  const x=Math.min(...xs),y=Math.min(...ys),w=Math.max(...xs)-x,h=Math.max(...ys)-y;
+  const r=document.createElementNS('http://www.w3.org/2000/svg','rect');
+  r.setAttribute('x',x);r.setAttribute('y',y);r.setAttribute('width',w);r.setAttribute('height',h);r.setAttribute('rx','8');
+  for(const a of['fill','stroke','stroke-width','class','style'])if(p.hasAttribute(a))r.setAttribute(a,p.getAttribute(a));
+  p.replaceWith(r);
+});
+document.querySelectorAll('#erd4 svg.erDiagram .row-rect-odd path,#erd4 svg.erDiagram .row-rect-even path').forEach(p=>p.setAttribute('stroke','none'));
+</script>

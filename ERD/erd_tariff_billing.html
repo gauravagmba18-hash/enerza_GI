@@ -1,0 +1,109 @@
+
+<style>
+#erd3 svg { max-width:100%; }
+#erd3 svg.erDiagram .row-rect-odd path,
+#erd3 svg.erDiagram .row-rect-odd rect,
+#erd3 svg.erDiagram .row-rect-even path,
+#erd3 svg.erDiagram .row-rect-even rect { stroke: none !important; }
+</style>
+<div id="erd3" style="overflow-x:auto;padding:4px 0"></div>
+<script type="module">
+import mermaid from 'https://esm.sh/mermaid@11/dist/mermaid.esm.min.mjs';
+const dark = matchMedia('(prefers-color-scheme: dark)').matches;
+await document.fonts.ready;
+mermaid.initialize({startOnLoad:false,theme:'base',fontFamily:'"Anthropic Sans",sans-serif',themeVariables:{darkMode:dark,fontSize:'13px',fontFamily:'"Anthropic Sans",sans-serif',lineColor:dark?'#9c9a92':'#73726c',textColor:dark?'#c2c0b6':'#3d3d3a'}});
+const {svg} = await mermaid.render('erd3-svg',`erDiagram
+    RATE_PLAN ||--o{ CHARGE_COMPONENT : "defines"
+    RATE_PLAN }|--|| CONSUMER_SEGMENT : "for"
+    TAX_MASTER }o--o{ CHARGE_COMPONENT : "applied to"
+    BILL_CYCLE ||--o{ BILL : "schedules"
+    ACCOUNT ||--o{ BILL : "receives"
+    SERVICE_CONNECTION ||--o{ BILL : "for"
+    BILL ||--o{ BILL_LINE : "contains"
+    CHARGE_COMPONENT ||--o{ BILL_LINE : "priced by"
+
+    RATE_PLAN {
+        varchar rate_plan_id PK
+        varchar plan_name
+        varchar utility_type
+        varchar segment_id FK
+        date effective_from
+        date effective_to
+        varchar billing_freq
+        varchar status
+    }
+    CHARGE_COMPONENT {
+        varchar component_id PK
+        varchar rate_plan_id FK
+        varchar component_name
+        varchar component_type
+        varchar uom
+        decimal rate
+        varchar posting_class
+        int slab_from
+        int slab_to
+    }
+    TAX_MASTER {
+        varchar tax_id PK
+        varchar tax_name
+        varchar jurisdiction
+        decimal tax_rate
+        varchar applicability
+        date effective_from
+        date effective_to
+    }
+    BILL_CYCLE {
+        varchar cycle_id PK
+        varchar cycle_name
+        varchar read_date_rule
+        varchar bill_date_rule
+        varchar due_date_rule
+        int grace_days
+        varchar status
+    }
+    BILL {
+        varchar bill_id PK
+        varchar account_id FK
+        varchar connection_id FK
+        varchar cycle_id FK
+        date bill_date
+        date due_date
+        decimal net_amount
+        decimal tax_amount
+        decimal total_amount
+        varchar status
+    }
+    BILL_LINE {
+        varchar line_id PK
+        varchar bill_id FK
+        varchar component_id FK
+        varchar description
+        decimal quantity
+        decimal rate
+        decimal amount
+        varchar line_type
+    }
+    ACCOUNT {
+        varchar account_id PK
+    }
+    CONSUMER_SEGMENT {
+        varchar segment_id PK
+    }
+    SERVICE_CONNECTION {
+        varchar connection_id PK
+    }
+`);
+document.getElementById('erd3').innerHTML = svg;
+document.querySelectorAll('#erd3 svg.erDiagram .node').forEach(node=>{
+  const p=node.querySelector('path[d]');if(!p)return;
+  const d=p.getAttribute('d'),nums=d.match(/-?[\d.]+/g)?.map(Number);
+  if(!nums||nums.length<8)return;
+  const xs=[nums[0],nums[2],nums[4],nums[6]],ys=[nums[1],nums[3],nums[5],nums[7]];
+  const x=Math.min(...xs),y=Math.min(...ys),w=Math.max(...xs)-x,h=Math.max(...ys)-y;
+  const r=document.createElementNS('http://www.w3.org/2000/svg','rect');
+  r.setAttribute('x',x);r.setAttribute('y',y);r.setAttribute('width',w);r.setAttribute('height',h);r.setAttribute('rx','8');
+  for(const a of['fill','stroke','stroke-width','class','style'])if(p.hasAttribute(a))r.setAttribute(a,p.getAttribute(a));
+  p.replaceWith(r);
+});
+document.querySelectorAll('#erd3 svg.erDiagram .row-rect-odd path,#erd3 svg.erDiagram .row-rect-even path').forEach(p=>p.setAttribute('stroke','none'));
+</script>

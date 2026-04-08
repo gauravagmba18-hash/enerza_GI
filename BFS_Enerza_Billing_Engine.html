@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BFS Enerza — Billing Engine</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0D1117;--ink2:#2A3441;--ink3:#6B7685;
+  --gas:#00C896;--elec:#FFBC1F;--water:#2F9BF5;--cng:#FF6B35;
+  --bg:#F2F4F7;--card:#FFFFFF;--border:#E0E4EB;
+  --success:#0DB871;--warn:#E8A020;--error:#E03C3C;
+  --r:10px;--mono:'DM Mono',monospace;--sans:'DM Sans',sans-serif;--disp:'Syne',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--sans);background:var(--bg);color:var(--ink);font-size:14px;min-height:100vh}
+
+/* ── SHELL ── */
+.shell{background:var(--ink);height:52px;display:flex;align-items:center;padding:0 28px;gap:16px;position:sticky;top:0;z-index:100}
+.brand{font-family:var(--disp);font-size:20px;font-weight:800;color:#fff;letter-spacing:-.3px}
+.brand span{color:var(--gas)}
+.shell-div{color:#fff3;font-size:20px}
+.shell-sub{font-family:var(--mono);font-size:11px;color:#fff6;letter-spacing:.5px;text-transform:uppercase}
+.shell-right{margin-left:auto;display:flex;gap:8px}
+.utility-pill{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:500;font-family:var(--mono);cursor:pointer;border:1px solid;transition:all .15s}
+.utility-pill.gas  {background:rgba(0,200,150,.15);color:var(--gas);border-color:rgba(0,200,150,.4)}
+.utility-pill.elec {background:rgba(255,188,31,.15);color:var(--elec);border-color:rgba(255,188,31,.4)}
+.utility-pill.water{background:rgba(47,155,245,.15);color:var(--water);border-color:rgba(47,155,245,.4)}
+.utility-pill.cng  {background:rgba(255,107,53,.15);color:var(--cng);border-color:rgba(255,107,53,.4)}
+.utility-pill.active{font-weight:700;box-shadow:0 0 0 1px currentColor}
+
+/* ── LAYOUT ── */
+.layout{display:grid;grid-template-columns:300px 1fr;gap:20px;padding:20px 28px;max-width:1400px;margin:0 auto}
+@media(max-width:900px){.layout{grid-template-columns:1fr}}
+
+/* ── PANEL ── */
+.panel{background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+.panel-hdr{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.panel-icon{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px}
+.panel-title{font-family:var(--disp);font-size:14px;font-weight:700;letter-spacing:-.2px}
+.panel-body{padding:18px}
+
+/* ── FORM ELEMENTS ── */
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:11px;font-weight:500;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;font-family:var(--mono)}
+.fg input,.fg select{width:100%;border:1px solid var(--border);border-radius:6px;padding:8px 11px;font-size:13px;font-family:var(--sans);color:var(--ink);background:#fff;outline:none;transition:border-color .15s}
+.fg input:focus,.fg select:focus{border-color:var(--gas);box-shadow:0 0 0 3px rgba(0,200,150,.1)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.calc-btn{width:100%;padding:12px;background:var(--ink);color:#fff;border:none;border-radius:8px;font-family:var(--disp);font-size:14px;font-weight:700;cursor:pointer;letter-spacing:.3px;transition:all .15s;margin-top:4px}
+.calc-btn:hover{background:var(--ink2);transform:translateY(-1px)}
+.calc-btn:active{transform:translateY(0)}
+
+/* ── UTILITY DOTS ── */
+.udot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}
+.udot.gas{background:var(--gas)}.udot.elec{background:var(--elec)}
+.udot.water{background:var(--water)}.udot.cng{background:var(--cng)}
+
+/* ── BILL DISPLAY ── */
+.bill-wrap{display:flex;flex-direction:column;gap:16px}
+
+.bill-card{border:1px solid var(--border);border-radius:var(--r);overflow:hidden;transition:all .2s}
+.bill-card.gas  {border-top:3px solid var(--gas)}
+.bill-card.elec {border-top:3px solid var(--elec)}
+.bill-card.water{border-top:3px solid var(--water)}
+.bill-card.cng  {border-top:3px solid var(--cng)}
+
+.bill-head{padding:14px 18px;display:flex;align-items:center;gap:12px;cursor:pointer;background:#FAFBFC}
+.bill-head:hover{background:#F5F7FA}
+.bill-badge{padding:2px 8px;border-radius:4px;font-family:var(--mono);font-size:10px;font-weight:500}
+.bill-badge.gas  {background:rgba(0,200,150,.12);color:#008060}
+.bill-badge.elec {background:rgba(255,188,31,.15);color:#9A6800}
+.bill-badge.water{background:rgba(47,155,245,.12);color:#1060A0}
+.bill-badge.cng  {background:rgba(255,107,53,.12);color:#C03000}
+.bill-id{font-family:var(--mono);font-size:12px;color:var(--ink3)}
+.bill-title{font-family:var(--disp);font-size:13px;font-weight:700;flex:1}
+.bill-total{font-family:var(--mono);font-size:16px;font-weight:500;color:var(--ink)}
+.bill-toggle{font-size:16px;color:var(--ink3);transition:transform .2s}
+.bill-toggle.open{transform:rotate(180deg)}
+
+.bill-body{display:none;padding:16px 18px;border-top:1px solid var(--border)}
+.bill-body.open{display:block}
+
+.reading-row{display:flex;gap:16px;margin-bottom:14px;padding:10px 14px;background:#F8FAFB;border-radius:6px;font-family:var(--mono);font-size:12px}
+.rr-item{display:flex;flex-direction:column;gap:2px}
+.rr-label{font-size:10px;text-transform:uppercase;color:var(--ink3);letter-spacing:.5px}
+.rr-val{font-size:14px;font-weight:500;color:var(--ink)}
+
+.lines-table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:12px}
+.lines-table th{font-size:10px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.5px;color:var(--ink3);padding:5px 8px;border-bottom:1px solid var(--border);text-align:left;font-weight:500}
+.lines-table td{padding:7px 8px;border-bottom:1px solid #F5F5F5}
+.lines-table tr:last-child td{border-bottom:none}
+.lines-table .ltype-tax td{color:var(--ink3);font-size:12px;font-style:italic}
+.lines-table .ltype-slab0 td:first-child{color:var(--ink3)}
+
+.bill-totals{border-top:2px solid var(--border);padding-top:10px;display:flex;flex-direction:column;gap:4px}
+.bt-row{display:flex;justify-content:space-between;font-size:13px;padding:2px 0}
+.bt-row.total{font-family:var(--disp);font-size:16px;font-weight:700;padding-top:6px;border-top:1px solid var(--border);margin-top:4px}
+.bt-label{color:var(--ink3)}.bt-val{font-family:var(--mono);font-weight:500}
+.bt-row.total .bt-val{color:var(--ink)}
+
+.pay-bar{display:flex;gap:8px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border)}
+.pay-btn{flex:1;padding:8px;border-radius:6px;font-size:12px;font-family:var(--disp);font-weight:700;cursor:pointer;border:1px solid;transition:all .15s;text-align:center}
+.pay-btn-upi  {background:rgba(0,200,150,.1);color:#007050;border-color:rgba(0,200,150,.3)}
+.pay-btn-card {background:rgba(47,155,245,.1);color:#1050A0;border-color:rgba(47,155,245,.3)}
+.pay-btn-cash {background:rgba(107,118,133,.1);color:#3A4A5A;border-color:rgba(107,118,133,.3)}
+.pay-btn:hover{opacity:.85;transform:translateY(-1px)}
+
+.paid-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:11px;font-family:var(--mono);font-weight:500;background:rgba(13,184,113,.12);color:#007040;border:1px solid rgba(13,184,113,.3);margin-top:14px}
+
+/* ── TABS ── */
+.tabs-bar{display:flex;gap:0;border-bottom:2px solid var(--border);margin:-18px -18px 18px}
+.tab-btn{padding:11px 18px;font-size:13px;font-family:var(--disp);font-weight:600;color:var(--ink3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s;white-space:nowrap}
+.tab-btn:hover{color:var(--ink)}
+.tab-btn.active{color:var(--ink);border-bottom-color:var(--gas)}
+.tab-pane{display:none}.tab-pane.active{display:block}
+
+/* ── RECONCILIATION ── */
+.recon-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+.rs-card{background:#F8FAFB;border:1px solid var(--border);border-radius:8px;padding:12px 14px}
+.rs-label{font-size:10px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.5px;color:var(--ink3);margin-bottom:4px}
+.rs-val{font-family:var(--mono);font-size:20px;font-weight:500}
+.rs-val.ok{color:var(--success)}.rs-val.warn{color:var(--warn)}.rs-val.mono{color:var(--ink)}
+
+.recon-table{width:100%;border-collapse:collapse;font-size:13px}
+.recon-table th{background:#F0F3F7;padding:8px 12px;text-align:left;font-size:11px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.4px;color:var(--ink3);border-bottom:1px solid var(--border)}
+.recon-table td{padding:9px 12px;border-bottom:1px solid #F0F0F0;font-family:var(--mono);font-size:12px}
+.recon-table tr:last-child td{border-bottom:none}
+.status-ok{color:var(--success);font-weight:500}.status-fail{color:var(--error);font-weight:500}
+.status-pending{color:var(--warn);font-weight:500}
+
+/* ── PIPELINE ── */
+.pipeline{display:flex;align-items:center;gap:0;margin-bottom:20px;overflow-x:auto;padding-bottom:4px}
+.pipe-step{display:flex;align-items:center;gap:0}
+.pipe-node{padding:8px 14px;border-radius:6px;font-size:12px;font-family:var(--disp);font-weight:700;white-space:nowrap;cursor:pointer;transition:all .15s;border:1px solid}
+.pipe-node.done {background:rgba(13,184,113,.1);color:#007040;border-color:rgba(13,184,113,.35)}
+.pipe-node.active{background:var(--ink);color:#fff;border-color:var(--ink)}
+.pipe-node.pending{background:#F5F5F5;color:var(--ink3);border-color:var(--border)}
+.pipe-arrow{padding:0 4px;color:var(--ink3);font-size:14px}
+
+/* ── ENGINE LOG ── */
+.log-wrap{background:#0D1117;border-radius:8px;padding:14px 16px;font-family:var(--mono);font-size:11.5px;line-height:1.7;max-height:280px;overflow-y:auto;margin-top:4px}
+.log-line{display:flex;gap:10px}
+.log-ts{color:#4A5568}.log-ok{color:#00C896}.log-info{color:#7DD3FC}
+.log-warn{color:#FFBC1F}.log-label{color:#E2E8F0}
+
+/* ── TOTALS STRIP ── */
+.totals-strip{background:var(--ink);color:#fff;border-radius:var(--r);padding:14px 20px;display:flex;align-items:center;gap:24px;margin-bottom:16px;flex-wrap:wrap}
+.ts-item{display:flex;flex-direction:column;gap:2px}
+.ts-label{font-size:10px;font-family:var(--mono);color:#ffffff80;text-transform:uppercase;letter-spacing:.5px}
+.ts-val{font-family:var(--mono);font-size:18px;font-weight:500}
+.ts-val.gas{color:var(--gas)}.ts-val.elec{color:var(--elec)}.ts-val.water{color:var(--water)}.ts-val.cng{color:var(--cng)}
+.ts-div{width:1px;height:36px;background:rgba(255,255,255,.15);align-self:center}
+
+/* ── ANOMALY ── */
+.anomaly-tag{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:4px;font-family:var(--mono);font-size:10px;font-weight:500;background:rgba(232,56,56,.12);color:var(--error);border:1px solid rgba(232,56,56,.25)}
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <div class="brand">BFS <span>Enerza</span></div>
+  <div class="shell-div">|</div>
+  <div class="shell-sub">Billing Engine</div>
+  <div class="shell-right">
+    <div class="utility-pill gas active"   onclick="filterUtil('gas')"  >⬛ Gas PNG</div>
+    <div class="utility-pill elec"  onclick="filterUtil('elec')" >⬛ Electricity</div>
+    <div class="utility-pill water" onclick="filterUtil('water')">⬛ Water</div>
+    <div class="utility-pill cng"   onclick="filterUtil('cng')"  >⬛ CNG</div>
+    <div class="utility-pill" style="color:#fff;border-color:#fff3" onclick="filterUtil('all')">All</div>
+  </div>
+</div>
+
+<div class="layout">
+
+  <!-- ── LEFT: CALCULATOR ── -->
+  <div>
+    <div class="panel">
+      <div class="panel-hdr">
+        <div class="panel-icon" style="background:#0D1117">⚡</div>
+        <div class="panel-title">Rate Calculator</div>
+      </div>
+      <div class="panel-body">
+
+        <div class="fg">
+          <label>Utility Type</label>
+          <select id="calc-utility" onchange="onUtilChange()">
+            <option value="gas">Gas PNG</option>
+            <option value="elec">Electricity</option>
+            <option value="water">Water</option>
+            <option value="cng">CNG</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label>Consumer Segment</label>
+          <select id="calc-segment" onchange="onSegmentChange()">
+            <option>Domestic</option><option>Commercial</option><option>Industrial</option>
+          </select>
+        </div>
+        <div class="row2">
+          <div class="fg">
+            <label>Previous Reading</label>
+            <input id="calc-prev" type="number" value="1048.4" step="0.1">
+          </div>
+          <div class="fg">
+            <label>Current Reading</label>
+            <input id="calc-curr" type="number" value="1060.8" step="0.1" oninput="liveCalc()">
+          </div>
+        </div>
+        <div class="fg">
+          <label>Consumption Preview</label>
+          <input id="calc-cons" readonly style="background:#F8FAFB;font-family:var(--mono);font-weight:500;color:var(--gas)">
+        </div>
+        <div class="fg">
+          <label>Billing Period</label>
+          <input id="calc-period" type="text" value="April 2026">
+        </div>
+        <div class="fg">
+          <label>Bill Date</label>
+          <input id="calc-date" type="date" value="2026-04-08">
+        </div>
+        <button class="calc-btn" onclick="generateBill()">▶  Generate Bill</button>
+      </div>
+    </div>
+
+    <!-- Engine Log -->
+    <div class="panel" style="margin-top:16px">
+      <div class="panel-hdr">
+        <div class="panel-icon" style="background:#0D1117">📋</div>
+        <div class="panel-title">Engine Log</div>
+      </div>
+      <div class="panel-body" style="padding:0">
+        <div class="log-wrap" id="engine-log">
+          <div class="log-line"><span class="log-ts">00:00:00</span><span class="log-ok">✓</span><span class="log-label">BFS Enerza Billing Engine v1.0 ready</span></div>
+          <div class="log-line"><span class="log-ts">00:00:00</span><span class="log-info">ℹ</span><span class="log-label">Rate plans loaded: 5 (Gas×2, Elec×1, Water×1, CNG×1)</span></div>
+          <div class="log-line"><span class="log-ts">00:00:00</span><span class="log-info">ℹ</span><span class="log-label">Payment channels: UPI, BBPS, Card, Net Banking, Cash</span></div>
+          <div class="log-line"><span class="log-ts">00:00:00</span><span class="log-label">─── Enter readings and click Generate Bill ───</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── RIGHT: BILLS + TABS ── -->
+  <div>
+    <div class="panel">
+      <div class="panel-body">
+
+        <div class="tabs-bar">
+          <div class="tab-btn active" onclick="swTab('bills')">Bills</div>
+          <div class="tab-btn" onclick="swTab('payment')">Payment Flow</div>
+          <div class="tab-btn" onclick="swTab('recon')">Reconciliation</div>
+          <div class="tab-btn" onclick="swTab('pipeline')">Engine Pipeline</div>
+        </div>
+
+        <!-- BILLS TAB -->
+        <div id="tab-bills" class="tab-pane active">
+          <div id="totals-strip" style="display:none" class="totals-strip">
+            <div class="ts-item"><div class="ts-label">Bills Generated</div><div class="ts-val" id="ts-count">0</div></div>
+            <div class="ts-div"></div>
+            <div class="ts-item"><div class="ts-label">Total Net</div><div class="ts-val" id="ts-net">₹0</div></div>
+            <div class="ts-div"></div>
+            <div class="ts-item"><div class="ts-label">Total Tax</div><div class="ts-val" id="ts-tax">₹0</div></div>
+            <div class="ts-div"></div>
+            <div class="ts-item"><div class="ts-label">Total Due</div><div class="ts-val" id="ts-total">₹0</div></div>
+          </div>
+          <div id="bills-wrap" class="bill-wrap">
+            <div id="empty-state" style="text-align:center;padding:48px;color:var(--ink3)">
+              <div style="font-size:36px;margin-bottom:12px">📄</div>
+              <div style="font-family:var(--disp);font-weight:700;font-size:16px;margin-bottom:6px">No bills generated yet</div>
+              <div style="font-size:13px">Use the calculator to generate your first bill</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PAYMENT FLOW TAB -->
+        <div id="tab-payment" class="tab-pane">
+          <div id="payment-content">
+            <div style="text-align:center;padding:48px;color:var(--ink3)">
+              <div style="font-size:36px;margin-bottom:12px">💳</div>
+              <div style="font-family:var(--disp);font-weight:700;font-size:16px;margin-bottom:6px">No payments yet</div>
+              <div style="font-size:13px">Generate a bill and click a payment button</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RECONCILIATION TAB -->
+        <div id="tab-recon" class="tab-pane">
+          <div id="recon-content">
+            <div style="text-align:center;padding:48px;color:var(--ink3)">
+              <div style="font-size:36px;margin-bottom:12px">🔄</div>
+              <div style="font-family:var(--disp);font-weight:700;font-size:16px;margin-bottom:6px">No settlements yet</div>
+              <div style="font-size:13px">Make payments to trigger reconciliation</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PIPELINE TAB -->
+        <div id="tab-pipeline" class="tab-pane">
+          <div style="margin-bottom:18px">
+            <div class="pipeline" id="pipeline-vis">
+              <div class="pipe-step"><div class="pipe-node pending" id="pipe-read">📊 Meter Read</div><div class="pipe-arrow">→</div></div>
+              <div class="pipe-step"><div class="pipe-node pending" id="pipe-rate">📐 Rating</div><div class="pipe-arrow">→</div></div>
+              <div class="pipe-step"><div class="pipe-node pending" id="pipe-bill">📄 Bill Gen</div><div class="pipe-arrow">→</div></div>
+              <div class="pipe-step"><div class="pipe-node pending" id="pipe-pay">💳 Payment</div><div class="pipe-arrow">→</div></div>
+              <div class="pipe-step"><div class="pipe-node pending" id="pipe-recon">✅ Recon</div></div>
+            </div>
+            <div id="pipeline-detail" style="background:#F8FAFB;border:1px solid var(--border);border-radius:8px;padding:16px;font-size:13px;color:var(--ink3);font-family:var(--mono)">
+              Click Generate Bill to start the billing pipeline
+            </div>
+          </div>
+          <div style="font-family:var(--disp);font-size:13px;font-weight:700;margin-bottom:12px;color:var(--ink)">Rate Plan Reference</div>
+          <table class="recon-table" style="font-size:12px">
+            <thead><tr><th>Utility</th><th>Plan</th><th>Segment</th><th>Fixed</th><th>Variable</th><th>Tax</th></tr></thead>
+            <tbody>
+              <tr><td><span class="udot gas"></span>Gas PNG</td><td>RP-GAS-DOM-01</td><td>Domestic</td><td>₹120</td><td>₹30/₹35/₹42 SCM</td><td>GST 5%</td></tr>
+              <tr><td><span class="udot gas"></span>Gas PNG</td><td>RP-GAS-COM-01</td><td>Commercial</td><td>₹350</td><td>₹38/SCM flat</td><td>GST 5%</td></tr>
+              <tr><td><span class="udot elec"></span>Electricity</td><td>RP-ELEC-DOM-01</td><td>Domestic</td><td>₹45 rent</td><td>₹3.50/₹5.00/₹7.50 kWh</td><td>Duty 15% + GST 18%</td></tr>
+              <tr><td><span class="udot water"></span>Water</td><td>RP-WATER-DOM-01</td><td>Domestic</td><td>₹80</td><td>₹8/₹14 KL</td><td>Water tax 5%</td></tr>
+              <tr><td><span class="udot cng"></span>CNG</td><td>RP-CNG-PRIV-01</td><td>Private</td><td>—</td><td>₹80/KG</td><td>GST 5%</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────────────────────────────
+// BILLING ENGINE  (JavaScript port of Python engine)
+// ─────────────────────────────────────────────────────────────────────
+const RATE_PLANS = {
+  "RP-GAS-DOM-01": {
+    name:"Domestic PNG Slab 2024", utility:"gas", uom:"SCM",
+    components:[
+      {id:"FIX",  name:"Fixed Monthly Charge",          type:"FIXED",    rate:120.00},
+      {id:"V1",   name:"Variable – Slab 1 (0–10 SCM)",  type:"VARIABLE", rate:30.00, slab_from:0,   slab_to:10},
+      {id:"V2",   name:"Variable – Slab 2 (10–30 SCM)", type:"VARIABLE", rate:35.00, slab_from:10,  slab_to:30},
+      {id:"V3",   name:"Variable – Slab 3 (>30 SCM)",   type:"VARIABLE", rate:42.00, slab_from:30,  slab_to:null},
+      {id:"GST",  name:"GST @ 5%",                      type:"TAX",      rate:0.05,  base:["FIX","V1","V2","V3"]},
+    ]
+  },
+  "RP-GAS-COM-01": {
+    name:"Commercial PNG Flat 2024", utility:"gas", uom:"SCM",
+    components:[
+      {id:"FIX",  name:"Fixed Monthly Charge", type:"FIXED",    rate:350.00},
+      {id:"VAR",  name:"Variable Charge",       type:"VARIABLE", rate:38.00, slab_from:0, slab_to:null},
+      {id:"GST",  name:"GST @ 5%",             type:"TAX",      rate:0.05,  base:["FIX","VAR"]},
+    ]
+  },
+  "RP-ELEC-DOM-01": {
+    name:"Domestic Electricity 2024", utility:"elec", uom:"kWh",
+    components:[
+      {id:"RENT", name:"Meter Rent",                     type:"FIXED",    rate:45.00},
+      {id:"E1",   name:"Energy – Slab 1 (0–100 kWh)",   type:"VARIABLE", rate:3.50,  slab_from:0,   slab_to:100},
+      {id:"E2",   name:"Energy – Slab 2 (101–300 kWh)", type:"VARIABLE", rate:5.00,  slab_from:100, slab_to:300},
+      {id:"E3",   name:"Energy – Slab 3 (>300 kWh)",    type:"VARIABLE", rate:7.50,  slab_from:300, slab_to:null},
+      {id:"DUTY", name:"Electricity Duty @ 15%",         type:"TAX",      rate:0.15,  base:["E1","E2","E3"]},
+      {id:"GST",  name:"GST @ 18% (Meter Rent)",         type:"TAX",      rate:0.18,  base:["RENT"]},
+    ]
+  },
+  "RP-WATER-DOM-01": {
+    name:"Domestic Water 2024", utility:"water", uom:"KL",
+    components:[
+      {id:"FIX",  name:"Fixed Water Charge",        type:"FIXED",    rate:80.00},
+      {id:"W1",   name:"Water – Slab 1 (0–10 KL)", type:"VARIABLE", rate:8.00,  slab_from:0,  slab_to:10},
+      {id:"W2",   name:"Water – Slab 2 (>10 KL)",  type:"VARIABLE", rate:14.00, slab_from:10, slab_to:null},
+      {id:"TAX",  name:"Water Tax @ 5%",            type:"TAX",      rate:0.05,  base:["FIX","W1","W2"]},
+    ]
+  },
+  "RP-CNG-PRIV-01": {
+    name:"CNG Private Vehicle 2024", utility:"cng", uom:"KG",
+    components:[
+      {id:"CNG",  name:"CNG Fuel Charge", type:"VARIABLE", rate:80.00, slab_from:0, slab_to:null},
+      {id:"GST",  name:"GST @ 5%",       type:"TAX",      rate:0.05,  base:["CNG"]},
+    ]
+  },
+};
+
+const PLAN_MAP = {gas:{Domestic:"RP-GAS-DOM-01",Commercial:"RP-GAS-COM-01",Industrial:"RP-GAS-COM-01"},
+                 elec:{Domestic:"RP-ELEC-DOM-01",Commercial:"RP-ELEC-DOM-01",Industrial:"RP-ELEC-DOM-01"},
+                 water:{Domestic:"RP-WATER-DOM-01",Commercial:"RP-WATER-DOM-01",Industrial:"RP-WATER-DOM-01"},
+                 cng:{Domestic:"RP-CNG-PRIV-01",Commercial:"RP-CNG-PRIV-01",Industrial:"RP-CNG-PRIV-01"}};
+
+const r2 = v => Math.round(v*100)/100;
+
+function applySlabs(consumption, comps) {
+  let rem = consumption, lines = [];
+  for (const c of comps) {
+    if (c.type !== "VARIABLE") continue;
+    const qty = c.slab_to === null ? rem : Math.min(rem, c.slab_to - c.slab_from);
+    const qtyUse = Math.max(0, qty);
+    lines.push({...c, qty:qtyUse, amount:r2(qtyUse*c.rate)});
+    rem -= qtyUse;
+    if (rem <= 0) rem = 0;
+  }
+  return lines;
+}
+
+function rateBill(planId, consumption) {
+  const plan = RATE_PLANS[planId], comps = plan.components, amounts = {};
+  let lines = [], net = 0, tax = 0;
+  for (const c of comps) {
+    if (c.type==="FIXED") {
+      amounts[c.id]=c.rate; net+=c.rate;
+      lines.push({...c, qty:null, amount:c.rate, line_type:"CHARGE"});
+    }
+  }
+  for (const sl of applySlabs(consumption, comps)) {
+    amounts[sl.id]=sl.amount; net+=sl.amount;
+    lines.push({...sl, line_type:"CHARGE"});
+  }
+  for (const c of comps) {
+    if (c.type==="TAX") {
+      const base = (c.base||[]).reduce((s,b)=>s+(amounts[b]||0),0);
+      const ta = r2(base*c.rate);
+      lines.push({...c, qty:null, amount:ta, line_type:"TAX"});
+      tax+=ta;
+    }
+  }
+  return {planId, planName:plan.name, utility:plan.utility, uom:plan.uom,
+          consumption, lines, net:r2(net), tax:r2(tax), total:r2(net+tax)};
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────────────────────────────────
+let bills=[], payments=[], billSeq=1000;
+const fmt = n => "₹"+n.toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2});
+const ts  = ()=>new Date().toTimeString().slice(0,8);
+
+// ─────────────────────────────────────────────────────────────────────
+// PIPELINE STATE TRACKER
+// ─────────────────────────────────────────────────────────────────────
+function setPipeStep(step, detail) {
+  const steps = ['read','rate','bill','pay','recon'];
+  const idx = steps.indexOf(step);
+  steps.forEach((s,i)=>{
+    const el = document.getElementById('pipe-'+s);
+    if(!el) return;
+    el.className = 'pipe-node ' + (i < idx ? 'done' : i===idx ? 'active' : 'pending');
+  });
+  document.getElementById('pipeline-detail').textContent = detail;
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// ENGINE LOG
+// ─────────────────────────────────────────────────────────────────────
+function log(msg, type='info') {
+  const cl = type==='ok'?'log-ok':type==='warn'?'log-warn':'log-info';
+  const wrap = document.getElementById('engine-log');
+  const div = document.createElement('div');
+  div.className = 'log-line';
+  div.innerHTML = `<span class="log-ts">${ts()}</span><span class="${cl}">${type==='ok'?'✓':type==='warn'?'⚠':'ℹ'}</span><span class="log-label">${msg}</span>`;
+  wrap.appendChild(div);
+  wrap.scrollTop = wrap.scrollHeight;
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// UTILITY / SEGMENT CHANGE
+// ─────────────────────────────────────────────────────────────────────
+const DEFAULTS = {
+  gas:  {prev:1048.4, curr:1060.8},
+  elec: {prev:8700,   curr:8945},
+  water:{prev:221.0,  curr:234.5},
+  cng:  {prev:0,      curr:4.2},
+};
+function onUtilChange() {
+  const u = document.getElementById('calc-utility').value;
+  const d = DEFAULTS[u];
+  document.getElementById('calc-prev').value = d.prev;
+  document.getElementById('calc-curr').value = d.curr;
+  liveCalc();
+}
+function onSegmentChange() { liveCalc(); }
+function liveCalc() {
+  const prev = parseFloat(document.getElementById('calc-prev').value)||0;
+  const curr = parseFloat(document.getElementById('calc-curr').value)||0;
+  const cons = Math.max(0, curr-prev);
+  const u = document.getElementById('calc-utility').value;
+  const seg = document.getElementById('calc-segment').value;
+  const planId = (PLAN_MAP[u]||{})[seg] || Object.values(PLAN_MAP[u]||{})[0];
+  const plan = planId ? RATE_PLANS[planId] : null;
+  const uom = plan ? plan.uom : '';
+  document.getElementById('calc-cons').value = cons.toFixed(3) + ' ' + uom;
+}
+liveCalc();
+
+// ─────────────────────────────────────────────────────────────────────
+// GENERATE BILL
+// ─────────────────────────────────────────────────────────────────────
+function generateBill() {
+  const u    = document.getElementById('calc-utility').value;
+  const seg  = document.getElementById('calc-segment').value;
+  const prev = parseFloat(document.getElementById('calc-prev').value)||0;
+  const curr = parseFloat(document.getElementById('calc-curr').value)||0;
+  const period = document.getElementById('calc-period').value;
+  const bdate  = document.getElementById('calc-date').value;
+  const planId = (PLAN_MAP[u]||{})[seg];
+  if (!planId) { alert('No rate plan for this utility/segment'); return; }
+  const cons = Math.max(0, curr-prev);
+  if (cons===0) { alert('Consumption is 0. Check meter readings.'); return; }
+
+  // Step 1: Meter Read
+  setPipeStep('read', `Reading: ${prev} → ${curr} = ${cons.toFixed(3)} ${RATE_PLANS[planId].uom} consumption`);
+  log(`Meter read processed: consumption = ${cons.toFixed(3)} ${RATE_PLANS[planId].uom}`);
+
+  // Step 2: Rating
+  setTimeout(()=>{
+    const rating = rateBill(planId, cons);
+    setPipeStep('rate', `Applied: ${planId} (${rating.planName}) | Net ₹${rating.net} + Tax ₹${rating.tax}`);
+    log(`Rating complete: Net=${fmt(rating.net)}  Tax=${fmt(rating.tax)}  Total=${fmt(rating.total)}`,'ok');
+
+    // Step 3: Bill Generation
+    setTimeout(()=>{
+      billSeq++;
+      const billId = `BILL${String(billSeq).padStart(6,'0')}`;
+      const dueDate = new Date(bdate); dueDate.setDate(dueDate.getDate()+20);
+      const bill = {billId, planId, utility:u, segment:seg, period, billDate:bdate,
+                    dueDate:dueDate.toISOString().slice(0,10),
+                    prev, curr, cons, rating, paid:false};
+      bills.push(bill);
+      setPipeStep('bill', `Bill ${billId} generated | Due: ${bill.dueDate} | Total: ${fmt(rating.total)}`);
+      log(`Bill generated: ${billId} for period ${period}`,'ok');
+      renderBills();
+      updateTotals();
+      document.getElementById('empty-state') && (document.getElementById('empty-state').style.display='none');
+    },300);
+  },200);
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// RENDER BILLS
+// ─────────────────────────────────────────────────────────────────────
+function renderBills() {
+  const wrap = document.getElementById('bills-wrap');
+  const empty = document.getElementById('empty-state');
+  if (bills.length) {
+    if(empty) empty.style.display='none';
+    wrap.innerHTML = bills.map((b,i)=>billCardHTML(b,i)).join('');
+  }
+}
+
+function billCardHTML(b,i) {
+  const r = b.rating;
+  const udot = `<span class="udot ${b.utility}"></span>`;
+  const linesHTML = r.lines.map(ln=>{
+    const isZero = ln.amount===0;
+    const isTax  = ln.line_type==='TAX';
+    const cls    = isZero?'ltype-slab0':isTax?'ltype-tax':'';
+    const qtyStr = ln.qty!==null ? `<span style="color:var(--ink3)">${ln.qty.toFixed(2)} ${r.uom} ×</span> ` : '';
+    const rateStr= isTax ? `${(ln.rate).toFixed(0)}%` : `${fmt(ln.rate)}/${ln.qty!==null?r.uom:''}`;
+    return `<tr class="${cls}"><td>${ln.name}</td><td style="text-align:right;font-family:var(--mono)">${qtyStr}${isZero?'<span style="color:var(--ink3)">—</span>':fmt(ln.amount)}</td><td style="text-align:right;font-family:var(--mono);color:var(--ink3);font-size:12px">${rateStr}</td></tr>`;
+  }).join('');
+
+  const payBtns = b.paid ? `<div class="paid-badge">✓ PAID via ${b.payChannel} · Ref: ${b.gwRef}</div>` :
+    `<div class="pay-bar">
+      <div class="pay-btn pay-btn-upi"  onclick="payBill(${i},'UPI')">UPI</div>
+      <div class="pay-btn pay-btn-card" onclick="payBill(${i},'CARD')">Card</div>
+      <div class="pay-btn pay-btn-cash" onclick="payBill(${i},'CASH')">Cash</div>
+    </div>`;
+
+  return `<div class="bill-card ${b.utility}" id="bcard-${i}">
+  <div class="bill-head" onclick="toggleBill(${i})">
+    <div class="bill-badge ${b.utility}">${{gas:'GAS PNG',elec:'ELECTRICITY',water:'WATER',cng:'CNG'}[b.utility]}</div>
+    <div style="flex:1">
+      <div class="bill-title">${{gas:'Domestic PNG',elec:'Domestic Electricity',water:'Domestic Water',cng:'CNG Vehicle'}[b.utility]} — ${b.period}</div>
+      <div class="bill-id">${b.billId} · Due ${b.dueDate}</div>
+    </div>
+    ${b.paid ? '<div class="paid-badge" style="margin-right:8px">✓ PAID</div>' : ''}
+    <div class="bill-total">${fmt(r.total)}</div>
+    <div class="bill-toggle" id="btoggle-${i}">▼</div>
+  </div>
+  <div class="bill-body" id="bbody-${i}">
+    <div class="reading-row">
+      <div class="rr-item"><div class="rr-label">Previous</div><div class="rr-val">${b.prev} ${r.uom}</div></div>
+      <div class="rr-item"><div class="rr-label">Current</div><div class="rr-val">${b.curr} ${r.uom}</div></div>
+      <div class="rr-item"><div class="rr-label">Consumption</div><div class="rr-val" style="color:var(--${b.utility})">${b.cons.toFixed(3)} ${r.uom}</div></div>
+      <div class="rr-item"><div class="rr-label">Rate Plan</div><div class="rr-val" style="font-size:12px">${b.planId}</div></div>
+    </div>
+    <table class="lines-table">
+      <thead><tr><th>Charge Description</th><th style="text-align:right">Amount (₹)</th><th style="text-align:right">Rate</th></tr></thead>
+      <tbody>${linesHTML}</tbody>
+    </table>
+    <div class="bill-totals">
+      <div class="bt-row"><span class="bt-label">Net Amount</span><span class="bt-val">${fmt(r.net)}</span></div>
+      <div class="bt-row"><span class="bt-label">Tax Amount</span><span class="bt-val">${fmt(r.tax)}</span></div>
+      <div class="bt-row total"><span>Total Due</span><span class="bt-val">${fmt(r.total)}</span></div>
+    </div>
+    ${payBtns}
+  </div>
+</div>`;
+}
+
+function toggleBill(i) {
+  const body = document.getElementById('bbody-'+i);
+  const tog  = document.getElementById('btoggle-'+i);
+  const open = body.classList.toggle('open');
+  tog.classList.toggle('open', open);
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// PAYMENT
+// ─────────────────────────────────────────────────────────────────────
+function payBill(idx, channel) {
+  const b = bills[idx];
+  if (b.paid) return;
+  const gwRef = `GW${Date.now().toString().slice(-6)}`;
+  b.paid = true; b.payChannel = channel; b.gwRef = gwRef;
+  const order = {orderId:`ORD${Date.now().toString().slice(-6)}`,billId:b.billId,
+                 channel, amount:b.rating.total, gwRef, status:'SUCCESS'};
+  payments.push(order);
+  log(`Payment received: ${b.billId} via ${channel} | Ref: ${gwRef} | ₹${b.rating.total}`,'ok');
+  setPipeStep('pay', `Payment SUCCESS | ${channel} | ${gwRef} | ${fmt(b.rating.total)}`);
+  renderBills();
+  updateTotals();
+  renderPayments();
+  if (payments.length >= 1) runRecon();
+}
+
+function renderPayments() {
+  const rows = payments.map(p=>`
+    <tr>
+      <td style="font-family:var(--mono);font-size:12px">${p.orderId}</td>
+      <td style="font-family:var(--mono);font-size:12px">${p.billId}</td>
+      <td>${p.channel}</td>
+      <td style="font-family:var(--mono);font-size:12px">${p.gwRef}</td>
+      <td style="font-family:var(--mono)">${fmt(p.amount)}</td>
+      <td><span class="status-ok">${p.status}</span></td>
+    </tr>`).join('');
+  document.getElementById('payment-content').innerHTML = `
+    <div style="font-family:var(--disp);font-size:13px;font-weight:700;margin-bottom:12px">Payment Orders (${payments.length})</div>
+    <table class="recon-table">
+      <thead><tr><th>Order ID</th><th>Bill ID</th><th>Channel</th><th>Gateway Ref</th><th>Amount</th><th>Status</th></tr></thead>
+      <tbody>${rows||'<tr><td colspan="6" style="text-align:center;color:var(--ink3)">No payments yet</td></tr>'}</tbody>
+    </table>`;
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// RECONCILIATION
+// ─────────────────────────────────────────────────────────────────────
+function runRecon() {
+  const gross = payments.reduce((s,p)=>s+p.amount,0);
+  const fee   = r2(gross*0.002);
+  const settleId = `STL-${new Date().toISOString().slice(0,7).replace('-','')}-001`;
+  log(`Reconciliation started: ${payments.length} transactions, gross=${fmt(gross)}`);
+  setTimeout(()=>{
+    log(`Settlement ${settleId}: gross=${fmt(gross)} fee=${fmt(fee)} net=${fmt(r2(gross-fee))}`,'ok');
+    setPipeStep('recon', `Settlement ${settleId} | ${payments.length} matched | Net ${fmt(r2(gross-fee))}`);
+    const rows = payments.map(p=>`
+      <tr>
+        <td style="font-family:var(--mono);font-size:12px">${p.gwRef}</td>
+        <td style="font-family:var(--mono);font-size:12px">${p.orderId}</td>
+        <td style="font-family:var(--mono)">${fmt(p.amount)}</td>
+        <td><span class="status-ok">MATCHED</span></td>
+      </tr>`).join('');
+    document.getElementById('recon-content').innerHTML = `
+      <div class="recon-summary">
+        <div class="rs-card"><div class="rs-label">Settlement ID</div><div class="rs-val mono" style="font-size:12px">${settleId}</div></div>
+        <div class="rs-card"><div class="rs-label">Matched</div><div class="rs-val ok">${payments.length}</div></div>
+        <div class="rs-card"><div class="rs-label">Gross Amount</div><div class="rs-val mono">${fmt(gross)}</div></div>
+        <div class="rs-card"><div class="rs-label">Net (after fee)</div><div class="rs-val ok">${fmt(r2(gross-fee))}</div></div>
+      </div>
+      <div style="font-family:var(--disp);font-size:13px;font-weight:700;margin-bottom:12px">Transaction Matches</div>
+      <table class="recon-table">
+        <thead><tr><th>Gateway Ref</th><th>Order ID</th><th>Amount</th><th>Result</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+  },400);
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// TOTALS
+// ─────────────────────────────────────────────────────────────────────
+function updateTotals() {
+  if (!bills.length) return;
+  document.getElementById('totals-strip').style.display='flex';
+  document.getElementById('ts-count').textContent = bills.length;
+  document.getElementById('ts-net').textContent   = fmt(r2(bills.reduce((s,b)=>s+b.rating.net,0)));
+  document.getElementById('ts-tax').textContent   = fmt(r2(bills.reduce((s,b)=>s+b.rating.tax,0)));
+  document.getElementById('ts-total').textContent = fmt(r2(bills.reduce((s,b)=>s+b.rating.total,0)));
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// TAB SWITCHER
+// ─────────────────────────────────────────────────────────────────────
+function swTab(name) {
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// UTILITY FILTER
+// ─────────────────────────────────────────────────────────────────────
+function filterUtil(u) {
+  document.querySelectorAll('.utility-pill').forEach(p=>p.classList.remove('active'));
+  event.target.classList.add('active');
+  document.querySelectorAll('.bill-card').forEach(c=>{
+    c.style.display = (u==='all'||c.classList.contains(u)) ? '' : 'none';
+  });
+}
+</script>
+</body>
+</html>

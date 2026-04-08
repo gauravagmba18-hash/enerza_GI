@@ -1,0 +1,114 @@
+
+<style>
+#erd5 svg { max-width:100%; }
+#erd5 svg.erDiagram .row-rect-odd path,
+#erd5 svg.erDiagram .row-rect-odd rect,
+#erd5 svg.erDiagram .row-rect-even path,
+#erd5 svg.erDiagram .row-rect-even rect { stroke: none !important; }
+</style>
+<div id="erd5" style="overflow-x:auto;padding:4px 0"></div>
+<script type="module">
+import mermaid from 'https://esm.sh/mermaid@11/dist/mermaid.esm.min.mjs';
+const dark = matchMedia('(prefers-color-scheme: dark)').matches;
+await document.fonts.ready;
+mermaid.initialize({startOnLoad:false,theme:'base',fontFamily:'"Anthropic Sans",sans-serif',themeVariables:{darkMode:dark,fontSize:'13px',fontFamily:'"Anthropic Sans",sans-serif',lineColor:dark?'#9c9a92':'#73726c',textColor:dark?'#c2c0b6':'#3d3d3a'}});
+const {svg} = await mermaid.render('erd5-svg',`erDiagram
+    CUSTOMER ||--o| APP_USER : "linked as"
+    APP_USER ||--o{ APP_DEVICE : "uses"
+    APP_USER ||--o{ APP_ACCOUNT_LINK : "links"
+    APP_ACCOUNT_LINK }|--|| ACCOUNT : "to"
+    APP_USER ||--o{ APP_SESSION : "creates"
+    APP_SESSION }|--|| APP_DEVICE : "on"
+    APP_USER ||--o{ APP_NOTIFICATION : "receives"
+    APP_NOTIFICATION }|--|| NOTIF_TEMPLATE : "from"
+    APP_USER ||--o{ APP_SERVICE_REQUEST : "raises"
+    APP_SERVICE_REQUEST }|--|| SERVICE_REQUEST_TYPE : "of type"
+
+    APP_USER {
+        varchar app_user_id PK
+        varchar customer_id FK
+        varchar mobile
+        varchar email
+        varchar otp_verified
+        varchar status
+        timestamp registered_at
+    }
+    APP_DEVICE {
+        varchar device_id PK
+        varchar app_user_id FK
+        varchar os_type
+        varchar app_version
+        varchar push_token
+        varchar device_fingerprint
+        boolean active
+    }
+    APP_ACCOUNT_LINK {
+        varchar link_id PK
+        varchar app_user_id FK
+        varchar account_id FK
+        varchar ownership_type
+        timestamp linked_at
+    }
+    APP_SESSION {
+        varchar session_id PK
+        varchar app_user_id FK
+        varchar device_id FK
+        timestamp started_at
+        timestamp ended_at
+        varchar session_status
+    }
+    APP_NOTIFICATION {
+        varchar notif_id PK
+        varchar app_user_id FK
+        varchar template_id FK
+        varchar message
+        varchar channel
+        timestamp sent_at
+        boolean read_flag
+    }
+    NOTIF_TEMPLATE {
+        varchar template_id PK
+        varchar channel
+        varchar event_type
+        varchar language
+        varchar body_template
+        boolean active
+    }
+    APP_SERVICE_REQUEST {
+        varchar request_id PK
+        varchar app_user_id FK
+        varchar account_id FK
+        varchar type_id FK
+        varchar description
+        varchar status
+        timestamp created_at
+    }
+    SERVICE_REQUEST_TYPE {
+        varchar type_id PK
+        varchar category
+        varchar subcategory
+        int sla_hours
+        varchar priority
+        varchar department
+    }
+    CUSTOMER {
+        varchar customer_id PK
+    }
+    ACCOUNT {
+        varchar account_id PK
+    }
+`);
+document.getElementById('erd5').innerHTML = svg;
+document.querySelectorAll('#erd5 svg.erDiagram .node').forEach(node=>{
+  const p=node.querySelector('path[d]');if(!p)return;
+  const d=p.getAttribute('d'),nums=d.match(/-?[\d.]+/g)?.map(Number);
+  if(!nums||nums.length<8)return;
+  const xs=[nums[0],nums[2],nums[4],nums[6]],ys=[nums[1],nums[3],nums[5],nums[7]];
+  const x=Math.min(...xs),y=Math.min(...ys),w=Math.max(...xs)-x,h=Math.max(...ys)-y;
+  const r=document.createElementNS('http://www.w3.org/2000/svg','rect');
+  r.setAttribute('x',x);r.setAttribute('y',y);r.setAttribute('width',w);r.setAttribute('height',h);r.setAttribute('rx','8');
+  for(const a of['fill','stroke','stroke-width','class','style'])if(p.hasAttribute(a))r.setAttribute(a,p.getAttribute(a));
+  p.replaceWith(r);
+});
+document.querySelectorAll('#erd5 svg.erDiagram .row-rect-odd path,#erd5 svg.erDiagram .row-rect-even path').forEach(p=>p.setAttribute('stroke','none'));
+</script>

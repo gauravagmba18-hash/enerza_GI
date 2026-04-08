@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>01 - Customer Master | CGD MDM</title>
+    <link rel="stylesheet" href="../css/fiori-complete.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <h1>Customer Master</h1>
+        <div>
+            <span class="status-badge status-active">Active</span>
+            <strong>CUST000123</strong>
+        </div>
+    </header>
+
+    <!-- Search Bar -->
+    <div class="search-bar">
+        <input class="search-input" type="text" placeholder="Search by ID, Name, Mobile..." id="customerSearch">
+        <select class="form-select">
+            <option>All Status</option>
+            <option>Active</option>
+            <option>Draft</option>
+            <option>Blocked</option>
+        </select>
+        <button class="btn btn-primary">🔍 Search</button>
+        <button class="btn btn-primary">➕ Create New</button>
+        <button class="btn btn-primary">📊 Export</button>
+    </div>
+
+    <!-- Data Table -->
+    <div class="table-container">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>ID</th><th>Name</th><th>Type</th><th>Segment</th><th>Mobile</th><th>Area</th><th>KYC</th><th>Status</th>
+                </tr>
+            </thead>
+            <tbody id="customerTable">
+                <!-- Dynamic data populated by JS -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Detail Form -->
+    <div class="form-grid">
+        <div class="form-group">
+            <label>Customer ID</label>
+            <input class="form-input" type="text" value="CUST000123" readonly>
+        </div>
+        <div class="form-group">
+            <label>Status</label>
+            <select class="form-select">
+                <option selected>Active</option>
+                <option>Draft</option>
+                <option>Blocked</option>
+            </select>
+        </div>
+        <!-- 20+ form fields following wireframe spec -->
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+        <div class="tab active" data-tab="accounts">Linked Accounts (2)</div>
+        <div class="tab" data-tab="premises">Premises (1)</div>
+        <div class="tab" data-tab="connections">Connections (1)</div>
+        <div class="tab" data-tab="attachments">Attachments (3)</div>
+        <div class="tab" data-tab="history">Change History (5)</div>
+    </div>
+
+    <!-- Tab Contents -->
+    <div id="accounts" class="tab-content active">
+        <table class="table">
+            <thead><tr><th>Account ID</th><th>Type</th><th>Bill Cycle</th><th>Status</th></tr></thead>
+            <tbody><!-- Dynamic --></tbody>
+        </table>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="audit-info">
+            Created: Admin1 • 2026-03-01 14:30 | Changed: Admin2 • 2026-03-29 10:15
+        </div>
+        <div>
+            <button class="btn btn-primary">💾 Save</button>
+            <button class="btn btn-success">✅ Submit Approval</button>
+            <button class="btn btn-warning">🔒 Block</button>
+            <button class="btn btn-danger">❌ Deactivate</button>
+        </div>
+    </footer>
+
+    <script src="../js/common.js"></script>
+    <script src="../js/data.js"></script>
+    <script>
+        // Screen-specific JS for Customer Master
+        initCustomerMaster();
+    </script>
+</body>
+</html>

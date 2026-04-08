@@ -1,0 +1,1824 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Enerza CRM &amp; Field Service Management</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#0F1C2E;--gold:#9B7300;--gold-l:#FEF5D6;--gold-m:#CCA000;
+  --blue:#0051AB;--blue-l:#E6F1FF;--green:#107E3E;--green-l:#E0F5EE;
+  --red:#A32D2D;--red-l:#FFEBEB;--amber:#7A4A00;--amber-l:#FFF3E0;
+  --teal:#0A6B5E;--teal-l:#E0F5F2;--purple:#5A2D82;--purple-l:#F3EEFF;
+  --ink:#0D1117;--ink2:#1E2D3E;--ink3:#5A6675;--ink4:#8A96A2;
+  --border:#DCE1EA;--card:#fff;--bg:#F3F5F8;--sidebar:#0F1C2E;
+  --r:8px;--mono:"DM Mono","Courier New",monospace;
+  --sans:"DM Sans","Segoe UI",sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:var(--sans);background:var(--bg);color:var(--ink);font-size:13px}
+
+/* Layout */
+.shell{display:flex;height:100vh;overflow:hidden}
+.sidebar{width:220px;background:var(--sidebar);flex-shrink:0;display:flex;flex-direction:column;overflow-y:auto}
+.main{flex:1;overflow-y:auto;display:flex;flex-direction:column}
+
+/* Sidebar */
+.sb-brand{padding:16px 16px 12px;border-bottom:1px solid rgba(255,255,255,.07)}
+.sb-logo{font-family:"Syne","Georgia",serif;font-size:16px;font-weight:800;color:#fff;line-height:1}
+.sb-logo em{color:#FFD966;font-style:normal}
+.sb-tag{font-size:9px;color:rgba(255,255,255,.4);font-family:var(--mono);text-transform:uppercase;letter-spacing:.5px;margin-top:3px}
+.sb-group{padding:10px 10px 4px;font-size:9.5px;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:.6px;font-family:var(--mono)}
+.sb-item{display:flex;align-items:center;gap:8px;padding:8px 12px;margin:1px 8px;border-radius:6px;
+  cursor:pointer;color:rgba(255,255,255,.65);font-size:12px;transition:all .15s}
+.sb-item:hover{background:rgba(255,255,255,.08);color:#fff}
+.sb-item.a{background:rgba(255,217,102,.15);color:#FFD966}
+.sb-icon{width:20px;text-align:center;font-size:14px}
+.sb-badge{margin-left:auto;background:var(--red);color:#fff;font-size:9px;padding:1px 5px;border-radius:8px;font-family:var(--mono)}
+
+/* Topbar */
+.topbar{background:#fff;border-bottom:1px solid var(--border);padding:0 20px;height:46px;
+  display:flex;align-items:center;gap:12px;flex-shrink:0}
+.tb-title{font-family:"Syne","Georgia",serif;font-size:15px;font-weight:700;color:var(--ink)}
+.tb-sub{font-size:11px;color:var(--ink3)}
+.tb-r{margin-left:auto;display:flex;gap:8px;align-items:center}
+.btn{padding:5px 12px;border-radius:6px;font-size:12px;cursor:pointer;border:1px solid transparent;
+  font-family:var(--sans);display:inline-flex;align-items:center;gap:5px;transition:all .15s}
+.btn-p{background:var(--navy);color:#fff;border-color:var(--navy)}
+.btn-p:hover{background:#1A2B3C}
+.btn-s{background:#fff;color:var(--ink2);border-color:var(--border)}
+.btn-s:hover{background:var(--bg)}
+.btn-g{background:var(--green);color:#fff;border-color:var(--green)}
+.btn-r{background:var(--red);color:#fff;border-color:var(--red)}
+.btn-sm{padding:3px 8px;font-size:11px}
+
+/* Content */
+.content{padding:18px 20px;flex:1}
+.page{display:none}.page.a{display:block}
+
+/* Cards */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:14px}
+.card-hd{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.card-title{font-family:"Syne","Georgia",serif;font-size:13px;font-weight:700;color:var(--ink)}
+.card-sub{font-size:11px;color:var(--ink3)}
+.card-body{padding:14px 16px}
+.card-r{margin-left:auto}
+
+/* Grid */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.g4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px}
+@media(max-width:1100px){.g4{grid-template-columns:1fr 1fr}.g3{grid-template-columns:1fr 1fr}}
+@media(max-width:800px){.g2,.g3,.g4{grid-template-columns:1fr}}
+
+/* KPI */
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:13px 15px;
+  position:relative;overflow:hidden}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.kpi.bl::before{background:var(--blue)}.kpi.gr::before{background:var(--green)}
+.kpi.rd::before{background:var(--red)}.kpi.am::before{background:var(--gold)}
+.kpi.tl::before{background:var(--teal)}.kpi.pu::before{background:var(--purple)}
+.kpi-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--ink3);
+  margin-bottom:6px;font-family:var(--mono)}
+.kpi-val{font-family:"Syne","Georgia",serif;font-size:24px;font-weight:800;line-height:1}
+.kpi-sub{font-size:11px;color:var(--ink3);margin-top:4px}
+.kpi-delta{font-size:11px;margin-top:2px;font-weight:500}
+.kpi-delta.up{color:var(--green)}.kpi-delta.dn{color:var(--red)}
+
+/* Status pills */
+.pill{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:10px;
+  font-size:10px;font-weight:600;font-family:var(--mono);border:1px solid;white-space:nowrap}
+.pill.open{background:var(--blue-l);color:var(--blue);border-color:rgba(0,81,171,.25)}
+.pill.active{background:var(--green-l);color:var(--green);border-color:rgba(16,126,62,.25)}
+.pill.pending{background:var(--amber-l);color:var(--amber);border-color:rgba(122,74,0,.25)}
+.pill.closed{background:#F0F0F0;color:#555;border-color:#DDD}
+.pill.urgent{background:var(--red-l);color:var(--red);border-color:rgba(163,45,45,.25)}
+.pill.inprogress{background:var(--purple-l);color:var(--purple);border-color:rgba(90,45,130,.25)}
+.pill.dispatch{background:var(--teal-l);color:var(--teal);border-color:rgba(10,107,94,.25)}
+.pill.stock{background:var(--green-l);color:var(--green);border-color:rgba(16,126,62,.25)}
+.pill.low{background:var(--red-l);color:var(--red);border-color:rgba(163,45,45,.25)}
+.pill.warn{background:var(--amber-l);color:var(--amber);border-color:rgba(122,74,0,.25)}
+
+/* Table */
+.tbl-wrap{overflow-x:auto}
+.tbl{width:100%;border-collapse:collapse;font-size:12px}
+.tbl th{padding:8px 12px;font-size:10px;font-family:var(--mono);font-weight:500;
+  text-transform:uppercase;letter-spacing:.4px;color:var(--ink3);
+  border-bottom:2px solid var(--border);text-align:left;background:#F8FAFB;white-space:nowrap}
+.tbl td{padding:8px 12px;border-bottom:1px solid #F5F5F6;vertical-align:middle}
+.tbl tr:hover td{background:#FAFBFC}
+.tbl tr:last-child td{border-bottom:none}
+.td-link{color:var(--blue);cursor:pointer;font-weight:500}
+.td-link:hover{text-decoration:underline}
+.td-mono{font-family:var(--mono);font-size:11px}
+.td-sev{display:flex;align-items:center;gap:5px}
+.sev-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.sev-dot.H{background:var(--red)}.sev-dot.M{background:var(--gold)}.sev-dot.L{background:var(--green)}
+
+/* Progress bar */
+.progress{height:6px;background:#EAECEF;border-radius:3px;overflow:hidden;margin-top:4px}
+.progress-fill{height:100%;border-radius:3px;transition:width .6s}
+.progress-fill.gr{background:var(--green)}.progress-fill.am{background:var(--gold)}
+.progress-fill.rd{background:var(--red)}.progress-fill.bl{background:var(--blue)}
+
+/* Timeline */
+.timeline{padding:0 0 0 16px;border-left:2px solid var(--border)}
+.tl-item{position:relative;padding:0 0 16px 20px}
+.tl-item::before{content:'';position:absolute;left:-9px;top:4px;width:14px;height:14px;
+  border-radius:50%;background:var(--card);border:2px solid var(--border)}
+.tl-item.done::before{background:var(--green);border-color:var(--green)}
+.tl-item.active::before{background:var(--blue);border-color:var(--blue);
+  box-shadow:0 0 0 3px rgba(0,81,171,.2)}
+.tl-item.pend::before{background:#fff;border-color:var(--border)}
+.tl-title{font-size:12px;font-weight:600;color:var(--ink);margin-bottom:2px}
+.tl-sub{font-size:11px;color:var(--ink3)}
+.tl-time{font-size:10px;color:var(--ink4);font-family:var(--mono)}
+
+/* Form */
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.form-row.col3{grid-template-columns:1fr 1fr 1fr}
+.form-group{display:flex;flex-direction:column;gap:4px}
+.form-label{font-size:11px;font-weight:500;color:var(--ink2)}
+.form-input,.form-select,.form-textarea{padding:7px 10px;border:1px solid var(--border);
+  border-radius:6px;font-size:12px;font-family:var(--sans);color:var(--ink);
+  background:#fff;transition:border .15s}
+.form-input:focus,.form-select:focus,.form-textarea:focus{outline:none;border-color:var(--blue)}
+.form-textarea{resize:vertical;min-height:70px}
+.form-hint{font-size:10px;color:var(--ink4)}
+
+/* Stepper */
+.stepper{display:flex;gap:0;margin-bottom:20px;position:relative}
+.stepper::before{content:'';position:absolute;top:14px;left:0;right:0;height:2px;background:var(--border);z-index:0}
+.step{flex:1;text-align:center;position:relative;z-index:1}
+.step-circle{width:28px;height:28px;border-radius:50%;background:#fff;border:2px solid var(--border);
+  display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;
+  margin:0 auto 6px;font-family:var(--mono)}
+.step.done .step-circle{background:var(--green);border-color:var(--green);color:#fff}
+.step.active .step-circle{background:var(--navy);border-color:var(--navy);color:#fff}
+.step-label{font-size:10px;color:var(--ink3);font-family:var(--mono)}
+.step.active .step-label{color:var(--navy);font-weight:600}
+
+/* Customer 360 profile */
+.c360-header{background:linear-gradient(135deg,var(--navy),#1A2B3C);padding:16px 18px;
+  display:flex;align-items:center;gap:14px}
+.c360-avatar{width:48px;height:48px;border-radius:12px;background:rgba(255,255,255,.15);
+  display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.c360-name{font-family:"Syne","Georgia",serif;font-size:17px;font-weight:700;color:#fff;margin-bottom:2px}
+.c360-meta{font-size:11px;color:rgba(255,255,255,.6)}
+.c360-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border-top:1px solid rgba(255,255,255,.1)}
+.c360-stat{padding:10px 14px;text-align:center;border-right:1px solid rgba(255,255,255,.1)}
+.c360-stat:last-child{border-right:none}
+.c360-stat-val{font-family:"Syne","Georgia",serif;font-size:18px;font-weight:700;color:#FFD966}
+.c360-stat-lbl{font-size:10px;color:rgba(255,255,255,.5);font-family:var(--mono)}
+
+/* Tab inside card */
+.card-tabs{display:flex;border-bottom:1px solid var(--border);overflow-x:auto}
+.ct{padding:8px 14px;font-size:12px;font-weight:600;color:var(--ink3);cursor:pointer;
+  border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap;font-family:"Syne","Georgia",serif}
+.ct:hover{color:var(--ink)}
+.ct.a{color:var(--navy);border-bottom-color:var(--navy)}
+.cpane{display:none;padding:14px 16px}.cpane.a{display:block}
+
+/* Map placeholder */
+.map-ph{background:linear-gradient(135deg,#1A2B3C,#0F1C2E);border-radius:8px;
+  height:220px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.map-grid{position:absolute;inset:0;background-image:
+  linear-gradient(rgba(255,255,255,.05) 1px, transparent 1px),
+  linear-gradient(90deg, rgba(255,255,255,.05) 1px, transparent 1px);
+  background-size:30px 30px}
+.map-pin{position:absolute;font-size:20px;animation:bounce .8s infinite alternate}
+@keyframes bounce{from{transform:translateY(0)} to{transform:translateY(-4px)}}
+.map-route{position:absolute;font-size:11px;color:rgba(255,255,255,.6);font-family:var(--mono)}
+
+/* Inventory visual */
+.inv-bar{display:flex;height:8px;border-radius:4px;overflow:hidden;margin:4px 0;gap:1px}
+.inv-bar-seg{border-radius:2px}
+
+/* SLA clock */
+.sla-ring{width:56px;height:56px;border-radius:50%;position:relative;flex-shrink:0}
+.sla-pct{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:11px;font-weight:700;font-family:var(--mono)}
+
+/* Info row */
+.info-row{display:flex;gap:0;flex-wrap:wrap}
+.info-item{padding:8px 14px 8px 0;min-width:120px}
+.info-lbl{font-size:10px;color:var(--ink3);font-family:var(--mono);text-transform:uppercase;letter-spacing:.3px}
+.info-val{font-size:12px;font-weight:500;color:var(--ink);margin-top:2px}
+
+/* Modal overlay */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;
+  display:none;align-items:center;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:#fff;border-radius:12px;width:560px;max-height:88vh;overflow-y:auto;
+  box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.modal-hd{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.modal-title{font-family:"Syne","Georgia",serif;font-size:15px;font-weight:700;flex:1}
+.modal-close{width:28px;height:28px;border-radius:6px;background:var(--bg);border:none;
+  cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center}
+.modal-body{padding:18px 20px}
+.modal-ft{padding:12px 20px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end}
+
+/* Checklist */
+.checklist-item{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #F5F5F6}
+.checklist-item:last-child{border-bottom:none}
+.chk{width:18px;height:18px;border-radius:4px;border:2px solid var(--border);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s}
+.chk.done{background:var(--green);border-color:var(--green);color:#fff}
+.chk-label{font-size:12px;color:var(--ink2)}
+
+/* Field tech card */
+.tech-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);
+  padding:12px;display:flex;align-items:center;gap:10px}
+.tech-avatar{width:36px;height:36px;border-radius:50%;font-size:16px;display:flex;
+  align-items:center;justify-content:center;flex-shrink:0}
+.tech-name{font-size:12px;font-weight:600;color:var(--ink)}
+.tech-role{font-size:10px;color:var(--ink3);font-family:var(--mono)}
+.tech-r{margin-left:auto;text-align:right}
+
+/* Notification dot */
+.notif{width:6px;height:6px;border-radius:50%;background:var(--red);display:inline-block;margin-left:4px}
+
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}</style>
+</head><body>
+<div class="shell">
+<nav class="sidebar">
+<div class="sb-brand"><div class="sb-logo">&#x26A1; <em>Enerza</em></div><div class="sb-tag">CRM &amp; Field Services</div></div>
+<div class="sb-group">CRM</div>
+<div class="sb-item" onclick="nav('dash', this)"><span class="sb-icon">🏠</span>Dashboard</div>
+<div class="sb-item" onclick="nav('cust', this)"><span class="sb-icon">👤</span>Customer 360</div>
+<div class="sb-item" onclick="nav('srlc', this)"><span class="sb-icon">🔄</span>Service Lifecycle</div>
+<div class="sb-item" onclick="nav('comp', this)"><span class="sb-icon">📣</span>Complaints<span class="sb-badge">3</span></div>
+<div class="sb-group">Field Service</div>
+<div class="sb-item" onclick="nav('wo', this)"><span class="sb-icon">🔧</span>Work Orders<span class="sb-badge">2</span></div>
+<div class="sb-item" onclick="nav('field', this)"><span class="sb-icon">📱</span>Field Mobile</div>
+<div class="sb-item" onclick="nav('repl', this)"><span class="sb-icon">🔄</span>Device Replacement</div>
+<div class="sb-group">Inventory</div>
+<div class="sb-item" onclick="nav('inv', this)"><span class="sb-icon">📦</span>Spares & Inventory</div>
+<div class="sb-group">Operations</div>
+<div class="sb-item" onclick="nav('maint', this)"><span class="sb-icon">🏗️</span>Asset Maintenance</div>
+<div class="sb-item" onclick="nav('outage', this)"><span class="sb-icon">⚡</span>Outage Linkage</div>
+<div class="sb-item" onclick="nav('rpt', this)"><span class="sb-icon">📊</span>Reports</div>
+</nav>
+<div class="main">
+<div class="topbar"><div class="tb-title">Dashboard</div><div class="tb-sub">Real-time operations overview</div>
+<div class="tb-r">
+<button class="btn btn-s" onclick="openModal('m-newsr')">+ Service Request</button>
+<button class="btn btn-p" onclick="openModal('m-newcomp')">+ Complaint</button>
+</div></div>
+<div class="content">
+<div id="p-dash" class="page a">
+<div class="g4" style="margin-bottom:14px">
+<div class="kpi rd"><div class="kpi-lbl">Open Complaints</div><div class="kpi-val">14</div>
+<div class="kpi-sub">3 breached SLA</div><div class="kpi-delta dn">↑ 2 since yesterday</div></div>
+<div class="kpi gr"><div class="kpi-lbl">Work Orders Today</div><div class="kpi-val">21</div>
+<div class="kpi-sub">8 completed · 6 in-progress</div><div class="kpi-delta up">↓ 3 vs last week</div></div>
+<div class="kpi am"><div class="kpi-lbl">Consumers Affected</div><div class="kpi-val">1,160</div>
+<div class="kpi-sub">Active outages</div><div class="kpi-delta ">Feeder F-07, F-12</div></div>
+<div class="kpi bl"><div class="kpi-lbl">Pending Move-In/Out</div><div class="kpi-val">7</div>
+<div class="kpi-sub">4 move-in · 3 move-out</div><div class="kpi-delta dn">SLA due today: 2</div></div>
+<div class="kpi tl"><div class="kpi-lbl">Field Technicians</div><div class="kpi-val">12 active</div>
+<div class="kpi-sub">of 18 total</div><div class="kpi-delta ">5 en route</div></div>
+<div class="kpi rd"><div class="kpi-lbl">Inventory Alerts</div><div class="kpi-val">3</div>
+<div class="kpi-sub">Below reorder level</div><div class="kpi-delta dn">Meters · Seals</div></div>
+<div class="kpi gr"><div class="kpi-lbl">Bills Due Today</div><div class="kpi-val">₹4.2L</div>
+<div class="kpi-sub">142 consumers</div><div class="kpi-delta up">↑ from ₹3.8L</div></div>
+<div class="kpi bl"><div class="kpi-lbl">SAIFI MTD</div><div class="kpi-val">0.42</div>
+<div class="kpi-sub">Target: < 0.50</div><div class="kpi-delta up">↓ improving</div></div>
+</div>
+<div class="g2">
+<div class="card"><div class="card-hd"><div class="card-title">⚡ Active Outages</div>
+<span class="pill urgent" style="margin-left:auto">2 active · 1,160 consumers</span></div><div class="card-body">
+<div style="padding:8px 0;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:10px">
+<div style="flex:1"><div style="font-size:12px;font-weight:600;color:var(--ink)">OUT-0081 — Adajan, Surat</div>
+<div style="font-size:11px;color:var(--ink3)">Forced · F-12 · Cable fault</div>
+<div style="font-size:10px;color:var(--ink4);font-family:var(--mono)">Est restore: 2026-04-06 12:00 · 840 consumers · 4 complaints linked</div></div>
+<span class="pill urgent">Active</span></div>
+<div style="padding:8px 0;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:10px">
+<div style="flex:1"><div style="font-size:12px;font-weight:600;color:var(--ink)">OUT-0079 — Navrangpura, Ahmedabad</div>
+<div style="font-size:11px;color:var(--ink3)">Planned · F-07 · Maintenance</div>
+<div style="font-size:10px;color:var(--ink4);font-family:var(--mono)">Est restore: 2026-04-06 14:00 · 320 consumers · 2 complaints linked</div></div>
+<span class="pill urgent">Active</span></div>
+<div style="padding:8px 0;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:10px">
+<div style="flex:1"><div style="font-size:12px;font-weight:600;color:var(--ink)">OUT-0072 — Satellite Rd, Ahmedabad</div>
+<div style="font-size:11px;color:var(--ink3)">Forced · F-03 · Tree fall on LT line</div>
+<div style="font-size:10px;color:var(--ink4);font-family:var(--mono)">Est restore: 2026-04-05 18:30 · 210 consumers · 7 complaints linked</div></div>
+<span class="pill active">Restored</span></div>
+</div></div>
+<div class="card"><div class="card-hd"><div class="card-title">📣 Recent Complaints</div>
+<button class="btn btn-s btn-sm card-r" onclick="nav('comp',null)">View All →</button></div>
+<div class="tbl-wrap"><table class="tbl"><thead><tr>
+<th>ID</th><th>Type</th><th>Customer</th><th>Priority</th><th>SLA</th><th>Status</th></tr></thead><tbody>
+<tr><td class="td-link" onclick="nav('comp',null)">CMP-20241</td>
+<td>No Supply</td>
+<td style="font-size:11px">Rajesh Mehta</td>
+<td><div class="td-sev"><div class="sev-dot H"></div>High</div></td>
+<td style="min-width:90px"><div style="font-size:10px;color:#107E3E;font-family:var(--mono)">2h / 4h</div>
+<div class="progress" style="margin-top:3px"><div class="progress-fill" style="width:62%;background:#107E3E"></div></div></td>
+<td><span class="pill inprogress">In Progress</span></td></tr>
+<tr><td class="td-link" onclick="nav('comp',null)">CMP-20238</td>
+<td>Billing Dispute</td>
+<td style="font-size:11px">Gujarat Ceramics</td>
+<td><div class="td-sev"><div class="sev-dot M"></div>Medium</div></td>
+<td style="min-width:90px"><div style="font-size:10px;color:#107E3E;font-family:var(--mono)">6h / 24h</div>
+<div class="progress" style="margin-top:3px"><div class="progress-fill" style="width:25%;background:#107E3E"></div></div></td>
+<td><span class="pill open">Open</span></td></tr>
+<tr><td class="td-link" onclick="nav('comp',null)">CMP-20215</td>
+<td>Voltage Fluctuation</td>
+<td style="font-size:11px">Surat Textiles</td>
+<td><div class="td-sev"><div class="sev-dot H"></div>High</div></td>
+<td style="min-width:90px"><div style="font-size:10px;color:#A32D2D;font-family:var(--mono)">9h / 8h</div>
+<div class="progress" style="margin-top:3px"><div class="progress-fill" style="width:100%;background:#A32D2D"></div></div></td>
+<td><span class="pill urgent">Breached</span></td></tr>
+<tr><td class="td-link" onclick="nav('comp',null)">CMP-20204</td>
+<td>Faulty Meter</td>
+<td style="font-size:11px">Priya Nair</td>
+<td><div class="td-sev"><div class="sev-dot M"></div>Medium</div></td>
+<td style="min-width:90px"><div style="font-size:10px;color:#107E3E;font-family:var(--mono)">12h / 48h</div>
+<div class="progress" style="margin-top:3px"><div class="progress-fill" style="width:25%;background:#107E3E"></div></div></td>
+<td><span class="pill open">Open</span></td></tr>
+<tr><td class="td-link" onclick="nav('comp',null)">CMP-20198</td>
+<td>Payment Not Reflected</td>
+<td style="font-size:11px">Sunita Desai</td>
+<td><div class="td-sev"><div class="sev-dot L"></div>Low</div></td>
+<td style="min-width:90px"><div style="font-size:10px;color:#107E3E;font-family:var(--mono)">4h / 24h</div>
+<div class="progress" style="margin-top:3px"><div class="progress-fill" style="width:16%;background:#107E3E"></div></div></td>
+<td><span class="pill closed">Closed</span></td></tr>
+</tbody></table></div></div>
+</div>
+<div class="g2">
+<div class="card"><div class="card-hd"><div class="card-title">🗺️ Field Team — Live</div>
+<span class="pill active card-r">12 active</span></div><div class="card-body">
+<div class="map-ph"><div class="map-grid"></div>
+<div class="map-pin" style="left:15%;top:20%;position:absolute">🔵</div>
+<div class="map-route" style="left:18%;top:22%">Manoj</div>
+<div class="map-pin" style="left:35%;top:35%;position:absolute">🟡</div>
+<div class="map-route" style="left:38%;top:37%">Dinesh</div>
+<div class="map-pin" style="left:55%;top:50%;position:absolute">🟡</div>
+<div class="map-route" style="left:58%;top:52%">Ramesh</div>
+<div class="map-pin" style="left:75%;top:65%;position:absolute">🟢</div>
+<div class="map-route" style="left:78%;top:67%">Sundar</div>
+</div>
+<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+<div style="display:flex;align-items:center;gap:5px;font-size:11px">
+<span class="pill inprogress">Manoj: 1/3 WOs</span></div>
+<div style="display:flex;align-items:center;gap:5px;font-size:11px">
+<span class="pill dispatch">Dinesh: 2/4 WOs</span></div>
+<div style="display:flex;align-items:center;gap:5px;font-size:11px">
+<span class="pill active">Sundar: 0/2 WOs</span></div>
+<div style="display:flex;align-items:center;gap:5px;font-size:11px">
+<span class="pill dispatch">Ramesh: 1/3 WOs</span></div>
+<div style="display:flex;align-items:center;gap:5px;font-size:11px">
+<span class="pill active">Kavita: 1/1 WOs</span></div>
+</div></div></div>
+<div class="card"><div class="card-hd"><div class="card-title">📦 Inventory Alerts</div>
+<button class="btn btn-s btn-sm card-r" onclick="nav('inv',null)">View Stock →</button></div>
+<div class="card-body">
+<div style="padding:6px 0;border-bottom:1px solid #F5F5F6">
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px">
+<span style="font-size:11.5px;font-weight:500">Single-Phase Static Meter (Secure Elite)</span>
+<span style="font-family:var(--mono);font-size:11px;color:var(--ink3)">WH: 284 / Min: 50</span></div>
+<div class="progress"><div class="progress-fill gr" style="width:100%"></div></div></div>
+<div style="padding:6px 0;border-bottom:1px solid #F5F5F6">
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px">
+<span style="font-size:11.5px;font-weight:500">Three-Phase HT Meter (L&T Metering)</span>
+<span style="font-family:var(--mono);font-size:11px;color:var(--ink3)">WH: 42 / Min: 10</span></div>
+<div class="progress"><div class="progress-fill gr" style="width:100%"></div></div></div>
+<div style="padding:6px 0;border-bottom:1px solid #F5F5F6">
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px">
+<span style="font-size:11.5px;font-weight:500">Smart Meter + GPRS Module (Genus)</span>
+<span style="font-family:var(--mono);font-size:11px;color:var(--ink3)">WH: 185 / Min: 30</span></div>
+<div class="progress"><div class="progress-fill gr" style="width:100%"></div></div></div>
+<div style="padding:6px 0;border-bottom:1px solid #F5F5F6">
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px">
+<span style="font-size:11.5px;font-weight:500">Lead Seal (Meter)</span>
+<span style="font-family:var(--mono);font-size:11px;color:var(--ink3)">WH: 4820 / Min: 500</span></div>
+<div class="progress"><div class="progress-fill gr" style="width:100%"></div></div></div>
+<div style="padding:6px 0;border-bottom:1px solid #F5F5F6">
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px">
+<span style="font-size:11.5px;font-weight:500">Terminal Seal (Strip)</span>
+<span style="font-family:var(--mono);font-size:11px;color:var(--ink3)">WH: 3100 / Min: 200</span></div>
+<div class="progress"><div class="progress-fill gr" style="width:100%"></div></div></div>
+<div style="padding:6px 0;border-bottom:1px solid #F5F5F6">
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px">
+<span style="font-size:11.5px;font-weight:500">Service Cable 10mm² (per metre)</span>
+<span style="font-family:var(--mono);font-size:11px;color:var(--ink3)">WH: 3200 / Min: 500</span></div>
+<div class="progress"><div class="progress-fill gr" style="width:100%"></div></div></div>
+<div style="padding:6px 0;border-bottom:1px solid #F5F5F6">
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px">
+<span style="font-size:11.5px;font-weight:500">HRC Fuse 63A</span>
+<span style="font-family:var(--mono);font-size:11px;color:var(--ink3)">WH: 620 / Min: 100</span></div>
+<div class="progress"><div class="progress-fill gr" style="width:100%"></div></div></div>
+<div style="padding:6px 0;border-bottom:1px solid #F5F5F6">
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px">
+<span style="font-size:11.5px;font-weight:500">MCB 32A Single Pole</span>
+<span style="font-family:var(--mono);font-size:11px;color:var(--ink3)">WH: 380 / Min: 50</span></div>
+<div class="progress"><div class="progress-fill gr" style="width:100%"></div></div></div>
+<div style="padding:6px 0;border-bottom:1px solid #F5F5F6">
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px">
+<span style="font-size:11.5px;font-weight:500">Lugs & Crimping Ferrules Set</span>
+<span style="font-family:var(--mono);font-size:11px;color:var(--ink3)">WH: 95 / Min: 20</span></div>
+<div class="progress"><div class="progress-fill gr" style="width:100%"></div></div></div>
+<div style="padding:6px 0;border-bottom:1px solid #F5F5F6">
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px">
+<span style="font-size:11.5px;font-weight:500">Meter Replacement Kit (Meter+Seals+CB)</span>
+<span style="font-family:var(--mono);font-size:11px;color:var(--ink3)">WH: 60 / Min: 10</span></div>
+<div class="progress"><div class="progress-fill gr" style="width:100%"></div></div></div>
+</div></div>
+</div>
+</div>
+<div id="p-cust" class="page">
+<div class="card" style="margin-bottom:14px">
+<div class="card-body" style="padding:10px 14px">
+<div style="display:flex;gap:8px;align-items:center">
+<input class="form-input" style="flex:1" placeholder="Search by name, CAN, mobile, BP ID..." id="cust-search">
+<button class="btn btn-s" onclick="showToast('Searching...')">🔍 Search</button>
+<button class="btn btn-p" onclick="openModal('m-newcust')">+ New Customer</button>
+</div></div></div>
+<div class="tbl-wrap card"><div class="card-hd"><div class="card-title">Customer Master</div>
+<div class="card-sub">BR-001, BR-002, BR-003 — Unified customer records with effective-dated history</div></div>
+<table class="tbl"><thead><tr>
+<th>BP ID</th><th>Name</th><th>Type</th><th>CAN</th><th>Mobile</th><th>Tariff</th><th>Credit Score</th><th>Outstanding</th><th>Status</th><th>Actions</th></tr></thead><tbody>
+<tr><td class="td-mono td-link" onclick="showC360("Rajesh Mehta","56039281","Residential","Active"  )">BP-00421</td>
+<td style="font-weight:500">Rajesh Mehta</td>
+<td><span class="pill open" style="font-size:9px">Residential</span></td>
+<td class="td-mono">56039281</td>
+<td class="td-mono" style="font-size:11px">+91 98765 12340</td>
+<td><span class="pill pending" style="font-size:9px">LT-1</span></td>
+<td><div style="display:flex;align-items:center;gap:4px">
+<div style="font-family:var(--mono);font-size:11px;font-weight:600;color:var(--green)">720</div>
+<div class="progress" style="width:50px"><div class="progress-fill" style="width:70%;background:var(--green)"></div></div></div></td>
+<td style="font-weight:600;color:var(--red)">₹1,284</td>
+<td><span class="pill active">Active</span></td>
+<td><button class="btn btn-s btn-sm" onclick="showC360("Rajesh Mehta","56039281","Residential","Active")">360°</button></td></tr>
+<tr><td class="td-mono td-link" onclick="showC360("Gujarat Ceramics Pvt Ltd","56039105","Commercial","Active"  )">BP-00384</td>
+<td style="font-weight:500">Gujarat Ceramics Pvt Ltd</td>
+<td><span class="pill open" style="font-size:9px">Commercial</span></td>
+<td class="td-mono">56039105</td>
+<td class="td-mono" style="font-size:11px">+91 98765 00000</td>
+<td><span class="pill pending" style="font-size:9px">HT-1</span></td>
+<td><div style="display:flex;align-items:center;gap:4px">
+<div style="font-family:var(--mono);font-size:11px;font-weight:600;color:var(--gold)">540</div>
+<div class="progress" style="width:50px"><div class="progress-fill" style="width:40%;background:var(--gold)"></div></div></div></td>
+<td style="font-weight:600;color:var(--red)">₹48,320</td>
+<td><span class="pill active">Active</span></td>
+<td><button class="btn btn-s btn-sm" onclick="showC360("Gujarat Ceramics Pvt Ltd","56039105","Commercial","Active")">360°</button></td></tr>
+<tr><td class="td-mono td-link" onclick="showC360("Sunita Desai","56039412","Residential","Active"  )">BP-00512</td>
+<td style="font-weight:500">Sunita Desai</td>
+<td><span class="pill open" style="font-size:9px">Residential</span></td>
+<td class="td-mono">56039412</td>
+<td class="td-mono" style="font-size:11px">+91 97354 88812</td>
+<td><span class="pill pending" style="font-size:9px">LT-1</span></td>
+<td><div style="display:flex;align-items:center;gap:4px">
+<div style="font-family:var(--mono);font-size:11px;font-weight:600;color:var(--green)">810</div>
+<div class="progress" style="width:50px"><div class="progress-fill" style="width:85%;background:var(--green)"></div></div></div></td>
+<td style="font-weight:600;color:var(--green)">₹0</td>
+<td><span class="pill active">Active</span></td>
+<td><button class="btn btn-s btn-sm" onclick="showC360("Sunita Desai","56039412","Residential","Active")">360°</button></td></tr>
+<tr><td class="td-mono td-link" onclick="showC360("Surat Textiles Ltd","56041200","Industrial","Overdue"  )">BP-00601</td>
+<td style="font-weight:500">Surat Textiles Ltd</td>
+<td><span class="pill open" style="font-size:9px">Industrial</span></td>
+<td class="td-mono">56041200</td>
+<td class="td-mono" style="font-size:11px">+91 98200 44400</td>
+<td><span class="pill pending" style="font-size:9px">HT-1</span></td>
+<td><div style="display:flex;align-items:center;gap:4px">
+<div style="font-family:var(--mono);font-size:11px;font-weight:600;color:var(--red)">380</div>
+<div class="progress" style="width:50px"><div class="progress-fill" style="width:13%;background:var(--red)"></div></div></div></td>
+<td style="font-weight:600;color:var(--red)">₹2,18,500</td>
+<td><span class="pill urgent">Overdue</span></td>
+<td><button class="btn btn-s btn-sm" onclick="showC360("Surat Textiles Ltd","56041200","Industrial","Overdue")">360°</button></td></tr>
+<tr><td class="td-mono td-link" onclick="showC360("Priya Nair","56030099","Residential","Active"  )">BP-00318</td>
+<td style="font-weight:500">Priya Nair</td>
+<td><span class="pill open" style="font-size:9px">Residential</span></td>
+<td class="td-mono">56030099</td>
+<td class="td-mono" style="font-size:11px">+91 99004 22234</td>
+<td><span class="pill pending" style="font-size:9px">LT-1</span></td>
+<td><div style="display:flex;align-items:center;gap:4px">
+<div style="font-family:var(--mono);font-size:11px;font-weight:600;color:var(--green)">790</div>
+<div class="progress" style="width:50px"><div class="progress-fill" style="width:81%;background:var(--green)"></div></div></div></td>
+<td style="font-weight:600;color:var(--red)">₹342</td>
+<td><span class="pill active">Active</span></td>
+<td><button class="btn btn-s btn-sm" onclick="showC360("Priya Nair","56030099","Residential","Active")">360°</button></td></tr>
+</tbody></table>
+<div id="c360-panel" style="display:none;border-top:2px solid var(--border)">
+<div class="c360-header">
+<div class="c360-avatar">👤</div>
+<div style="flex:1"><div class="c360-name" id="c360-name">Customer Name</div>
+<div class="c360-meta" id="c360-meta">LT-1 Domestic · CAN: — · Status: —</div></div>
+<button class="btn btn-s btn-sm" style="color:#fff;border-color:rgba(255,255,255,.3);background:transparent" onclick="document.getElementById('c360-panel').style.display='none'">✕ Close</button>
+</div>
+<div class="c360-stats">
+<div class="c360-stat"><div class="c360-stat-val" id="c360-outstanding">₹1,284</div><div class="c360-stat-lbl">Outstanding</div></div>
+<div class="c360-stat"><div class="c360-stat-val" id="c360-bills">12</div><div class="c360-stat-lbl">Bills</div></div>
+<div class="c360-stat"><div class="c360-stat-val" id="c360-complaints">1</div><div class="c360-stat-lbl">Complaints</div></div>
+<div class="c360-stat"><div class="c360-stat-val" id="c360-field visits">3</div><div class="c360-stat-lbl">Field Visits</div></div>
+</div>
+<div id="c360-tabs" class="card-tabs">
+<div class="ct a" data-tab="svc" onclick="ctab('c360-tabs','svc')">Service</div>
+<div class="ct" data-tab="bills" onclick="ctab('c360-tabs','bills')">Bills</div>
+<div class="ct" data-tab="pay" onclick="ctab('c360-tabs','pay')">Payments</div>
+<div class="ct" data-tab="comp" onclick="ctab('c360-tabs','comp')">Complaints</div>
+<div class="ct" data-tab="field" onclick="ctab('c360-tabs','field')">Field</div>
+<div class="ct" data-tab="dev" onclick="ctab('c360-tabs','dev')">Devices</div>
+</div>
+<div id="c360-tabs-svc" class="cpane a">
+<div class="g2">
+<div><div style="font-size:11px;font-weight:600;color:var(--ink3);font-family:var(--mono);text-transform:uppercase;margin-bottom:8px">Service Agreement</div>
+<div class="info-item"><div class="info-lbl">Contract ID</div><div class="info-val">CON-00421-01</div></div>
+<div class="info-item"><div class="info-lbl">Tariff</div><div class="info-val">LT-1 Domestic</div></div>
+<div class="info-item"><div class="info-lbl">Load</div><div class="info-val">5 kW (Single Phase)</div></div>
+<div class="info-item"><div class="info-lbl">Bill Cycle</div><div class="info-val">Monthly (8th)</div></div>
+<div class="info-item"><div class="info-lbl">Due Days</div><div class="info-val">20</div></div>
+<div class="info-item"><div class="info-lbl">Security Deposit</div><div class="info-val">₹2,400 (on file)</div></div>
+</div>
+<div><div style="font-size:11px;font-weight:600;color:var(--ink3);font-family:var(--mono);text-transform:uppercase;margin-bottom:8px">Service History</div>
+<div class="timeline">
+<div class="tl-item done"><div class="tl-title">New Connection Activated</div>
+<div class="tl-sub">LT-1 Domestic 5kW, Single Phase</div><div class="tl-time">12 Jan 2021</div></div>
+<div class="tl-item done"><div class="tl-title">Meter Replacement</div>
+<div class="tl-sub">Old meter faulty (CMP-18211). New: SN 2041-8821</div><div class="tl-time">05 Mar 2023</div></div>
+<div class="tl-item active"><div class="tl-title">Category Change Request</div>
+<div class="tl-sub">Pending approval: LT-1 → LT-2</div><div class="tl-time">15 Mar 2026</div></div>
+</div></div></div></div>
+<div id="c360-tabs-bills" class="cpane"><table class="tbl"><thead><tr>
+<th>Bill ID</th><th>Period</th><th>Units</th><th>Amount</th><th>Paid</th><th>Status</th></tr></thead><tbody>
+<tr><td class="td-mono">BILL0042311</td><td>Mar 2026</td><td class="td-mono">284 kWh</td>
+<td style="font-weight:600">₹1,842</td><td class="td-mono" style="color:var(--green)">₹558</td>
+<td><span class="pill pending">Partial</span></td></tr>
+<tr><td class="td-mono">BILL0041842</td><td>Feb 2026</td><td class="td-mono">210 kWh</td>
+<td style="font-weight:600">₹1,380</td><td class="td-mono" style="color:var(--green)">₹1,380</td>
+<td><span class="pill active">Paid</span></td></tr>
+<tr><td class="td-mono">BILL0041321</td><td>Jan 2026</td><td class="td-mono">195 kWh</td>
+<td style="font-weight:600">₹1,288</td><td class="td-mono" style="color:var(--green)">₹1,288</td>
+<td><span class="pill active">Paid</span></td></tr>
+</tbody></table></div>
+<div id="c360-tabs-comp" class="cpane"><table class="tbl"><thead><tr>
+<th>Complaint</th><th>Type</th><th>Date</th><th>SLA</th><th>Status</th><th>WO</th></tr></thead><tbody>
+<tr><td class="td-mono">CMP-20241</td><td>No Supply</td><td style="font-size:11px">2026-04-06 08:45</td>
+<td><span style="font-size:10px;color:var(--ink3)">2h/4h</span></td>
+<td><span class="pill inprogress">In Progress</span></td>
+<td class="td-mono">WO-4421</td></tr>
+<tr><td class="td-mono">CMP-20177</td><td>No Supply</td><td style="font-size:11px">2026-04-02 07:30</td>
+<td><span style="font-size:10px;color:var(--ink3)">1h/4h</span></td>
+<td><span class="pill closed">Closed</span></td>
+<td class="td-mono">WO-4380</td></tr>
+</tbody></table></div>
+<div id="c360-tabs-dev" class="cpane">
+<div style="display:flex;gap:10px;flex-wrap:wrap">
+<div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;min-width:200px">
+<div style="font-size:12px;font-weight:600;margin-bottom:4px">Meter (Active)</div>
+<div style="font-size:11px;color:var(--ink3);font-family:var(--mono)">SN: SN-2041-8821</div>
+<div style="font-size:11px;color:var(--ink3)">Static Single Phase · Installed: 05 Mar 2023</div>
+<div style="margin-top:6px"><span class="pill active">Active</span></div></div>
+<div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;min-width:200px">
+<div style="font-size:12px;font-weight:600;margin-bottom:4px">Seal (Terminal)</div>
+<div style="font-size:11px;color:var(--ink3);font-family:var(--mono)">SN: TS-8821-A</div>
+<div style="font-size:11px;color:var(--ink3)">Lead Seal · Installed: 05 Mar 2023</div>
+<div style="margin-top:6px"><span class="pill active">Intact</span></div></div>
+<div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;min-width:200px">
+<div style="font-size:12px;font-weight:600;margin-bottom:4px">Seal (Terminal)</div>
+<div style="font-size:11px;color:var(--ink3);font-family:var(--mono)">SN: TS-8821-B</div>
+<div style="font-size:11px;color:var(--ink3)">Lead Seal · Installed: 05 Mar 2023</div>
+<div style="margin-top:6px"><span class="pill active">Intact</span></div></div>
+</div></div>
+<div id="c360-tabs-pay" class="cpane"><div style="color:var(--ink3);font-size:12px">Recent payments and receipts displayed here — integrated with FI-CA open items subledger.</div></div>
+<div id="c360-tabs-field" class="cpane"><div style="color:var(--ink3);font-size:12px">Field visit history, work order completion photos, and technician notes displayed here.</div></div>
+</div>
+</div>
+</div>
+<div id="p-srlc" class="page">
+<div class="g2" style="margin-bottom:14px">
+<div class="kpi" style="border-top:3px solid var(--blue)"><div class="kpi-lbl">New Connection</div>
+<div class="kpi-val" style="color:var(--blue)">4</div><div class="kpi-sub">Pending today</div></div>
+<div class="kpi" style="border-top:3px solid var(--green)"><div class="kpi-lbl">Move-In</div>
+<div class="kpi-val" style="color:var(--green)">3</div><div class="kpi-sub">Pending today</div></div>
+<div class="kpi" style="border-top:3px solid var(--gold)"><div class="kpi-lbl">Move-Out</div>
+<div class="kpi-val" style="color:var(--gold)">2</div><div class="kpi-sub">Pending today</div></div>
+<div class="kpi" style="border-top:3px solid var(--purple)"><div class="kpi-lbl">Customer Transfer</div>
+<div class="kpi-val" style="color:var(--purple)">1</div><div class="kpi-sub">Pending today</div></div>
+</div>
+<div class="card">
+<div class="card-hd"><div class="card-title">Service Lifecycle Workflow</div>
+<div class="card-sub">BR-004 to BR-009 — New connection, move-in, move-out, transfer</div>
+<div class="card-r"><select class="form-select" style="font-size:12px" onchange="setLifecycleType(this.value)">
+<option>New Connection</option>
+<option>Move-In</option>
+<option>Move-Out</option>
+<option>Customer Transfer</option>
+<option>Temporary Disconnection</option>
+</select></div></div>
+<div style="padding:16px 20px">
+<div class="stepper">
+<div class="step sl-step" style="cursor:pointer"><div class="step-circle">1</div><div class="step-label">Application</div></div>
+<div class="step sl-step" style="cursor:pointer"><div class="step-circle">2</div><div class="step-label">Verification</div></div>
+<div class="step sl-step" style="cursor:pointer"><div class="step-circle">3</div><div class="step-label">Field Work</div></div>
+<div class="step sl-step" style="cursor:pointer"><div class="step-circle">4</div><div class="step-label">Billing Setup</div></div>
+<div class="step sl-step" style="cursor:pointer"><div class="step-circle">5</div><div class="step-label">Activation</div></div>
+</div>
+<div class="sl-pane" style="display:block">
+<div style="font-size:13px;font-weight:600;font-family:Syne,serif;margin-bottom:14px;color:var(--navy)">Application Details</div>
+
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Customer Name *</label><input class="form-input" placeholder="Full name" value="Vikram Shah"/></div>
+          <div class="form-group"><label class="form-label">Mobile *</label><input class="form-input" placeholder="+91 XXXXX XXXXX" value="+91 99012 34567"/></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Premise Address *</label><input class="form-input" placeholder="Full address" value="C-07, Bopal, Ahmedabad"/></div>
+          <div class="form-group"><label class="form-label">Connection Type *</label><select class="form-select"><option>New Connection</option><option>Move-In (Existing)</option><option>Service Transfer</option></select></div>
+        </div>
+        <div class="form-row col3">
+          <div class="form-group"><label class="form-label">Consumer Category</label><select class="form-select"><option>LT-1 Domestic</option><option>LT-2 Non-Domestic</option><option>HT-1 Industrial</option></select></div>
+          <div class="form-group"><label class="form-label">Sanctioned Load (kW)</label><input class="form-input" type="number" value="5" /></div>
+          <div class="form-group"><label class="form-label">Phase Type</label><select class="form-select"><option>Single Phase (1P)</option><option>Three Phase (3P)</option></select></div>
+        </div>
+</div>
+<div class="sl-pane" style="display:none">
+<div style="font-size:13px;font-weight:600;font-family:Syne,serif;margin-bottom:14px;color:var(--navy)">Document Verification</div>
+
+        <div style="margin-bottom:12px;padding:10px 12px;background:var(--blue-l);border-radius:6px;font-size:12px;color:var(--blue)">
+        ℹ️ BR-004: Application review workflow — documents verified by section engineer before site inspection is assigned.</div>
+        <table class="tbl"><thead><tr><th>Document Type</th><th>Submitted</th><th>Verified</th><th>Action</th></tr></thead><tbody>
+        <tr><td>Identity Proof (Aadhaar)</td><td><span class="pill active">✓ Uploaded</span></td><td><span class="pill pending">Pending</span></td><td><button class="btn btn-g btn-sm" onclick="showToast('Document verified ✓')">Verify</button></td></tr>
+        <tr><td>Address Proof</td><td><span class="pill active">✓ Uploaded</span></td><td><span class="pill pending">Pending</span></td><td><button class="btn btn-g btn-sm" onclick="showToast('Document verified ✓')">Verify</button></td></tr>
+        <tr><td>Ownership / Rent Agreement</td><td><span class="pill urgent">✗ Missing</span></td><td><span class="pill closed">—</span></td><td><button class="btn btn-s btn-sm" onclick="showToast('Reminder sent to consumer')">Send Reminder</button></td></tr>
+        <tr><td>Load Sanction Letter</td><td><span class="pill active">✓ Uploaded</span></td><td><span class="pill active">✓ Verified</span></td><td>—</td></tr>
+        </tbody></table>
+</div>
+<div class="sl-pane" style="display:none">
+<div style="font-size:13px;font-weight:600;font-family:Syne,serif;margin-bottom:14px;color:var(--navy)">Site Inspection & BoQ</div>
+
+        <div class="g2">
+          <div>
+            <div style="font-size:11px;font-weight:600;color:var(--ink3);font-family:var(--mono);margin-bottom:8px;text-transform:uppercase">Site Inspection Details</div>
+            <div class="form-group" style="margin-bottom:8px"><label class="form-label">Inspection Date</label><input class="form-input" type="date" value="2026-04-06"/></div>
+            <div class="form-group" style="margin-bottom:8px"><label class="form-label">Inspector (Field Engineer)</label><select class="form-select"><option>Sundar Rao (Zone-A)</option><option>Manoj Kumar (Zone-A)</option></select></div>
+            <div class="form-group" style="margin-bottom:8px"><label class="form-label">GPS Coordinates</label><input class="form-input" value="23.0150, 72.5650" placeholder="lat, lon"/></div>
+            <div class="form-group"><label class="form-label">Inspection Notes</label><textarea class="form-textarea">Premises accessible. Single phase connection feasible. Service line ~18m. Meter location: near gate.</textarea></div>
+          </div>
+          <div>
+            <div style="font-size:11px;font-weight:600;color:var(--ink3);font-family:var(--mono);margin-bottom:8px;text-transform:uppercase">Bill of Quantities (BoQ)</div>
+            <table class="tbl"><thead><tr><th>Material</th><th>Qty</th><th>Rate</th><th>Amount</th></tr></thead><tbody>
+            <tr><td>Single Phase Meter</td><td>1</td><td>₹1,800</td><td>₹1,800</td></tr>
+            <tr><td>Service Cable 10mm² (18m)</td><td>18m</td><td>₹45/m</td><td>₹810</td></tr>
+            <tr><td>MCB 32A Single Pole</td><td>1</td><td>₹320</td><td>₹320</td></tr>
+            <tr><td>Lead Seals</td><td>2</td><td>₹12</td><td>₹24</td></tr>
+            <tr><td>Labour (Installation)</td><td>1</td><td>₹800</td><td>₹800</td></tr>
+            <tr style="font-weight:700"><td colspan="3">Total BoQ</td><td>₹3,754</td></tr>
+            </tbody></table>
+            <div style="margin-top:8px;padding:8px;background:var(--amber-l);border-radius:6px;font-size:11px">
+            <b>Demand Note (BR-004):</b> Security Deposit ₹2,400 + BoQ ₹3,754 + GST ₹450 = <b>₹6,604</b></div>
+          </div>
+        </div>
+</div>
+<div class="sl-pane" style="display:none">
+<div style="font-size:13px;font-weight:600;font-family:Syne,serif;margin-bottom:14px;color:var(--navy)">Billing Setup</div>
+
+        <div class="g2">
+        <div>
+          <div style="font-size:11px;font-weight:600;color:var(--ink3);font-family:var(--mono);margin-bottom:8px;text-transform:uppercase">Contract Setup</div>
+          <div class="form-row"><div class="form-group"><label class="form-label">Rate Plan</label><select class="form-select"><option>LT-1 Domestic (RP-ELEC-LT1-01)</option><option>LT-2 Non-Domestic</option></select></div>
+          <div class="form-group"><label class="form-label">Bill Cycle</label><select class="form-select"><option>Monthly Cycle-08 (Reading: 8th)</option></select></div></div>
+          <div class="form-row"><div class="form-group"><label class="form-label">Contract Start Date</label><input class="form-input" type="date" value="2026-04-08"/></div>
+          <div class="form-group"><label class="form-label">Opening Read</label><input class="form-input" type="number" value="0" placeholder="kWh"/></div></div>
+          <div style="padding:10px;background:var(--green-l);border-radius:6px;font-size:11px;margin-top:6px">
+          ✓ Security Deposit ₹2,400 received on 06-Apr-2026 · Receipt: RCP-0042181</div>
+        </div>
+        <div>
+          <div style="font-size:11px;font-weight:600;color:var(--ink3);font-family:var(--mono);margin-bottom:8px;text-transform:uppercase">Tariff Simulation (First Bill Estimate)</div>
+          <table class="tbl"><thead><tr><th>Component</th><th>Amount</th></tr></thead><tbody>
+          <tr><td>Meter Rent</td><td>₹45.00</td></tr>
+          <tr><td>Energy (est. 200 kWh)</td><td>₹877.50</td></tr>
+          <tr><td>Electricity Duty (15%)</td><td>₹131.63</td></tr>
+          <tr><td>GST on Meter Rent (18%)</td><td>₹8.10</td></tr>
+          <tr style="font-weight:700"><td>Estimated Monthly Bill</td><td>₹1,062.23</td></tr>
+          </tbody></table>
+        </div></div>
+</div>
+<div class="sl-pane" style="display:none">
+<div style="font-size:13px;font-weight:600;font-family:Syne,serif;margin-bottom:14px;color:var(--navy)">Activation</div>
+
+        <div style="text-align:center;padding:20px 0">
+          <div style="font-size:48px;margin-bottom:12px">✅</div>
+          <div style="font-family:'Syne','Georgia',serif;font-size:18px;font-weight:700;margin-bottom:8px">Ready to Activate</div>
+          <div style="font-size:13px;color:var(--ink3);margin-bottom:20px">All steps completed. New CAN will be assigned on activation.</div>
+          <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px;text-align:left;max-width:400px;margin:0 auto">
+          <div class="info-row"><div class="info-item"><div class="info-lbl">Customer</div><div class="info-val">Vikram Shah</div></div>
+          <div class="info-item"><div class="info-lbl">Category</div><div class="info-val">LT-1 Domestic</div></div></div>
+          <div class="info-row"><div class="info-item"><div class="info-lbl">Rate Plan</div><div class="info-val">RP-ELEC-LT1-01</div></div>
+          <div class="info-item"><div class="info-lbl">Load</div><div class="info-val">5 kW Single Phase</div></div></div>
+          <div class="info-row"><div class="info-item"><div class="info-lbl">Meter SN</div><div class="info-val">SN-2042-0918</div></div>
+          <div class="info-item"><div class="info-lbl">Start Date</div><div class="info-val">08 Apr 2026</div></div></div></div>
+          <div style="margin-top:16px"><button class="btn btn-g" onclick="showToast('✓ Service activated! CAN: 56041892 assigned')">⚡ Activate Service</button></div>
+        </div>
+</div>
+<div style="display:flex;justify-content:space-between;margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
+<button id="sl-back" class="btn btn-s" onclick="slBack()">← Back</button>
+<button id="sl-next" class="btn btn-p" onclick="slNext()">Next →</button>
+</div></div></div>
+</div>
+<div id="p-comp" class="page">
+<div class="g4" style="margin-bottom:14px">
+<div class="kpi rd"><div class="kpi-lbl">Total Open</div><div class="kpi-val">14</div></div>
+<div class="kpi rd"><div class="kpi-lbl">Breached SLA</div><div class="kpi-val">3</div></div>
+<div class="kpi am"><div class="kpi-lbl">Avg Resolution</div><div class="kpi-val">18.4h</div></div>
+<div class="kpi gr"><div class="kpi-lbl">First Contact Res</div><div class="kpi-val">68%</div></div>
+</div>
+<div class="card"><div class="card-hd"><div class="card-title">📣 Complaint Register</div>
+<div class="card-sub">BR-034 to BR-036 — SLA-governed, linked to WO, bills, reads and outage events</div>
+<div class="card-r"><button class="btn btn-p btn-sm" onclick="openModal('m-newcomp')">+ New Complaint</button></div></div>
+<div class="tbl-wrap"><table class="tbl"><thead><tr>
+<th>ID</th><th>Type</th><th>Customer · CAN</th><th>Priority</th><th>SLA Progress</th><th>Assigned</th><th>WO Link</th><th>Status</th><th>Actions</th></tr></thead><tbody>
+<tr><td class="td-mono td-link">CMP-20241</td>
+<td style="font-weight:500;font-size:12px">No Supply</td>
+<td><div style="font-size:12px">Rajesh Mehta</div><div class="td-mono" style="font-size:10px;color:var(--ink3)">56039281</div></td>
+<td><div class="td-sev"><div class="sev-dot H"></div>High</div></td>
+<td style="min-width:110px">
+<div style="display:flex;align-items:center;gap:6px">
+<div style="flex:1"><div class="progress"><div class="progress-fill" style="width:62%;background:#107E3E"></div></div></div>
+<span style="font-size:10px;color:#107E3E;font-family:var(--mono);white-space:nowrap">2h/4h</span>
+</div></td>
+<td style="font-size:11px">Pramila S</td>
+<td class="td-mono td-link" style="font-size:11px">WO-4421</td>
+<td><span class="pill inprogress">In Progress</span></td>
+<td><button class="btn btn-s btn-sm" onclick="openModal('m-compdetail')">View</button> 
+</td></tr>
+<tr><td class="td-mono td-link">CMP-20238</td>
+<td style="font-weight:500;font-size:12px">Billing Dispute</td>
+<td><div style="font-size:12px">Gujarat Ceramics</div><div class="td-mono" style="font-size:10px;color:var(--ink3)">56039105</div></td>
+<td><div class="td-sev"><div class="sev-dot M"></div>Medium</div></td>
+<td style="min-width:110px">
+<div style="display:flex;align-items:center;gap:6px">
+<div style="flex:1"><div class="progress"><div class="progress-fill" style="width:25%;background:#107E3E"></div></div></div>
+<span style="font-size:10px;color:#107E3E;font-family:var(--mono);white-space:nowrap">6h/24h</span>
+</div></td>
+<td style="font-size:11px">Anand V</td>
+<td class="td-mono td-link" style="font-size:11px">—</td>
+<td><span class="pill open">Open</span></td>
+<td><button class="btn btn-s btn-sm" onclick="openModal('m-compdetail')">View</button> 
+<button class="btn btn-s btn-sm" onclick="showToast('Work order created: WO-4440')">+WO</button>
+</td></tr>
+<tr><td class="td-mono td-link">CMP-20215</td>
+<td style="font-weight:500;font-size:12px">Voltage Fluctuation</td>
+<td><div style="font-size:12px">Surat Textiles</div><div class="td-mono" style="font-size:10px;color:var(--ink3)">56041200</div></td>
+<td><div class="td-sev"><div class="sev-dot H"></div>High</div></td>
+<td style="min-width:110px">
+<div style="display:flex;align-items:center;gap:6px">
+<div style="flex:1"><div class="progress"><div class="progress-fill" style="width:100%;background:#A32D2D"></div></div></div>
+<span style="font-size:10px;color:#A32D2D;font-family:var(--mono);white-space:nowrap">9h/8h</span>
+</div></td>
+<td style="font-size:11px">Suresh P</td>
+<td class="td-mono td-link" style="font-size:11px">WO-4398</td>
+<td><span class="pill urgent">Breached</span></td>
+<td><button class="btn btn-s btn-sm" onclick="openModal('m-compdetail')">View</button> 
+</td></tr>
+<tr><td class="td-mono td-link">CMP-20204</td>
+<td style="font-weight:500;font-size:12px">Faulty Meter</td>
+<td><div style="font-size:12px">Priya Nair</div><div class="td-mono" style="font-size:10px;color:var(--ink3)">56030099</div></td>
+<td><div class="td-sev"><div class="sev-dot M"></div>Medium</div></td>
+<td style="min-width:110px">
+<div style="display:flex;align-items:center;gap:6px">
+<div style="flex:1"><div class="progress"><div class="progress-fill" style="width:25%;background:#107E3E"></div></div></div>
+<span style="font-size:10px;color:#107E3E;font-family:var(--mono);white-space:nowrap">12h/48h</span>
+</div></td>
+<td style="font-size:11px">Meena R</td>
+<td class="td-mono td-link" style="font-size:11px">—</td>
+<td><span class="pill open">Open</span></td>
+<td><button class="btn btn-s btn-sm" onclick="openModal('m-compdetail')">View</button> 
+<button class="btn btn-s btn-sm" onclick="showToast('Work order created: WO-4440')">+WO</button>
+</td></tr>
+<tr><td class="td-mono td-link">CMP-20198</td>
+<td style="font-weight:500;font-size:12px">Payment Not Reflected</td>
+<td><div style="font-size:12px">Sunita Desai</div><div class="td-mono" style="font-size:10px;color:var(--ink3)">56039412</div></td>
+<td><div class="td-sev"><div class="sev-dot L"></div>Low</div></td>
+<td style="min-width:110px">
+<div style="display:flex;align-items:center;gap:6px">
+<div style="flex:1"><div class="progress"><div class="progress-fill" style="width:16%;background:#107E3E"></div></div></div>
+<span style="font-size:10px;color:#107E3E;font-family:var(--mono);white-space:nowrap">4h/24h</span>
+</div></td>
+<td style="font-size:11px">Anand V</td>
+<td class="td-mono td-link" style="font-size:11px">—</td>
+<td><span class="pill closed">Closed</span></td>
+<td><button class="btn btn-s btn-sm" onclick="openModal('m-compdetail')">View</button> 
+<button class="btn btn-s btn-sm" onclick="showToast('Work order created: WO-4440')">+WO</button>
+</td></tr>
+<tr><td class="td-mono td-link">CMP-20177</td>
+<td style="font-weight:500;font-size:12px">No Supply</td>
+<td><div style="font-size:12px">Rajesh Mehta</div><div class="td-mono" style="font-size:10px;color:var(--ink3)">56039281</div></td>
+<td><div class="td-sev"><div class="sev-dot H"></div>High</div></td>
+<td style="min-width:110px">
+<div style="display:flex;align-items:center;gap:6px">
+<div style="flex:1"><div class="progress"><div class="progress-fill" style="width:25%;background:#107E3E"></div></div></div>
+<span style="font-size:10px;color:#107E3E;font-family:var(--mono);white-space:nowrap">1h/4h</span>
+</div></td>
+<td style="font-size:11px">Pramila S</td>
+<td class="td-mono td-link" style="font-size:11px">WO-4380</td>
+<td><span class="pill closed">Closed</span></td>
+<td><button class="btn btn-s btn-sm" onclick="openModal('m-compdetail')">View</button> 
+</td></tr>
+</tbody></table></div></div>
+</div>
+<div id="p-wo" class="page">
+<div class="g4" style="margin-bottom:14px">
+<div class="kpi bl"><div class="kpi-lbl">Today's WOs</div><div class="kpi-val">21</div><div class="kpi-sub">8 done · 6 in progress</div></div>
+<div class="kpi gr"><div class="kpi-lbl">Avg Completion</div><div class="kpi-val">2.8h</div><div class="kpi-sub">Target: < 4h</div></div>
+<div class="kpi rd"><div class="kpi-lbl">Unattended</div><div class="kpi-val">2</div><div class="kpi-sub">Rescheduled needed</div></div>
+<div class="kpi am"><div class="kpi-lbl">First-Time Fix</div><div class="kpi-val">84%</div><div class="kpi-sub">Target: > 85%</div></div>
+</div>
+<div class="card"><div class="card-hd"><div class="card-title">🔧 Work Order Queue</div>
+<div class="card-sub">BR-037 to BR-040 — Generated from complaints, SRs, meter events, maintenance plans</div>
+<div class="card-r"><button class="btn btn-p btn-sm" onclick="openModal('m-newwo')">+ Create WO</button></div></div>
+<div class="tbl-wrap"><table class="tbl"><thead><tr>
+<th>WO ID</th><th>Type</th><th>Source</th><th>Customer / Asset</th><th>Technician</th><th>Scheduled</th><th>Materials</th><th>Status</th><th>Update</th></tr></thead><tbody>
+<tr><td class="td-mono td-link">WO-4421</td>
+<td><div class="sev-dot H" style="display:inline-block;margin-right:4px"></div>Service Restoration</td>
+<td class="td-mono" style="font-size:11px">CMP-20241</td>
+<td><div style="font-size:11.5px;font-weight:500">Rajesh Mehta</div><div style="font-size:10px;color:var(--ink3)">B-12, Navrangpura, Ahmedabad</div></td>
+<td style="font-size:11px">Manoj Kumar<br><span style="font-size:10px;color:var(--ink3)">Zone-A T1</span></td>
+<td class="td-mono" style="font-size:10px">2026-04-06 10:00</td>
+<td style="font-size:10px;color:var(--ink3)">Test Equipment, HRC Fuse</td>
+<td class="wo-status-td"><span class="pill inprogress">In Progress</span></td>
+<td><select class="form-select" style="font-size:11px;padding:3px 6px" onchange="updateWOStatus(this)">
+<option>Assigned</option>
+<option>En Route</option>
+<option selected>In Progress</option>
+<option>Completed</option>
+<option>Unattended</option>
+</select></td></tr>
+<tr><td class="td-mono td-link">WO-4430</td>
+<td><div class="sev-dot M" style="display:inline-block;margin-right:4px"></div>Meter Replacement</td>
+<td class="td-mono" style="font-size:11px">SR-1812</td>
+<td><div style="font-size:11.5px;font-weight:500">Priya Nair</div><div style="font-size:10px;color:var(--ink3)">404, Satellite Rd, Ahmedabad</div></td>
+<td style="font-size:11px">Dinesh Patel<br><span style="font-size:10px;color:var(--ink3)">Zone-B T2</span></td>
+<td class="td-mono" style="font-size:10px">2026-04-06 11:30</td>
+<td style="font-size:10px;color:var(--ink3)">Single-phase meter, 2× seals</td>
+<td class="wo-status-td"><span class="pill pending">Assigned</span></td>
+<td><select class="form-select" style="font-size:11px;padding:3px 6px" onchange="updateWOStatus(this)">
+<option selected>Assigned</option>
+<option>En Route</option>
+<option>In Progress</option>
+<option>Completed</option>
+<option>Unattended</option>
+</select></td></tr>
+<tr><td class="td-mono td-link">WO-4418</td>
+<td><div class="sev-dot M" style="display:inline-block;margin-right:4px"></div>New Connection</td>
+<td class="td-mono" style="font-size:11px">NCA-0891</td>
+<td><div style="font-size:11.5px;font-weight:500">New Applicant — Vikram Shah</div><div style="font-size:10px;color:var(--ink3)">C-07, Bopal, Ahmedabad</div></td>
+<td style="font-size:11px">Sundar Rao<br><span style="font-size:10px;color:var(--ink3)">Zone-A T3</span></td>
+<td class="td-mono" style="font-size:10px">2026-04-06 14:00</td>
+<td style="font-size:10px;color:var(--ink3)">Meter, CB, service cable 25m</td>
+<td class="wo-status-td"><span class="pill pending">Assigned</span></td>
+<td><select class="form-select" style="font-size:11px;padding:3px 6px" onchange="updateWOStatus(this)">
+<option selected>Assigned</option>
+<option>En Route</option>
+<option>In Progress</option>
+<option>Completed</option>
+<option>Unattended</option>
+</select></td></tr>
+<tr><td class="td-mono td-link">WO-4412</td>
+<td><div class="sev-dot H" style="display:inline-block;margin-right:4px"></div>Disconnection</td>
+<td class="td-mono" style="font-size:11px">COL-3392</td>
+<td><div style="font-size:11.5px;font-weight:500">Surat Textiles Ltd</div><div style="font-size:10px;color:var(--ink3)">Industrial Estate, Surat</div></td>
+<td style="font-size:11px">Ramesh Joshi<br><span style="font-size:10px;color:var(--ink3)">Zone-C T1</span></td>
+<td class="td-mono" style="font-size:10px">2026-04-06 15:00</td>
+<td style="font-size:10px;color:var(--ink3)">Sealing pliers, seal</td>
+<td class="wo-status-td"><span class="pill dispatch">En Route</span></td>
+<td><select class="form-select" style="font-size:11px;padding:3px 6px" onchange="updateWOStatus(this)">
+<option>Assigned</option>
+<option selected>En Route</option>
+<option>In Progress</option>
+<option>Completed</option>
+<option>Unattended</option>
+</select></td></tr>
+<tr><td class="td-mono td-link">WO-4398</td>
+<td><div class="sev-dot H" style="display:inline-block;margin-right:4px"></div>Network Repair</td>
+<td class="td-mono" style="font-size:11px">CMP-20215</td>
+<td><div style="font-size:11.5px;font-weight:500">Area — HT Feeder F12</div><div style="font-size:10px;color:var(--ink3)">Adajan, Surat</div></td>
+<td style="font-size:11px">Pavan Singh<br><span style="font-size:10px;color:var(--ink3)">Zone-B T4</span></td>
+<td class="td-mono" style="font-size:10px">2026-04-05 16:00</td>
+<td style="font-size:10px;color:var(--ink3)">Jointing kit, cable 10m</td>
+<td class="wo-status-td"><span class="pill active">Completed</span></td>
+<td><select class="form-select" style="font-size:11px;padding:3px 6px" onchange="updateWOStatus(this)">
+<option>Assigned</option>
+<option>En Route</option>
+<option>In Progress</option>
+<option selected>Completed</option>
+<option>Unattended</option>
+</select></td></tr>
+<tr><td class="td-mono td-link">WO-4390</td>
+<td><div class="sev-dot M" style="display:inline-block;margin-right:4px"></div>Meter Reading</td>
+<td class="td-mono" style="font-size:11px">SCH-MRU-04</td>
+<td><div style="font-size:11.5px;font-weight:500">Route MRU-04 (48 meters)</div><div style="font-size:10px;color:var(--ink3)">Gota, Ahmedabad</div></td>
+<td style="font-size:11px">Kavita Shah<br><span style="font-size:10px;color:var(--ink3)">Zone-A T2</span></td>
+<td class="td-mono" style="font-size:10px">2026-04-05 08:00</td>
+<td style="font-size:10px;color:var(--ink3)">Handheld device, seals</td>
+<td class="wo-status-td"><span class="pill active">Completed</span></td>
+<td><select class="form-select" style="font-size:11px;padding:3px 6px" onchange="updateWOStatus(this)">
+<option>Assigned</option>
+<option>En Route</option>
+<option>In Progress</option>
+<option selected>Completed</option>
+<option>Unattended</option>
+</select></td></tr>
+</tbody></table></div></div>
+</div>
+<div id="p-field" class="page">
+<div style="max-width:420px;margin:0 auto">
+<div class="card">
+<div style="background:linear-gradient(135deg,var(--navy),#1A2B3C);padding:14px 16px;border-radius:8px 8px 0 0">
+<div style="color:#FFD966;font-size:10px;font-family:var(--mono);text-transform:uppercase;margin-bottom:4px">Field Mobile · Technician View</div>
+<div style="color:#fff;font-size:15px;font-weight:700;font-family:Syne,serif">WO-4421 — Service Restoration</div>
+<div style="color:rgba(255,255,255,.6);font-size:11px;margin-top:2px">Rajesh Mehta · B-12 Navrangpura, Ahmedabad</div>
+</div>
+<div class="card-body">
+<div class="tech-card" style="margin-bottom:12px">
+<div class="tech-avatar" style="background:var(--blue-l)">👷</div>
+<div><div class="tech-name">Manoj Kumar</div><div class="tech-role">Zone-A · TEC-01 · Today: 3 WOs (1 done)</div></div>
+<div class="tech-r"><span class="pill inprogress">In Progress</span></div></div>
+<div class="map-ph" style="height:150px;margin-bottom:12px;border-radius:8px">
+<div class="map-grid"></div>
+<div style="position:absolute;font-size:28px;animation:bounce .8s infinite alternate">📍</div>
+<div style="position:absolute;bottom:8px;left:8px;background:rgba(0,0,0,.5);color:#fff;font-size:10px;font-family:var(--mono);padding:3px 7px;border-radius:4px">23.0225° N, 72.5714° E · Updated 1 min ago</div>
+</div>
+<div style="font-size:11px;font-weight:600;color:var(--ink3);font-family:var(--mono);text-transform:uppercase;margin-bottom:8px">Execution Checklist (BR-039)</div>
+<div class="progress" style="margin-bottom:10px"><div class="progress-fill gr" style="width:25%" id="chk-progress"></div></div>
+<div style="font-size:10px;color:var(--ink3);margin-bottom:8px;font-family:var(--mono)" id="chk-pct">25% complete</div>
+<div id="field-checks">
+<div class="checklist-item"><div class="chk done">✓</div>
+<div class="chk-label" style="text-decoration:line-through">Arrive at site — scan WO QR code</div></div>
+<div class="checklist-item"><div class="chk done">✓</div>
+<div class="chk-label" style="text-decoration:line-through">Verify consumer identity (Aadhaar / CAN)</div></div>
+<div class="checklist-item"><div class="chk done">✓</div>
+<div class="chk-label" style="text-decoration:line-through">Check meter serial number matches WO</div></div>
+<div class="checklist-item"><div class="chk "></div>
+<div class="chk-label" style="text-decoration:none">Capture meter photo (opening read)</div></div>
+<div class="checklist-item"><div class="chk "></div>
+<div class="chk-label" style="text-decoration:none">Inspect fuse / MCB condition</div></div>
+<div class="checklist-item"><div class="chk "></div>
+<div class="chk-label" style="text-decoration:none">Check terminal connections</div></div>
+<div class="checklist-item"><div class="chk "></div>
+<div class="chk-label" style="text-decoration:none">Test voltage at meter terminals</div></div>
+<div class="checklist-item"><div class="chk "></div>
+<div class="chk-label" style="text-decoration:none">Restore supply — verify consumer acknowledgement</div></div>
+<div class="checklist-item"><div class="chk "></div>
+<div class="chk-label" style="text-decoration:none">Record closing read + seal condition</div></div>
+<div class="checklist-item"><div class="chk "></div>
+<div class="chk-label" style="text-decoration:none">Capture post-restoration photo</div></div>
+<div class="checklist-item"><div class="chk "></div>
+<div class="chk-label" style="text-decoration:none">Get consumer signature</div></div>
+</div>
+<div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border)">
+<div style="font-size:11px;font-weight:600;color:var(--ink3);font-family:var(--mono);text-transform:uppercase;margin-bottom:8px">Materials Consumed (BR-041)</div>
+<div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-bottom:1px solid #F5F5F6">
+<span>HRC Fuse 63A</span><span style="font-family:var(--mono);font-weight:500">1 Nos</span></div>
+<div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-bottom:1px solid #F5F5F6">
+<span>Lead Seal</span><span style="font-family:var(--mono);font-weight:500">1 Nos</span></div>
+</div>
+<div style="margin-top:14px;padding:10px;background:var(--red-l);border-radius:6px;font-size:11px;color:var(--red)">
+<b>BR-040: Unsuccessful Visit?</b> Code the reason and trigger reschedule:
+<select class="form-select" style="font-size:11px;margin-top:6px">
+<option>— Select reason —</option>
+<option>Consumer Absent</option>
+<option>Premises Locked</option>
+<option>Access Denied</option>
+<option>Unsafe Conditions</option>
+<option>Meter Inaccessible</option>
+</select></div>
+<div style="margin-top:12px;display:flex;gap:8px">
+<button class="btn btn-g" style="flex:1" onclick="showToast('WO-4421 marked Complete. Sync to server.')">✓ Complete WO</button>
+<button class="btn btn-s" onclick="showToast('Visit rescheduled. Supervisor notified.')">Reschedule</button>
+</div>
+</div></div></div></div>
+<div id="p-inv" class="page">
+<div class="g4" style="margin-bottom:14px">
+<div class="kpi bl"><div class="kpi-lbl">Warehouse Stock</div><div class="kpi-val">9 SKUs</div></div>
+<div class="kpi gr"><div class="kpi-lbl">Van A Stock</div><div class="kpi-val">10 items</div></div>
+<div class="kpi rd"><div class="kpi-lbl">Low Stock Alerts</div><div class="kpi-val">3</div></div>
+<div class="kpi am"><div class="kpi-lbl">Pending Replenishment</div><div class="kpi-val">2 POs</div></div>
+</div>
+<div class="card"><div class="card-hd"><div class="card-title">📦 Spares & Inventory Register</div>
+<div class="card-sub">BR-041, BR-042 — Van stock · Warehouse · Serialized devices · Issue against WO</div>
+<div class="card-r" style="display:flex;gap:6px">
+<button class="btn btn-s btn-sm" onclick="openModal('m-replenish')">+ Replenish</button>
+<button class="btn btn-p btn-sm" onclick="openModal('m-issuemat')">Issue to WO</button></div></div>
+<div class="tbl-wrap"><table class="tbl"><thead><tr>
+<th>Code</th><th>Description</th><th>Category</th><th>Warehouse</th><th>Van A</th><th>Van B</th><th>Van C</th><th>Min Level</th><th>Stock Status</th><th>WO Issue</th></tr></thead><tbody>
+<tr><td class="td-mono" style="font-size:11px">INV-M001</td>
+<td style="font-size:11.5px;font-weight:500">Single-Phase Static Meter (Secure Elite)</td>
+<td><span class="pill closed" style="font-size:9px">Meter</span></td>
+<td class="td-mono" style="font-weight:400;color:var(--ink)">284</td>
+<td class="td-mono">12</td>
+<td class="td-mono">8</td>
+<td class="td-mono">5</td>
+<td class="td-mono" style="color:var(--ink3)">50</td>
+<td><span class="pill stock">✓ OK</span></td>
+<td><div style="display:flex;gap:4px;align-items:center">
+<input class="form-input alloc-qty" type="number" min="0" value="0" style="width:48px;padding:3px 6px;font-size:11px">
+<span class="td-mono avail-qty" style="font-size:10px;color:var(--ink3)">284</span>
+<button class="btn btn-s btn-sm" onclick="allocateItem(this)">Issue</button></div></td></tr>
+<tr><td class="td-mono" style="font-size:11px">INV-M002</td>
+<td style="font-size:11.5px;font-weight:500">Three-Phase HT Meter (L&T Metering)</td>
+<td><span class="pill closed" style="font-size:9px">Meter</span></td>
+<td class="td-mono" style="font-weight:400;color:var(--ink)">42</td>
+<td class="td-mono">3</td>
+<td class="td-mono">2</td>
+<td class="td-mono">1</td>
+<td class="td-mono" style="color:var(--ink3)">10</td>
+<td><span class="pill stock">✓ OK</span></td>
+<td><div style="display:flex;gap:4px;align-items:center">
+<input class="form-input alloc-qty" type="number" min="0" value="0" style="width:48px;padding:3px 6px;font-size:11px">
+<span class="td-mono avail-qty" style="font-size:10px;color:var(--ink3)">42</span>
+<button class="btn btn-s btn-sm" onclick="allocateItem(this)">Issue</button></div></td></tr>
+<tr><td class="td-mono" style="font-size:11px">INV-M003</td>
+<td style="font-size:11.5px;font-weight:500">Smart Meter + GPRS Module (Genus)</td>
+<td><span class="pill closed" style="font-size:9px">Smart Meter</span></td>
+<td class="td-mono" style="font-weight:400;color:var(--ink)">185</td>
+<td class="td-mono">8</td>
+<td class="td-mono">6</td>
+<td class="td-mono">4</td>
+<td class="td-mono" style="color:var(--ink3)">30</td>
+<td><span class="pill stock">✓ OK</span></td>
+<td><div style="display:flex;gap:4px;align-items:center">
+<input class="form-input alloc-qty" type="number" min="0" value="0" style="width:48px;padding:3px 6px;font-size:11px">
+<span class="td-mono avail-qty" style="font-size:10px;color:var(--ink3)">185</span>
+<button class="btn btn-s btn-sm" onclick="allocateItem(this)">Issue</button></div></td></tr>
+<tr><td class="td-mono" style="font-size:11px">INV-S001</td>
+<td style="font-size:11.5px;font-weight:500">Lead Seal (Meter)</td>
+<td><span class="pill closed" style="font-size:9px">Seal</span></td>
+<td class="td-mono" style="font-weight:400;color:var(--ink)">4820</td>
+<td class="td-mono">250</td>
+<td class="td-mono">180</td>
+<td class="td-mono">140</td>
+<td class="td-mono" style="color:var(--ink3)">500</td>
+<td><span class="pill stock">✓ OK</span></td>
+<td><div style="display:flex;gap:4px;align-items:center">
+<input class="form-input alloc-qty" type="number" min="0" value="0" style="width:48px;padding:3px 6px;font-size:11px">
+<span class="td-mono avail-qty" style="font-size:10px;color:var(--ink3)">4820</span>
+<button class="btn btn-s btn-sm" onclick="allocateItem(this)">Issue</button></div></td></tr>
+<tr><td class="td-mono" style="font-size:11px">INV-S002</td>
+<td style="font-size:11.5px;font-weight:500">Terminal Seal (Strip)</td>
+<td><span class="pill closed" style="font-size:9px">Seal</span></td>
+<td class="td-mono" style="font-weight:400;color:var(--ink)">3100</td>
+<td class="td-mono">120</td>
+<td class="td-mono">90</td>
+<td class="td-mono">60</td>
+<td class="td-mono" style="color:var(--ink3)">200</td>
+<td><span class="pill stock">✓ OK</span></td>
+<td><div style="display:flex;gap:4px;align-items:center">
+<input class="form-input alloc-qty" type="number" min="0" value="0" style="width:48px;padding:3px 6px;font-size:11px">
+<span class="td-mono avail-qty" style="font-size:10px;color:var(--ink3)">3100</span>
+<button class="btn btn-s btn-sm" onclick="allocateItem(this)">Issue</button></div></td></tr>
+<tr><td class="td-mono" style="font-size:11px">INV-C001</td>
+<td style="font-size:11.5px;font-weight:500">Service Cable 10mm² (per metre)</td>
+<td><span class="pill closed" style="font-size:9px">Cable</span></td>
+<td class="td-mono" style="font-weight:400;color:var(--ink)">3200</td>
+<td class="td-mono">200</td>
+<td class="td-mono">150</td>
+<td class="td-mono">120</td>
+<td class="td-mono" style="color:var(--ink3)">500</td>
+<td><span class="pill stock">✓ OK</span></td>
+<td><div style="display:flex;gap:4px;align-items:center">
+<input class="form-input alloc-qty" type="number" min="0" value="0" style="width:48px;padding:3px 6px;font-size:11px">
+<span class="td-mono avail-qty" style="font-size:10px;color:var(--ink3)">3200</span>
+<button class="btn btn-s btn-sm" onclick="allocateItem(this)">Issue</button></div></td></tr>
+<tr><td class="td-mono" style="font-size:11px">INV-C002</td>
+<td style="font-size:11.5px;font-weight:500">HRC Fuse 63A</td>
+<td><span class="pill closed" style="font-size:9px">Protection</span></td>
+<td class="td-mono" style="font-weight:400;color:var(--ink)">620</td>
+<td class="td-mono">30</td>
+<td class="td-mono">25</td>
+<td class="td-mono">20</td>
+<td class="td-mono" style="color:var(--ink3)">100</td>
+<td><span class="pill stock">✓ OK</span></td>
+<td><div style="display:flex;gap:4px;align-items:center">
+<input class="form-input alloc-qty" type="number" min="0" value="0" style="width:48px;padding:3px 6px;font-size:11px">
+<span class="td-mono avail-qty" style="font-size:10px;color:var(--ink3)">620</span>
+<button class="btn btn-s btn-sm" onclick="allocateItem(this)">Issue</button></div></td></tr>
+<tr><td class="td-mono" style="font-size:11px">INV-E001</td>
+<td style="font-size:11.5px;font-weight:500">MCB 32A Single Pole</td>
+<td><span class="pill closed" style="font-size:9px">Protection</span></td>
+<td class="td-mono" style="font-weight:400;color:var(--ink)">380</td>
+<td class="td-mono">15</td>
+<td class="td-mono">12</td>
+<td class="td-mono">10</td>
+<td class="td-mono" style="color:var(--ink3)">50</td>
+<td><span class="pill stock">✓ OK</span></td>
+<td><div style="display:flex;gap:4px;align-items:center">
+<input class="form-input alloc-qty" type="number" min="0" value="0" style="width:48px;padding:3px 6px;font-size:11px">
+<span class="td-mono avail-qty" style="font-size:10px;color:var(--ink3)">380</span>
+<button class="btn btn-s btn-sm" onclick="allocateItem(this)">Issue</button></div></td></tr>
+<tr><td class="td-mono" style="font-size:11px">INV-T001</td>
+<td style="font-size:11.5px;font-weight:500">Lugs & Crimping Ferrules Set</td>
+<td><span class="pill closed" style="font-size:9px">Tools/Consumable</span></td>
+<td class="td-mono" style="font-weight:400;color:var(--ink)">95</td>
+<td class="td-mono">8</td>
+<td class="td-mono">6</td>
+<td class="td-mono">5</td>
+<td class="td-mono" style="color:var(--ink3)">20</td>
+<td><span class="pill stock">✓ OK</span></td>
+<td><div style="display:flex;gap:4px;align-items:center">
+<input class="form-input alloc-qty" type="number" min="0" value="0" style="width:48px;padding:3px 6px;font-size:11px">
+<span class="td-mono avail-qty" style="font-size:10px;color:var(--ink3)">95</span>
+<button class="btn btn-s btn-sm" onclick="allocateItem(this)">Issue</button></div></td></tr>
+<tr><td class="td-mono" style="font-size:11px">INV-K001</td>
+<td style="font-size:11.5px;font-weight:500">Meter Replacement Kit (Meter+Seals+CB)</td>
+<td><span class="pill closed" style="font-size:9px">Kit</span></td>
+<td class="td-mono" style="font-weight:400;color:var(--ink)">60</td>
+<td class="td-mono">4</td>
+<td class="td-mono">3</td>
+<td class="td-mono">2</td>
+<td class="td-mono" style="color:var(--ink3)">10</td>
+<td><span class="pill stock">✓ OK</span></td>
+<td><div style="display:flex;gap:4px;align-items:center">
+<input class="form-input alloc-qty" type="number" min="0" value="0" style="width:48px;padding:3px 6px;font-size:11px">
+<span class="td-mono avail-qty" style="font-size:10px;color:var(--ink3)">60</span>
+<button class="btn btn-s btn-sm" onclick="allocateItem(this)">Issue</button></div></td></tr>
+</tbody></table></div></div>
+<div class="g3">
+<div class="card"><div class="card-hd"><div class="card-title">🚐 Van A Stock</div>
+<div class="card-sub">Manoj Kumar / Dinesh · Zone-A/B</div></div><div class="card-body">
+<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid #F5F5F5">
+<span style="font-size:11px">Single-Phase Static Meter (S</span>
+<span class="td-mono" style="font-size:11px;color:var(--blue)">12</span></div>
+<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid #F5F5F5">
+<span style="font-size:11px">Three-Phase HT Meter (L&T Me</span>
+<span class="td-mono" style="font-size:11px;color:var(--blue)">3</span></div>
+<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid #F5F5F5">
+<span style="font-size:11px">Smart Meter + GPRS Module (G</span>
+<span class="td-mono" style="font-size:11px;color:var(--blue)">8</span></div>
+<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid #F5F5F5">
+<span style="font-size:11px">Lead Seal (Meter)</span>
+<span class="td-mono" style="font-size:11px;color:var(--blue)">250</span></div>
+<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid #F5F5F5">
+<span style="font-size:11px">Terminal Seal (Strip)</span>
+<span class="td-mono" style="font-size:11px;color:var(--blue)">120</span></div>
+</div></div>
+<div class="card"><div class="card-hd"><div class="card-title">🚐 Van B Stock</div>
+<div class="card-sub">Sundar Rao · Zone-A</div></div><div class="card-body">
+<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid #F5F5F5">
+<span style="font-size:11px">Single-Phase Static Meter (S</span>
+<span class="td-mono" style="font-size:11px;color:var(--blue)">8</span></div>
+<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid #F5F5F5">
+<span style="font-size:11px">Three-Phase HT Meter (L&T Me</span>
+<span class="td-mono" style="font-size:11px;color:var(--blue)">2</span></div>
+<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid #F5F5F5">
+<span style="font-size:11px">Smart Meter + GPRS Module (G</span>
+<span class="td-mono" style="font-size:11px;color:var(--blue)">6</span></div>
+<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid #F5F5F5">
+<span style="font-size:11px">Lead Seal (Meter)</span>
+<span class="td-mono" style="font-size:11px;color:var(--blue)">180</span></div>
+<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid #F5F5F5">
+<span style="font-size:11px">Terminal Seal (Strip)</span>
+<span class="td-mono" style="font-size:11px;color:var(--blue)">90</span></div>
+</div></div>
+<div class="card"><div class="card-hd"><div class="card-title">🚐 Van C Stock</div>
+<div class="card-sub">Ramesh Joshi · Zone-C</div></div><div class="card-body">
+<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid #F5F5F5">
+<span style="font-size:11px">Single-Phase Static Meter (S</span>
+<span class="td-mono" style="font-size:11px;color:var(--blue)">5</span></div>
+<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid #F5F5F5">
+<span style="font-size:11px">Three-Phase HT Meter (L&T Me</span>
+<span class="td-mono" style="font-size:11px;color:var(--blue)">1</span></div>
+<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid #F5F5F5">
+<span style="font-size:11px">Smart Meter + GPRS Module (G</span>
+<span class="td-mono" style="font-size:11px;color:var(--blue)">4</span></div>
+<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid #F5F5F5">
+<span style="font-size:11px">Lead Seal (Meter)</span>
+<span class="td-mono" style="font-size:11px;color:var(--blue)">140</span></div>
+<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid #F5F5F5">
+<span style="font-size:11px">Terminal Seal (Strip)</span>
+<span class="td-mono" style="font-size:11px;color:var(--blue)">60</span></div>
+</div></div>
+</div>
+</div>
+<div id="p-repl" class="page">
+<div class="card"><div class="card-hd"><div class="card-title">🔄 Device Replacement</div>
+<div class="card-sub">BR-043, BR-044 — Faulty/upgrade replacement with old/new traceability, inventory movement, billing update</div></div>
+<div class="card-body">
+<div class="g2">
+<div>
+<div style="font-size:11px;font-weight:600;color:var(--ink3);font-family:var(--mono);text-transform:uppercase;margin-bottom:12px">Step 1 — Old Device Removal</div>
+<div class="form-row">
+<div class="form-group"><label class="form-label">Consumer CAN</label><input class="form-input" value="56030099" placeholder="Scan or enter CAN"/></div>
+<div class="form-group"><label class="form-label">Reason for Replacement</label><select class="form-select"><option>Faulty Meter</option><option>Smart Meter Upgrade</option><option>Consumer Request</option><option>Tampered</option><option>Calibration Failed</option></select></div></div>
+<div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:12px">
+<div style="font-size:11px;font-weight:600;margin-bottom:8px">Current Device: SN-1928-0041</div>
+<div class="info-item"><div class="info-lbl">Type</div><div class="info-val">Single Phase Static</div></div>
+<div class="info-item"><div class="info-lbl">Make / Model</div><div class="info-val">Genus · Alpha 1P</div></div>
+<div class="info-item"><div class="info-lbl">Install Date</div><div class="info-val">12 Jun 2019</div></div>
+<div class="info-item"><div class="info-lbl">Calibration Due</div><div class="info-val">12 Jun 2022 ⚠ OVERDUE</div></div>
+<div class="info-item"><div class="info-lbl">Seals</div><div class="info-val">Terminal: Intact · Meter: Intact</div></div>
+<div class="info-item"><div class="info-lbl">Last Read</div><div class="info-val">2026-03-08 · 18,284 kWh</div></div>
+</div>
+<div class="form-row">
+<div class="form-group"><label class="form-label">Final Reading (kWh) *</label><input class="form-input" type="number" value="18721" placeholder="kWh at time of removal"/></div>
+<div class="form-group"><label class="form-label">Seal Condition</label><select class="form-select"><option>Both Intact</option><option>Meter Seal Broken</option><option>Both Broken</option></select></div></div>
+<div class="form-group"><label class="form-label">Removal Photo Evidence (BR-016)</label>
+<div style="border:2px dashed var(--border);border-radius:6px;padding:16px;text-align:center;color:var(--ink3);font-size:12px;cursor:pointer" onclick="showToast('Camera opened on field app')">📷 Capture / Upload meter photo</div></div>
+<div class="form-group" style="margin-top:8px"><label class="form-label">Return Disposition</label><select class="form-select"><option>Return to Warehouse for Testing</option><option>Condemn — Unrepairable</option><option>Send for Calibration</option></select></div>
+</div>
+<div>
+<div style="font-size:11px;font-weight:600;color:var(--ink3);font-family:var(--mono);text-transform:uppercase;margin-bottom:12px">Step 2 — New Device Installation</div>
+<div class="form-row">
+<div class="form-group"><label class="form-label">New Meter Serial No *</label>
+<input class="form-input" value="SN-2042-0991" placeholder="Scan barcode or type serial"/></div>
+<div class="form-group"><label class="form-label">Source Stock</label><select class="form-select"><option>Van A (Manoj Kumar)</option><option>Warehouse</option></select></div></div>
+<div style="background:var(--green-l);border:1px solid rgba(16,126,62,.2);border-radius:8px;padding:12px;margin-bottom:12px">
+<div style="font-size:11px;font-weight:600;color:var(--green);margin-bottom:8px">New Device: SN-2042-0991 ✓ Stock confirmed</div>
+<div class="info-item"><div class="info-lbl">Type</div><div class="info-val">Single Phase Static (Secure Elite)</div></div>
+<div class="info-item"><div class="info-lbl">Phase</div><div class="info-val">1P · Class 1.0</div></div>
+<div class="info-item"><div class="info-lbl">Purchase Date</div><div class="info-val">15 Jan 2026</div></div>
+<div class="info-item"><div class="info-lbl">Calibration Valid Until</div><div class="info-val">15 Jan 2028</div></div>
+</div>
+<div class="form-row">
+<div class="form-group"><label class="form-label">Opening Reading (kWh) *</label><input class="form-input" type="number" value="0" placeholder="kWh on new meter"/></div>
+<div class="form-group"><label class="form-label">New Seal No(s) *</label><input class="form-input" value="TS-9021-A, TS-9021-B" placeholder="Seal numbers applied"/></div></div>
+<div class="form-group"><label class="form-label">Installation Photo Evidence (BR-016)</label>
+<div style="border:2px dashed var(--border);border-radius:6px;padding:16px;text-align:center;color:var(--ink3);font-size:12px;cursor:pointer" onclick="showToast('Camera opened on field app')">📷 Capture installed meter photo</div></div>
+<div style="background:var(--amber-l);border:1px solid rgba(122,74,0,.2);border-radius:8px;padding:10px;margin-top:10px;font-size:11px">
+<b>BR-044 — Billing Impact:</b> Proration will be applied from replacement date. 
+Bills for <b>08 Apr 2026</b> onwards will use new meter SN-2042-0991. 
+Previous bill through 07 Apr with final read 18,721 kWh will be issued automatically.
+</div></div>
+</div>
+<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
+<button class="btn btn-s">Save Draft</button>
+<button class="btn btn-g" onclick="showToast('✓ Replacement recorded. Inventory updated. Proration bill triggered.')">✓ Complete Replacement</button>
+</div></div></div>
+</div>
+<div id="p-maint" class="page">
+<div class="card"><div class="card-hd"><div class="card-title">🏗️ Asset Maintenance Register</div>
+<div class="card-sub">BR-045, BR-046 — Preventive, corrective, condition-based maintenance with failure history</div>
+<div class="card-r"><button class="btn btn-p btn-sm" onclick="openModal('m-newmaint')">+ Maintenance WO</button></div></div>
+<div class="tbl-wrap"><table class="tbl"><thead><tr>
+<th>Asset ID</th><th>Name</th><th>Type</th><th>Last Maint</th><th>Next Due</th><th>YTD Failures</th><th>Health</th><th>Action</th></tr></thead><tbody>
+<tr><td class="td-mono td-link">AST-DT-0421</td>
+<td style="font-weight:500">DT-421 Navrangpura 100kVA</td>
+<td><span class="pill closed" style="font-size:9px">Distribution Transformer</span></td>
+<td class="td-mono" style="font-size:11px">2025-11-15</td>
+<td class="td-mono" style="font-size:11px;">2026-05-15</td>
+<td style="font-weight:600;color:var(--ink)">0</td>
+<td><span class="pill active">Good</span></td>
+<td><button class="btn btn-s btn-sm" onclick="showToast('Inspection plan opened')">Inspect</button> 
+<button class="btn btn-s btn-sm" onclick="showToast('Corrective WO created')">+WO</button></td></tr>
+<tr><td class="td-mono td-link">AST-DT-0318</td>
+<td style="font-weight:500">DT-318 Adajan 63kVA</td>
+<td><span class="pill closed" style="font-size:9px">Distribution Transformer</span></td>
+<td class="td-mono" style="font-size:11px">2025-08-10</td>
+<td class="td-mono" style="font-size:11px;color:var(--red);font-weight:700">2026-02-10</td>
+<td style="font-weight:600;color:var(--red)">2</td>
+<td><span class="pill urgent">Overdue</span></td>
+<td><button class="btn btn-s btn-sm" onclick="showToast('Inspection plan opened')">Inspect</button> 
+<button class="btn btn-s btn-sm" onclick="showToast('Corrective WO created')">+WO</button></td></tr>
+<tr><td class="td-mono td-link">AST-CB-0811</td>
+<td style="font-weight:500">CB-0811 Feeder F-07 33kV</td>
+<td><span class="pill closed" style="font-size:9px">Circuit Breaker</span></td>
+<td class="td-mono" style="font-size:11px">2026-01-20</td>
+<td class="td-mono" style="font-size:11px;">2026-07-20</td>
+<td style="font-weight:600;color:var(--ink)">0</td>
+<td><span class="pill active">Good</span></td>
+<td><button class="btn btn-s btn-sm" onclick="showToast('Inspection plan opened')">Inspect</button> 
+<button class="btn btn-s btn-sm" onclick="showToast('Corrective WO created')">+WO</button></td></tr>
+<tr><td class="td-mono td-link">AST-FDR-F12</td>
+<td style="font-weight:500">Feeder F-12 11kV Surat</td>
+<td><span class="pill closed" style="font-size:9px">Feeder</span></td>
+<td class="td-mono" style="font-size:11px">2025-09-05</td>
+<td class="td-mono" style="font-size:11px;color:var(--red);font-weight:700">2026-03-05</td>
+<td style="font-weight:600;color:var(--red)">3</td>
+<td><span class="pill urgent">Overdue</span></td>
+<td><button class="btn btn-s btn-sm" onclick="showToast('Inspection plan opened')">Inspect</button> 
+<button class="btn btn-s btn-sm" onclick="showToast('Corrective WO created')">+WO</button></td></tr>
+</tbody></table></div></div>
+</div>
+<div id="p-outage" class="page">
+<div class="card"><div class="card-hd"><div class="card-title">⚡ Outage Event Register</div>
+<div class="card-sub">BR-047, BR-048 — Cluster complaints to known outages. Avoid duplicate dispatch.</div></div>
+<div class="tbl-wrap"><table class="tbl"><thead><tr>
+<th>Outage ID</th><th>Feeder/Area</th><th>Type</th><th>Start</th><th>Est Restore</th><th>Consumers</th><th>Complaints Linked</th><th>Status</th><th>Actions</th></tr></thead><tbody>
+<tr><td class="td-mono td-link">OUT-0081</td>
+<td><div style="font-weight:500">Adajan, Surat</div><div class="td-mono" style="font-size:10px;color:var(--ink3)">F-12 · Cable fault</div></td>
+<td><span class="pill urgent">Forced</span></td>
+<td class="td-mono" style="font-size:10px">2026-04-06 07:30</td>
+<td class="td-mono" style="font-size:10px">2026-04-06 12:00</td>
+<td style="font-weight:600;color:var(--red)">840</td>
+<td><span class="pill urgent">4 linked</span></td>
+<td><span class="pill urgent">Active</span></td>
+<td><button class="btn btn-s btn-sm" onclick="showToast('Outage detail + linked complaints shown')">View</button> 
+<button class="btn btn-s btn-sm" onclick="showToast("Bulk SMS sent to 840 consumers")">Notify</button></td></tr>
+<tr><td class="td-mono td-link">OUT-0079</td>
+<td><div style="font-weight:500">Navrangpura, Ahmedabad</div><div class="td-mono" style="font-size:10px;color:var(--ink3)">F-07 · Maintenance</div></td>
+<td><span class="pill pending">Planned</span></td>
+<td class="td-mono" style="font-size:10px">2026-04-06 06:00</td>
+<td class="td-mono" style="font-size:10px">2026-04-06 14:00</td>
+<td style="font-weight:600;color:var(--red)">320</td>
+<td><span class="pill urgent">2 linked</span></td>
+<td><span class="pill urgent">Active</span></td>
+<td><button class="btn btn-s btn-sm" onclick="showToast('Outage detail + linked complaints shown')">View</button> 
+<button class="btn btn-s btn-sm" onclick="showToast("Bulk SMS sent to 320 consumers")">Notify</button></td></tr>
+<tr><td class="td-mono td-link">OUT-0072</td>
+<td><div style="font-weight:500">Satellite Rd, Ahmedabad</div><div class="td-mono" style="font-size:10px;color:var(--ink3)">F-03 · Tree fall on LT line</div></td>
+<td><span class="pill urgent">Forced</span></td>
+<td class="td-mono" style="font-size:10px">2026-04-05 15:00</td>
+<td class="td-mono" style="font-size:10px">2026-04-05 18:30</td>
+<td style="font-weight:600;color:var(--red)">210</td>
+<td><span class="pill urgent">7 linked</span></td>
+<td><span class="pill active">Restored</span></td>
+<td><button class="btn btn-s btn-sm" onclick="showToast('Outage detail + linked complaints shown')">View</button> 
+<button class="btn btn-s btn-sm" onclick="showToast("Bulk SMS sent to 210 consumers")">Notify</button></td></tr>
+</tbody></table></div></div>
+<div class="card"><div class="card-hd"><div class="card-title">🔗 Complaint Clustering — Outage OUT-0081</div>
+<div class="card-sub">BR-048 — 4 no-supply complaints automatically clustered to Feeder F-12 outage</div></div>
+<div class="card-body">
+<div style="padding:10px;background:var(--amber-l);border-radius:6px;font-size:12px;margin-bottom:12px">
+⚠️ <b>4 complaints</b> raised for "No Supply" in Adajan, Surat between 07:30–08:15 today have been auto-clustered to <b>OUT-0081</b>. 
+No duplicate field dispatch recommended — restoration ETA: 12:00.
+</div>
+<table class="tbl"><thead><tr><th>Complaint</th><th>Customer</th><th>Raised At</th><th>Status</th><th>Action</th></tr></thead><tbody>
+<tr><td class="td-mono">CMP-20235</td><td>R. Parekh, Adajan</td><td class="td-mono">07:42</td>
+<td><span class="pill pending">Clustered to OUT-0081</span></td>
+<td><button class="btn btn-s btn-sm" onclick="showToast('Auto-response sent: Outage in your area. Est restore: 12:00')">Auto-Respond</button></td></tr>
+<tr><td class="td-mono">CMP-20236</td><td>M. Iyer, Adajan</td><td class="td-mono">07:55</td>
+<td><span class="pill pending">Clustered to OUT-0081</span></td>
+<td><button class="btn btn-s btn-sm" onclick="showToast('Auto-response sent: Outage in your area. Est restore: 12:00')">Auto-Respond</button></td></tr>
+<tr><td class="td-mono">CMP-20237</td><td>Surat Textiles Ltd</td><td class="td-mono">08:05</td>
+<td><span class="pill pending">Clustered to OUT-0081</span></td>
+<td><button class="btn btn-s btn-sm" onclick="showToast('Auto-response sent: Outage in your area. Est restore: 12:00')">Auto-Respond</button></td></tr>
+<tr><td class="td-mono">CMP-20239</td><td>A. Kapoor, Adajan</td><td class="td-mono">08:18</td>
+<td><span class="pill pending">Clustered to OUT-0081</span></td>
+<td><button class="btn btn-s btn-sm" onclick="showToast('Auto-response sent: Outage in your area. Est restore: 12:00')">Auto-Respond</button></td></tr>
+</tbody></table></div></div>
+</div>
+<div id="p-rpt" class="page">
+<div class="g4" style="margin-bottom:14px">
+<div class="kpi gr"><div class="kpi-lbl">SLA Compliance</div><div class="kpi-val">91.4%</div><div class="kpi-sub">Target > 90%</div></div>
+<div class="kpi am"><div class="kpi-lbl">First-Time Fix Rate</div><div class="kpi-val">84%</div><div class="kpi-sub">Target > 85%</div></div>
+<div class="kpi gr"><div class="kpi-lbl">Avg Complaint Res.</div><div class="kpi-val">18.4h</div><div class="kpi-sub">Target < 24h</div></div>
+<div class="kpi bl"><div class="kpi-lbl">Field Utilisation</div><div class="kpi-val">78%</div><div class="kpi-sub">12 of 18 active</div></div>
+</div>
+<div class="g2">
+<div class="card"><div class="card-hd"><div class="card-title">Complaints by Category (MTD)</div></div><div class="card-body">
+<div style="padding:5px 0;border-bottom:1px solid #F5F5F5">
+<div style="display:flex;justify-content:space-between;margin-bottom:3px;font-size:12px">
+<span>No Supply</span><span style="font-family:var(--mono)">28 (38%)</span></div>
+<div class="progress"><div class="progress-fill bl" style="width:38%"></div></div></div>
+<div style="padding:5px 0;border-bottom:1px solid #F5F5F5">
+<div style="display:flex;justify-content:space-between;margin-bottom:3px;font-size:12px">
+<span>Billing Dispute</span><span style="font-family:var(--mono)">18 (24%)</span></div>
+<div class="progress"><div class="progress-fill bl" style="width:24%"></div></div></div>
+<div style="padding:5px 0;border-bottom:1px solid #F5F5F5">
+<div style="display:flex;justify-content:space-between;margin-bottom:3px;font-size:12px">
+<span>Voltage Issue</span><span style="font-family:var(--mono)">12 (16%)</span></div>
+<div class="progress"><div class="progress-fill bl" style="width:16%"></div></div></div>
+<div style="padding:5px 0;border-bottom:1px solid #F5F5F5">
+<div style="display:flex;justify-content:space-between;margin-bottom:3px;font-size:12px">
+<span>Faulty Meter</span><span style="font-family:var(--mono)">9 (12%)</span></div>
+<div class="progress"><div class="progress-fill bl" style="width:12%"></div></div></div>
+<div style="padding:5px 0;border-bottom:1px solid #F5F5F5">
+<div style="display:flex;justify-content:space-between;margin-bottom:3px;font-size:12px">
+<span>Payment Issue</span><span style="font-family:var(--mono)">5 (7%)</span></div>
+<div class="progress"><div class="progress-fill bl" style="width:7%"></div></div></div>
+<div style="padding:5px 0;border-bottom:1px solid #F5F5F5">
+<div style="display:flex;justify-content:space-between;margin-bottom:3px;font-size:12px">
+<span>Other</span><span style="font-family:var(--mono)">2 (3%)</span></div>
+<div class="progress"><div class="progress-fill bl" style="width:3%"></div></div></div>
+</div></div>
+<div class="card"><div class="card-hd"><div class="card-title">Work Order Performance (MTD)</div></div><div class="card-body">
+<div style="padding:5px 0;border-bottom:1px solid #F5F5F5">
+<div style="display:flex;justify-content:space-between;margin-bottom:3px;font-size:12px">
+<span>Total WOs Raised</span><span style="font-family:var(--mono)">284</span></div>
+<div class="progress"><div class="progress-fill bl" style="width:100%"></div></div></div>
+<div style="padding:5px 0;border-bottom:1px solid #F5F5F5">
+<div style="display:flex;justify-content:space-between;margin-bottom:3px;font-size:12px">
+<span>Completed</span><span style="font-family:var(--mono)">238</span></div>
+<div class="progress"><div class="progress-fill gr" style="width:84%"></div></div></div>
+<div style="padding:5px 0;border-bottom:1px solid #F5F5F5">
+<div style="display:flex;justify-content:space-between;margin-bottom:3px;font-size:12px">
+<span>First-Time Fix</span><span style="font-family:var(--mono)">200</span></div>
+<div class="progress"><div class="progress-fill gr" style="width:70%"></div></div></div>
+<div style="padding:5px 0;border-bottom:1px solid #F5F5F5">
+<div style="display:flex;justify-content:space-between;margin-bottom:3px;font-size:12px">
+<span>Rescheduled</span><span style="font-family:var(--mono)">31</span></div>
+<div class="progress"><div class="progress-fill am" style="width:11%"></div></div></div>
+<div style="padding:5px 0;border-bottom:1px solid #F5F5F5">
+<div style="display:flex;justify-content:space-between;margin-bottom:3px;font-size:12px">
+<span>Unattended</span><span style="font-family:var(--mono)">15</span></div>
+<div class="progress"><div class="progress-fill rd" style="width:5%"></div></div></div>
+</div></div>
+</div>
+<div class="g2">
+<div class="card"><div class="card-hd"><div class="card-title">BRD Requirement Coverage</div>
+<div class="card-sub">56 requirements tracked against this platform</div></div><div class="card-body">
+<div style="padding:4px 0;border-bottom:1px solid #F5F5F5">
+<div style="display:flex;justify-content:space-between;margin-bottom:2px;font-size:11px">
+<span>Customer & Account (BR-001–003)</span><span style="font-family:var(--mono)">3/3</span></div>
+<div class="progress" style="height:4px"><div class="progress-fill gr" style="width:100%"></div></div></div>
+<div style="padding:4px 0;border-bottom:1px solid #F5F5F5">
+<div style="display:flex;justify-content:space-between;margin-bottom:2px;font-size:11px">
+<span>Service Lifecycle (BR-004–009)</span><span style="font-family:var(--mono)">6/6</span></div>
+<div class="progress" style="height:4px"><div class="progress-fill gr" style="width:100%"></div></div></div>
+<div style="padding:4px 0;border-bottom:1px solid #F5F5F5">
+<div style="display:flex;justify-content:space-between;margin-bottom:2px;font-size:11px">
+<span>Contract & Deposits (BR-010)</span><span style="font-family:var(--mono)">1/1</span></div>
+<div class="progress" style="height:4px"><div class="progress-fill gr" style="width:100%"></div></div></div>
+<div style="padding:4px 0;border-bottom:1px solid #F5F5F5">
+<div style="display:flex;justify-content:space-between;margin-bottom:2px;font-size:11px">
+<span>Metering & Smart (BR-012–021)</span><span style="font-family:var(--mono)">9/10</span></div>
+<div class="progress" style="height:4px"><div class="progress-fill am" style="width:90%"></div></div></div>
+<div style="padding:4px 0;border-bottom:1px solid #F5F5F5">
+<div style="display:flex;justify-content:space-between;margin-bottom:2px;font-size:11px">
+<span>Billing (BR-022–029)</span><span style="font-family:var(--mono)">7/8</span></div>
+<div class="progress" style="height:4px"><div class="progress-fill am" style="width:87%"></div></div></div>
+<div style="padding:4px 0;border-bottom:1px solid #F5F5F5">
+<div style="display:flex;justify-content:space-between;margin-bottom:2px;font-size:11px">
+<span>Payments & Collections (BR-030–032)</span><span style="font-family:var(--mono)">3/3</span></div>
+<div class="progress" style="height:4px"><div class="progress-fill gr" style="width:100%"></div></div></div>
+<div style="padding:4px 0;border-bottom:1px solid #F5F5F5">
+<div style="display:flex;justify-content:space-between;margin-bottom:2px;font-size:11px">
+<span>CRM & Complaints (BR-033–036)</span><span style="font-family:var(--mono)">4/4</span></div>
+<div class="progress" style="height:4px"><div class="progress-fill gr" style="width:100%"></div></div></div>
+<div style="padding:4px 0;border-bottom:1px solid #F5F5F5">
+<div style="display:flex;justify-content:space-between;margin-bottom:2px;font-size:11px">
+<span>Field Service (BR-037–040)</span><span style="font-family:var(--mono)">4/4</span></div>
+<div class="progress" style="height:4px"><div class="progress-fill gr" style="width:100%"></div></div></div>
+<div style="padding:4px 0;border-bottom:1px solid #F5F5F5">
+<div style="display:flex;justify-content:space-between;margin-bottom:2px;font-size:11px">
+<span>Spares & Inventory (BR-041–042)</span><span style="font-family:var(--mono)">2/2</span></div>
+<div class="progress" style="height:4px"><div class="progress-fill gr" style="width:100%"></div></div></div>
+<div style="padding:4px 0;border-bottom:1px solid #F5F5F5">
+<div style="display:flex;justify-content:space-between;margin-bottom:2px;font-size:11px">
+<span>Device Replacement (BR-043–044)</span><span style="font-family:var(--mono)">2/2</span></div>
+<div class="progress" style="height:4px"><div class="progress-fill gr" style="width:100%"></div></div></div>
+<div style="padding:4px 0;border-bottom:1px solid #F5F5F5">
+<div style="display:flex;justify-content:space-between;margin-bottom:2px;font-size:11px">
+<span>Asset Maintenance (BR-045–046)</span><span style="font-family:var(--mono)">2/2</span></div>
+<div class="progress" style="height:4px"><div class="progress-fill gr" style="width:100%"></div></div></div>
+<div style="padding:4px 0;border-bottom:1px solid #F5F5F5">
+<div style="display:flex;justify-content:space-between;margin-bottom:2px;font-size:11px">
+<span>Outage (BR-047–048)</span><span style="font-family:var(--mono)">2/2</span></div>
+<div class="progress" style="height:4px"><div class="progress-fill gr" style="width:100%"></div></div></div>
+<div style="padding:4px 0;border-bottom:1px solid #F5F5F5">
+<div style="display:flex;justify-content:space-between;margin-bottom:2px;font-size:11px">
+<span>Reporting (BR-049–050)</span><span style="font-family:var(--mono)">2/2</span></div>
+<div class="progress" style="height:4px"><div class="progress-fill gr" style="width:100%"></div></div></div>
+<div style="padding:4px 0;border-bottom:1px solid #F5F5F5">
+<div style="display:flex;justify-content:space-between;margin-bottom:2px;font-size:11px">
+<span>Integration (BR-051)</span><span style="font-family:var(--mono)">0/1</span></div>
+<div class="progress" style="height:4px"><div class="progress-fill rd" style="width:0%"></div></div></div>
+<div style="padding:4px 0;border-bottom:1px solid #F5F5F5">
+<div style="display:flex;justify-content:space-between;margin-bottom:2px;font-size:11px">
+<span>Security & Config (BR-052–056)</span><span style="font-family:var(--mono)">4/5</span></div>
+<div class="progress" style="height:4px"><div class="progress-fill am" style="width:80%"></div></div></div>
+</div></div>
+<div class="card"><div class="card-hd"><div class="card-title">Technician Scorecard</div></div><div class="card-body">
+<div class="tech-card" style="margin-bottom:8px">
+<div class="tech-avatar" style="background:var(--blue-l)">👷</div>
+<div style="flex:1"><div class="tech-name">Manoj Kumar <span style="color:var(--ink3);font-weight:400;font-size:11px">(Zone-A)</span></div>
+<div class="progress" style="margin-top:4px;width:120px"><div class="progress-fill gr" style="width:33%"></div></div></div>
+<div class="tech-r"><div style="font-family:var(--mono);font-size:12px">1/3</div>
+<span class="pill inprogress" style="font-size:9px;margin-top:3px">In Progress</span></div></div>
+<div class="tech-card" style="margin-bottom:8px">
+<div class="tech-avatar" style="background:var(--blue-l)">👷</div>
+<div style="flex:1"><div class="tech-name">Dinesh Patel <span style="color:var(--ink3);font-weight:400;font-size:11px">(Zone-B)</span></div>
+<div class="progress" style="margin-top:4px;width:120px"><div class="progress-fill gr" style="width:50%"></div></div></div>
+<div class="tech-r"><div style="font-family:var(--mono);font-size:12px">2/4</div>
+<span class="pill dispatch" style="font-size:9px;margin-top:3px">En Route</span></div></div>
+<div class="tech-card" style="margin-bottom:8px">
+<div class="tech-avatar" style="background:var(--blue-l)">👷</div>
+<div style="flex:1"><div class="tech-name">Sundar Rao <span style="color:var(--ink3);font-weight:400;font-size:11px">(Zone-A)</span></div>
+<div class="progress" style="margin-top:4px;width:120px"><div class="progress-fill gr" style="width:0%"></div></div></div>
+<div class="tech-r"><div style="font-family:var(--mono);font-size:12px">0/2</div>
+<span class="pill active" style="font-size:9px;margin-top:3px">Available</span></div></div>
+<div class="tech-card" style="margin-bottom:8px">
+<div class="tech-avatar" style="background:var(--blue-l)">👷</div>
+<div style="flex:1"><div class="tech-name">Ramesh Joshi <span style="color:var(--ink3);font-weight:400;font-size:11px">(Zone-C)</span></div>
+<div class="progress" style="margin-top:4px;width:120px"><div class="progress-fill gr" style="width:33%"></div></div></div>
+<div class="tech-r"><div style="font-family:var(--mono);font-size:12px">1/3</div>
+<span class="pill dispatch" style="font-size:9px;margin-top:3px">En Route</span></div></div>
+<div class="tech-card" style="margin-bottom:8px">
+<div class="tech-avatar" style="background:var(--blue-l)">👷</div>
+<div style="flex:1"><div class="tech-name">Kavita Shah <span style="color:var(--ink3);font-weight:400;font-size:11px">(Zone-A)</span></div>
+<div class="progress" style="margin-top:4px;width:120px"><div class="progress-fill gr" style="width:100%"></div></div></div>
+<div class="tech-r"><div style="font-family:var(--mono);font-size:12px">1/1</div>
+<span class="pill active" style="font-size:9px;margin-top:3px">Available</span></div></div>
+</div></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="modal-bg" id="m-newcomp" onclick="if(event.target===this)closeModal('m-newcomp')">
+<div class="modal">
+<div class="modal-hd"><div class="modal-title">Raise New Complaint</div>
+<button class="modal-close" onclick="closeModal('m-newcomp')">✕</button></div>
+<div class="modal-body"><div class="form-row">
+    <div class="form-group"><label class="form-label">Consumer CAN *</label><input class="form-input" placeholder="Enter CAN or search"/></div>
+    <div class="form-group"><label class="form-label">Channel</label><select class="form-select"><option>App</option><option>Walk-in</option><option>Phone</option><option>WhatsApp</option></select></div>
+  </div>
+  <div class="form-row">
+    <div class="form-group"><label class="form-label">Complaint Category *</label><select class="form-select">
+    <option>No Supply</option><option>Voltage Fluctuation</option><option>Billing Dispute</option>
+    <option>Faulty Meter</option><option>Payment Not Reflected</option><option>Unsafe Installation</option>
+    <option>Poor Field Conduct</option><option>Delayed Service</option></select></div>
+    <div class="form-group"><label class="form-label">Priority</label><select class="form-select"><option>High — Safety/No Supply</option><option>Medium</option><option>Low</option></select></div>
+  </div>
+  <div class="form-group" style="margin-bottom:10px"><label class="form-label">Description</label><textarea class="form-textarea" placeholder="Describe the issue in detail..."></textarea></div>
+  <div class="form-row">
+    <div class="form-group"><label class="form-label">Assign To</label><select class="form-select"><option>Auto-assign</option><option>Pramila S</option><option>Anand V</option></select></div>
+    <div class="form-group"><label class="form-label">Check Outage (BR-048)</label>
+    <div style="padding:8px 10px;background:var(--amber-l);border-radius:6px;font-size:11px">⚠ Active outage OUT-0079 in this area. Auto-cluster?</div></div>
+  </div></div>
+<div class="modal-ft"><button class="btn btn-s" onclick="closeModal('m-newcomp')">Cancel</button>
+  <button class="btn btn-g" onclick="closeModal('m-newcomp');showToast('✓ Complaint raised: CMP-20243')">Raise Complaint</button></div>
+</div></div>
+<div class="modal-bg" id="m-newwo" onclick="if(event.target===this)closeModal('m-newwo')">
+<div class="modal">
+<div class="modal-hd"><div class="modal-title">Create Work Order</div>
+<button class="modal-close" onclick="closeModal('m-newwo')">✕</button></div>
+<div class="modal-body"><div class="form-row">
+    <div class="form-group"><label class="form-label">Source</label><select class="form-select"><option>Complaint</option><option>Service Request</option><option>Meter Event (AMI)</option><option>Maintenance Plan</option><option>Manual</option></select></div>
+    <div class="form-group"><label class="form-label">WO Type</label><select class="form-select"><option>Service Restoration</option><option>Meter Replacement</option><option>New Connection</option><option>Disconnection</option><option>Meter Reading</option><option>Inspection</option></select></div>
+  </div>
+  <div class="form-row">
+    <div class="form-group"><label class="form-label">Assign Technician</label><select class="form-select"><option>Manoj Kumar (Zone-A)</option><option>Dinesh Patel (Zone-B)</option><option>Sundar Rao (Zone-A)</option></select></div>
+    <div class="form-group"><label class="form-label">Scheduled Date/Time</label><input class="form-input" type="datetime-local" value="2026-04-07T09:00"/></div>
+  </div>
+  <div class="form-group" style="margin-bottom:10px"><label class="form-label">Materials Required</label>
+  <input class="form-input" placeholder="e.g. Single phase meter, 2 seals, MCB 32A"/></div>
+  <div class="form-group"><label class="form-label">Priority</label><select class="form-select"><option>High</option><option>Medium</option><option>Low</option></select></div></div>
+<div class="modal-ft"><button class="btn btn-s" onclick="closeModal('m-newwo')">Cancel</button>
+  <button class="btn btn-p" onclick="closeModal('m-newwo');showToast('✓ WO-4441 created and dispatched to Manoj Kumar')">Dispatch</button></div>
+</div></div>
+<div class="modal-bg" id="m-issuemat" onclick="if(event.target===this)closeModal('m-issuemat')">
+<div class="modal">
+<div class="modal-hd"><div class="modal-title">Issue Materials to Work Order</div>
+<button class="modal-close" onclick="closeModal('m-issuemat')">✕</button></div>
+<div class="modal-body"><div class="form-row">
+    <div class="form-group"><label class="form-label">Work Order</label><select class="form-select"><option>WO-4430 — Meter Replacement (Priya Nair)</option><option>WO-4418 — New Connection</option><option>WO-4421 — Service Restoration</option></select></div>
+    <div class="form-group"><label class="form-label">Issue From</label><select class="form-select"><option>Van A (Manoj Kumar)</option><option>Warehouse</option><option>Van B</option></select></div>
+  </div>
+  <table class="tbl" style="margin-top:10px"><thead><tr><th>Item</th><th>Available</th><th>Qty to Issue</th></tr></thead><tbody>
+  <tr><td>Single-Phase Meter (Secure Elite)</td><td class="td-mono">12</td><td><input class="form-input" type="number" value="1" min="0" max="12" style="width:60px;padding:3px 6px"/></td></tr>
+  <tr><td>Lead Seal (Meter)</td><td class="td-mono">250</td><td><input class="form-input" type="number" value="2" min="0" max="250" style="width:60px;padding:3px 6px"/></td></tr>
+  <tr><td>MCB 32A Single Pole</td><td class="td-mono">15</td><td><input class="form-input" type="number" value="1" min="0" max="15" style="width:60px;padding:3px 6px"/></td></tr>
+  </tbody></table></div>
+<div class="modal-ft"><button class="btn btn-s" onclick="closeModal('m-issuemat')">Cancel</button>
+  <button class="btn btn-g" onclick="closeModal('m-issuemat');showToast('✓ Materials issued. Inventory updated.')">Issue Materials</button></div>
+</div></div>
+<div class="modal-bg" id="m-compdetail" onclick="if(event.target===this)closeModal('m-compdetail')">
+<div class="modal">
+<div class="modal-hd"><div class="modal-title">CMP-20241 — No Supply (Rajesh Mehta)</div>
+<button class="modal-close" onclick="closeModal('m-compdetail')">✕</button></div>
+<div class="modal-body"><div style="display:flex;gap:12px;margin-bottom:12px">
+    <div style="flex:1">
+      <div style="font-size:10px;color:var(--ink3);font-family:var(--mono);text-transform:uppercase;margin-bottom:4px">Consumer</div>
+      <div style="font-size:13px;font-weight:600">Rajesh Mehta · CAN 56039281</div>
+      <div style="font-size:11px;color:var(--ink3)">LT-1 Domestic · B-12, Navrangpura</div>
+    </div>
+    <div>
+      <div style="font-size:10px;color:var(--ink3);font-family:var(--mono);text-transform:uppercase;margin-bottom:4px">SLA Clock</div>
+      <div><svg width="56" height="56" viewBox="0 0 56 56"><circle cx="28" cy="28" r="24" fill="none" stroke="#EAECEF" stroke-width="5"/><circle cx="28" cy="28" r="24" fill="none" stroke="#9B7300" stroke-width="5" stroke-dasharray="95.0 150.8" stroke-linecap="round" transform="rotate(-90 28 28)"/></svg></div>
+      <div style="text-align:center;font-size:10px;color:var(--amber);font-family:var(--mono)">2.5h / 4h</div>
+    </div>
+  </div>
+  <div class="timeline" style="margin-top:10px">
+    <div class="tl-item done"><div class="tl-title">Complaint Raised (App)</div><div class="tl-sub">Consumer reported no supply at 08:45. Auto-priority: High</div><div class="tl-time">06 Apr 2026 · 08:45</div></div>
+    <div class="tl-item done"><div class="tl-title">Outage Cluster Check</div><div class="tl-sub">OUT-0079 (Navrangpura, planned) checked — consumer NOT in feeder area. No auto-cluster.</div><div class="tl-time">06 Apr 2026 · 08:46</div></div>
+    <div class="tl-item done"><div class="tl-title">WO-4421 Dispatched</div><div class="tl-sub">Assigned to Manoj Kumar (Zone-A T1). Scheduled 10:00.</div><div class="tl-time">06 Apr 2026 · 09:10</div></div>
+    <div class="tl-item active"><div class="tl-title">Technician In Progress</div><div class="tl-sub">Manoj checked fuse condition. HRC fuse 63A blown. Replacement in progress.</div><div class="tl-time">06 Apr 2026 · 10:35</div></div>
+    <div class="tl-item pend"><div class="tl-title">Service Restoration & Closure</div><div class="tl-sub">Awaiting completion confirmation from field app.</div><div class="tl-time">—</div></div>
+  </div></div>
+<div class="modal-ft"><button class="btn btn-s" onclick="closeModal('m-compdetail')">Close</button>
+  <button class="btn btn-p" onclick="closeModal('m-compdetail');showToast('Escalated to L2 — SDO notified')">Escalate L2</button>
+  <button class="btn btn-g" onclick="closeModal('m-compdetail');showToast('CMP-20241 closed. Consumer notified.')">Close Complaint</button></div>
+</div></div>
+<div class="modal-bg" id="m-newcust" onclick="if(event.target===this)closeModal('m-newcust')">
+<div class="modal">
+<div class="modal-hd"><div class="modal-title">New Customer Registration</div>
+<button class="modal-close" onclick="closeModal('m-newcust')">✕</button></div>
+<div class="modal-body"><div class="form-row">
+    <div class="form-group"><label class="form-label">Full Name *</label><input class="form-input" placeholder="Full legal name"/></div>
+    <div class="form-group"><label class="form-label">Customer Type</label><select class="form-select"><option>Individual</option><option>Commercial</option><option>Industrial</option><option>Public / Govt</option></select></div>
+  </div>
+  <div class="form-row">
+    <div class="form-group"><label class="form-label">Mobile *</label><input class="form-input" placeholder="+91 XXXXX XXXXX"/></div>
+    <div class="form-group"><label class="form-label">Email</label><input class="form-input" placeholder="email@domain.com"/></div>
+  </div>
+  <div class="form-group" style="margin-bottom:10px"><label class="form-label">Premise Address *</label><input class="form-input" placeholder="Full address with PIN code"/></div>
+  <div class="form-row">
+    <div class="form-group"><label class="form-label">Aadhaar (last 4 digits)</label><input class="form-input" placeholder="XXXX" maxlength="4"/></div>
+    <div class="form-group"><label class="form-label">PAN Reference</label><input class="form-input" placeholder="XXXXX9999X"/></div>
+  </div></div>
+<div class="modal-ft"><button class="btn btn-s" onclick="closeModal('m-newcust')">Cancel</button>
+  <button class="btn btn-p" onclick="closeModal('m-newcust');showToast('✓ Customer BP-00712 created. Proceed to new connection.')">Create Customer</button></div>
+</div></div>
+<div class="modal-bg" id="m-newsr" onclick="if(event.target===this)closeModal('m-newsr')">
+<div class="modal">
+<div class="modal-hd"><div class="modal-title">New Service Request</div>
+<button class="modal-close" onclick="closeModal('m-newsr')">✕</button></div>
+<div class="modal-body"><div class="form-row">
+    <div class="form-group"><label class="form-label">Consumer CAN *</label><input class="form-input" placeholder="Enter CAN"/></div>
+    <div class="form-group"><label class="form-label">Request Type *</label><select class="form-select">
+    <option>Move-In (New Occupant)</option><option>Move-Out (Final Bill)</option><option>Name Change</option>
+    <option>Category Change</option><option>Load Modification</option><option>Meter Inspection</option>
+    <option>Meter Replacement</option><option>Payment Arrangement</option><option>New Connection</option></select></div>
+  </div>
+  <div class="form-group" style="margin-bottom:10px"><label class="form-label">Description</label>
+  <textarea class="form-textarea" placeholder="Additional details for the service request..."></textarea></div>
+  <div class="form-row">
+    <div class="form-group"><label class="form-label">Preferred Date</label><input class="form-input" type="date" value="2026-04-08"/></div>
+    <div class="form-group"><label class="form-label">Contact Mobile</label><input class="form-input" placeholder="+91 XXXXX XXXXX"/></div>
+  </div></div>
+<div class="modal-ft"><button class="btn btn-s" onclick="closeModal('m-newsr')">Cancel</button>
+  <button class="btn btn-p" onclick="closeModal('m-newsr');showToast('✓ SR-1820 created. SLA clock started.')">Create SR</button></div>
+</div></div>
+<div class="modal-bg" id="m-replenish" onclick="if(event.target===this)closeModal('m-replenish')">
+<div class="modal">
+<div class="modal-hd"><div class="modal-title">Replenishment Request</div>
+<button class="modal-close" onclick="closeModal('m-replenish')">✕</button></div>
+<div class="modal-body"><div class="form-row">
+    <div class="form-group"><label class="form-label">Item</label><select class="form-select">
+    <option>Single-Phase Static Meter</option><option>Smart Meter + GPRS Module</option><option>Lead Seals</option><option>HRC Fuse 63A</option></select></div>
+    <div class="form-group"><label class="form-label">Quantity Requested</label><input class="form-input" type="number" value="100" min="1"/></div>
+  </div>
+  <div class="form-row">
+    <div class="form-group"><label class="form-label">Replenish To</label><select class="form-select"><option>Warehouse</option><option>Van A</option><option>Van B</option></select></div>
+    <div class="form-group"><label class="form-label">Priority</label><select class="form-select"><option>Urgent (stock below minimum)</option><option>Normal</option></select></div>
+  </div></div>
+<div class="modal-ft"><button class="btn btn-s" onclick="closeModal('m-replenish')">Cancel</button>
+  <button class="btn btn-p" onclick="closeModal('m-replenish');showToast('✓ PO-0042 raised for replenishment.')">Raise PO</button></div>
+</div></div>
+<div class="modal-bg" id="m-newmaint" onclick="if(event.target===this)closeModal('m-newmaint')">
+<div class="modal">
+<div class="modal-hd"><div class="modal-title">Create Maintenance Work Order</div>
+<button class="modal-close" onclick="closeModal('m-newmaint')">✕</button></div>
+<div class="modal-body"><div class="form-row">
+    <div class="form-group"><label class="form-label">Asset</label><select class="form-select">
+    <option>DT-421 Navrangpura 100kVA</option><option>DT-318 Adajan 63kVA</option><option>CB-0811 Feeder F-07</option></select></div>
+    <div class="form-group"><label class="form-label">Maintenance Type</label><select class="form-select">
+    <option>Preventive (Scheduled)</option><option>Corrective (Fault)</option><option>Inspection</option></select></div>
+  </div>
+  <div class="form-group" style="margin-bottom:10px"><label class="form-label">Defect Description</label>
+  <textarea class="form-textarea" placeholder="Describe defect, oil level low, abnormal noise, etc."></textarea></div>
+  <div class="form-row">
+    <div class="form-group"><label class="form-label">Assign Team</label><select class="form-select"><option>HT Maintenance Team</option><option>Zone-B Team 2</option></select></div>
+    <div class="form-group"><label class="form-label">Planned Date</label><input class="form-input" type="date" value="2026-04-10"/></div>
+  </div></div>
+<div class="modal-ft"><button class="btn btn-s" onclick="closeModal('m-newmaint')">Cancel</button>
+  <button class="btn btn-p" onclick="closeModal('m-newmaint');showToast('✓ Maintenance WO-4442 created.')">Create</button></div>
+</div></div>
+<script>
+function showC360(name, can, type, status) {
+  document.getElementById('c360-panel').style.display='block';
+  document.getElementById('c360-name').textContent = name;
+  document.getElementById('c360-meta').textContent = type + ' · CAN: ' + can + ' · Status: ' + status;
+  document.getElementById('c360-panel').scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+</script><script>
+// Navigation
+function nav(id, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('a'));
+  document.querySelectorAll('.sb-item').forEach(i => i.classList.remove('a'));
+  const pg = document.getElementById('p-' + id);
+  if (pg) pg.classList.add('a');
+  if (btn) btn.classList.add('a');
+  const tb = document.querySelector('.tb-title');
+  const ts = document.querySelector('.tb-sub');
+  const titles = {
+    dash:  ['Dashboard', 'Real-time operations overview'],
+    cust:  ['Customer 360', 'Unified customer view — BR-001, BR-003, BR-033'],
+    srlc:  ['Service Lifecycle', 'Move-in · Move-out · Transfer · BR-005 to BR-009'],
+    comp:  ['Complaints & Disputes', 'SLA-governed case management — BR-034 to BR-036'],
+    wo:    ['Work Orders', 'Field service dispatch & execution — BR-037 to BR-040'],
+    field: ['Field Mobile View', 'Technician execution app — BR-038, BR-039'],
+    inv:   ['Spares & Inventory', 'Van stock · Warehouse · Serialized — BR-041, BR-042'],
+    repl:  ['Device Replacement', 'Faulty & upgrade replacements — BR-043, BR-044'],
+    maint: ['Asset Maintenance', 'Preventive & corrective — BR-045, BR-046'],
+    outage:['Outage Linkage', 'Cluster complaints to events — BR-047, BR-048'],
+    rpt:   ['Reports & KPIs', 'Operational & compliance — BR-049, BR-050'],
+  };
+  if (tb && titles[id]) tb.textContent = titles[id][0];
+  if (ts && titles[id]) ts.textContent = titles[id][1];
+}
+
+// Card tabs
+function ctab(container, id) {
+  const c = document.getElementById(container);
+  if (!c) return;
+  c.querySelectorAll('.ct').forEach(t => t.classList.remove('a'));
+  c.querySelectorAll('.cpane').forEach(p => p.classList.remove('a'));
+  const btn = c.querySelector(`.ct[data-tab="${id}"]`);
+  const pane = document.getElementById(container + '-' + id);
+  if (btn) btn.classList.add('a');
+  if (pane) pane.classList.add('a');
+}
+
+// Modal
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+// Checklist toggle
+function toggleCheck(el) {
+  el.classList.toggle('done');
+  el.innerHTML = el.classList.contains('done') ? '✓' : '';
+  const lbl = el.nextElementSibling;
+  if (lbl) lbl.style.textDecoration = el.classList.contains('done') ? 'line-through' : '';
+}
+
+// Service lifecycle stepper
+let slStep = 1;
+function slNext() {
+  if (slStep < 5) { slStep++; updateStepper(); }
+}
+function slBack() {
+  if (slStep > 1) { slStep--; updateStepper(); }
+}
+function updateStepper() {
+  document.querySelectorAll('.sl-step').forEach((s, i) => {
+    s.classList.remove('done', 'active', 'pend');
+    if (i + 1 < slStep) s.classList.add('done');
+    else if (i + 1 === slStep) s.classList.add('active');
+    else s.classList.add('pend');
+  });
+  document.querySelectorAll('.sl-pane').forEach((p, i) => {
+    p.style.display = i + 1 === slStep ? 'block' : 'none';
+  });
+  document.getElementById('sl-back').style.visibility = slStep > 1 ? 'visible' : 'hidden';
+  const nxt = document.getElementById('sl-next');
+  if (nxt) nxt.textContent = slStep === 5 ? '✓ Activate Service' : 'Next →';
+}
+
+// Inventory allocation
+function allocateItem(btn) {
+  const row = btn.closest('tr');
+  const qty = row.querySelector('.alloc-qty');
+  const avail = row.querySelector('.avail-qty');
+  const v = parseInt(qty.value) || 0;
+  const a = parseInt(avail.textContent) || 0;
+  if (v > 0 && v <= a) {
+    avail.textContent = a - v;
+    btn.textContent = '✓ Issued';
+    btn.className = 'btn btn-s btn-sm';
+    btn.disabled = true;
+    showToast('✓ ' + v + ' unit(s) issued to work order');
+  }
+}
+
+// Toast notification
+function showToast(msg) {
+  const t = document.createElement('div');
+  t.style.cssText = 'position:fixed;bottom:20px;right:20px;background:#1E2D3E;color:#fff;padding:10px 16px;border-radius:8px;font-size:12px;z-index:9999;animation:fadeIn .3s';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+
+// Complaint SLA visual
+function slaArc(pct, color) {
+  const r = 24, cx = 28, cy = 28;
+  const circ = 2 * Math.PI * r;
+  const dash = circ * pct / 100;
+  return `<svg width="56" height="56" viewBox="0 0 56 56">
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#EAECEF" stroke-width="5"/>
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="5"
+      stroke-dasharray="${dash} ${circ}" stroke-linecap="round" transform="rotate(-90 ${cx} ${cy})"/>
+  </svg>`;
+}
+
+// WO status change
+function updateWOStatus(select) {
+  const row = select.closest('tr');
+  const td = row.querySelector('.wo-status-td');
+  const map = {
+    'Assigned':'<span class="pill pending">Assigned</span>',
+    'En Route':'<span class="pill dispatch">En Route</span>',
+    'In Progress':'<span class="pill inprogress">In Progress</span>',
+    'Completed':'<span class="pill active">Completed</span>',
+    'Unattended':'<span class="pill urgent">Unattended</span>',
+  };
+  if (td && map[select.value]) td.innerHTML = map[select.value];
+  showToast('Work order status updated → ' + select.value);
+}
+
+// Field checklist completion
+function calcProgress() {
+  const checks = document.querySelectorAll('#field-checks .chk');
+  const done = document.querySelectorAll('#field-checks .chk.done').length;
+  const pct = Math.round(done / checks.length * 100);
+  const bar = document.getElementById('chk-progress');
+  if (bar) {
+    bar.style.width = pct + '%';
+    bar.className = 'progress-fill ' + (pct < 40 ? 'rd' : pct < 80 ? 'am' : 'gr');
+  }
+  const lbl = document.getElementById('chk-pct');
+  if (lbl) lbl.textContent = pct + '% complete';
+}
+
+window.onload = function() {
+  nav('dash', document.querySelector('.sb-item'));
+  updateStepper();
+  document.querySelectorAll('#field-checks .chk').forEach(c => {
+    c.addEventListener('click', function() { toggleCheck(this); calcProgress(); });
+  });
+};
+</script>
+</body></html>

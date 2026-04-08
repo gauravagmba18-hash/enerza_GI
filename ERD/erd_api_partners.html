@@ -1,0 +1,107 @@
+
+<style>
+#erd6 svg { max-width:100%; }
+#erd6 svg.erDiagram .row-rect-odd path,
+#erd6 svg.erDiagram .row-rect-odd rect,
+#erd6 svg.erDiagram .row-rect-even path,
+#erd6 svg.erDiagram .row-rect-even rect { stroke: none !important; }
+</style>
+<div id="erd6" style="overflow-x:auto;padding:4px 0"></div>
+<script type="module">
+import mermaid from 'https://esm.sh/mermaid@11/dist/mermaid.esm.min.mjs';
+const dark = matchMedia('(prefers-color-scheme: dark)').matches;
+await document.fonts.ready;
+mermaid.initialize({startOnLoad:false,theme:'base',fontFamily:'"Anthropic Sans",sans-serif',themeVariables:{darkMode:dark,fontSize:'13px',fontFamily:'"Anthropic Sans",sans-serif',lineColor:dark?'#9c9a92':'#73726c',textColor:dark?'#c2c0b6':'#3d3d3a'}});
+const {svg} = await mermaid.render('erd6-svg',`erDiagram
+    API_PARTNER ||--o{ API_CREDENTIAL : "has"
+    API_PARTNER ||--o{ API_ENDPOINT_MAPPING : "assigned"
+    API_ENDPOINT_CATALOG ||--o{ API_ENDPOINT_MAPPING : "defines"
+    API_PARTNER ||--o{ API_TRANSACTION : "makes"
+    API_ENDPOINT_CATALOG ||--o{ API_TRANSACTION : "called as"
+    API_PARTNER ||--o{ WEBHOOK_SUBSCRIPTION : "subscribes"
+    API_PARTNER ||--o| API_RATE_LIMIT : "governed by"
+    API_ERROR_CODE }o--o{ API_TRANSACTION : "returned in"
+
+    API_PARTNER {
+        varchar partner_id PK
+        varchar partner_name
+        varchar partner_type
+        varchar contact_email
+        varchar contact_mobile
+        varchar settlement_mode
+        varchar status
+    }
+    API_CREDENTIAL {
+        varchar credential_id PK
+        varchar partner_id FK
+        varchar client_id
+        varchar secret_ref
+        timestamp token_expiry
+        varchar ip_whitelist
+        varchar cert_ref
+    }
+    API_ENDPOINT_CATALOG {
+        varchar endpoint_id PK
+        varchar endpoint_code
+        varchar operation_type
+        varchar request_method
+        varchar auth_type
+        boolean sync_flag
+        varchar version
+    }
+    API_ENDPOINT_MAPPING {
+        varchar mapping_id PK
+        varchar partner_id FK
+        varchar endpoint_id FK
+        boolean enabled
+        date effective_from
+    }
+    API_TRANSACTION {
+        varchar api_txn_id PK
+        varchar partner_id FK
+        varchar endpoint_id FK
+        timestamp request_time
+        int response_ms
+        varchar status_code
+        varchar error_code FK
+        varchar payload_ref
+    }
+    WEBHOOK_SUBSCRIPTION {
+        varchar webhook_id PK
+        varchar partner_id FK
+        varchar event_type
+        varchar target_url
+        varchar signature_method
+        int retry_count
+        boolean active
+    }
+    API_RATE_LIMIT {
+        varchar limit_id PK
+        varchar partner_id FK
+        int requests_per_min
+        int burst_limit
+        int timeout_ms
+        varchar retry_policy
+    }
+    API_ERROR_CODE {
+        varchar error_code PK
+        int http_status
+        varchar message
+        boolean retryable
+        varchar category
+    }
+`);
+document.getElementById('erd6').innerHTML = svg;
+document.querySelectorAll('#erd6 svg.erDiagram .node').forEach(node=>{
+  const p=node.querySelector('path[d]');if(!p)return;
+  const d=p.getAttribute('d'),nums=d.match(/-?[\d.]+/g)?.map(Number);
+  if(!nums||nums.length<8)return;
+  const xs=[nums[0],nums[2],nums[4],nums[6]],ys=[nums[1],nums[3],nums[5],nums[7]];
+  const x=Math.min(...xs),y=Math.min(...ys),w=Math.max(...xs)-x,h=Math.max(...ys)-y;
+  const r=document.createElementNS('http://www.w3.org/2000/svg','rect');
+  r.setAttribute('x',x);r.setAttribute('y',y);r.setAttribute('width',w);r.setAttribute('height',h);r.setAttribute('rx','8');
+  for(const a of['fill','stroke','stroke-width','class','style'])if(p.hasAttribute(a))r.setAttribute(a,p.getAttribute(a));
+  p.replaceWith(r);
+});
+document.querySelectorAll('#erd6 svg.erDiagram .row-rect-odd path,#erd6 svg.erDiagram .row-rect-even path').forEach(p=>p.setAttribute('stroke','none'));
+</script>

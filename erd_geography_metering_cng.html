@@ -1,0 +1,116 @@
+
+<style>
+#erd2 svg { max-width:100%; }
+#erd2 svg.erDiagram .row-rect-odd path,
+#erd2 svg.erDiagram .row-rect-odd rect,
+#erd2 svg.erDiagram .row-rect-even path,
+#erd2 svg.erDiagram .row-rect-even rect { stroke: none !important; }
+</style>
+<div id="erd2" style="overflow-x:auto;padding:4px 0"></div>
+<script type="module">
+import mermaid from 'https://esm.sh/mermaid@11/dist/mermaid.esm.min.mjs';
+const dark = matchMedia('(prefers-color-scheme: dark)').matches;
+await document.fonts.ready;
+mermaid.initialize({startOnLoad:false,theme:'base',fontFamily:'"Anthropic Sans",sans-serif',themeVariables:{darkMode:dark,fontSize:'13px',fontFamily:'"Anthropic Sans",sans-serif',lineColor:dark?'#9c9a92':'#73726c',textColor:dark?'#c2c0b6':'#3d3d3a'}});
+const {svg} = await mermaid.render('erd2-svg',`erDiagram
+    CGDAREA ||--o{ ROUTE : "has"
+    CGDAREA ||--o{ CNG_STATION : "hosts"
+    METER ||--o{ METER_INSTALLATION : "tracked via"
+    METER_INSTALLATION }|--|| SERVICE_CONNECTION : "on"
+    METER ||--o{ METER_READING : "generates"
+    ROUTE }o--o{ METER_READING : "scheduled by"
+    CNG_STATION ||--o{ CNG_SALE : "records"
+    VEHICLE_CATEGORY ||--o{ CNG_SALE : "categorizes"
+
+    CGDAREA {
+        varchar area_id PK
+        varchar area_name
+        varchar city
+        varchar district
+        varchar state
+        varchar zone
+        varchar utility_type
+        varchar status
+    }
+    ROUTE {
+        varchar route_id PK
+        varchar area_id FK
+        varchar route_name
+        varchar cycle_group
+        varchar reader_id
+        varchar status
+    }
+    METER {
+        varchar meter_id PK
+        varchar serial_no
+        varchar meter_type
+        varchar make
+        varchar model
+        varchar uom
+        varchar utility_type
+        date calibration_due
+        varchar status
+    }
+    METER_INSTALLATION {
+        varchar install_id PK
+        varchar meter_id FK
+        varchar connection_id FK
+        date install_date
+        date remove_date
+        varchar seal_no
+        varchar reason
+    }
+    METER_READING {
+        varchar reading_id PK
+        varchar meter_id FK
+        varchar connection_id FK
+        varchar route_id FK
+        date reading_date
+        decimal reading_value
+        decimal consumption
+        varchar reading_type
+        varchar status
+    }
+    SERVICE_CONNECTION {
+        varchar connection_id PK
+    }
+    CNG_STATION {
+        varchar station_id PK
+        varchar station_name
+        varchar area_id FK
+        varchar city
+        varchar compressor_type
+        int dispenser_count
+        varchar status
+    }
+    VEHICLE_CATEGORY {
+        varchar category_id PK
+        varchar category_name
+        varchar vehicle_type
+        boolean commercial_flag
+        varchar status
+    }
+    CNG_SALE {
+        varchar sale_id PK
+        varchar station_id FK
+        varchar category_id FK
+        date sale_date
+        decimal quantity_scm
+        decimal unit_price
+        decimal amount
+    }
+`);
+document.getElementById('erd2').innerHTML = svg;
+document.querySelectorAll('#erd2 svg.erDiagram .node').forEach(node=>{
+  const p=node.querySelector('path[d]');if(!p)return;
+  const d=p.getAttribute('d'),nums=d.match(/-?[\d.]+/g)?.map(Number);
+  if(!nums||nums.length<8)return;
+  const xs=[nums[0],nums[2],nums[4],nums[6]],ys=[nums[1],nums[3],nums[5],nums[7]];
+  const x=Math.min(...xs),y=Math.min(...ys),w=Math.max(...xs)-x,h=Math.max(...ys)-y;
+  const r=document.createElementNS('http://www.w3.org/2000/svg','rect');
+  r.setAttribute('x',x);r.setAttribute('y',y);r.setAttribute('width',w);r.setAttribute('height',h);r.setAttribute('rx','8');
+  for(const a of['fill','stroke','stroke-width','class','style'])if(p.hasAttribute(a))r.setAttribute(a,p.getAttribute(a));
+  p.replaceWith(r);
+});
+document.querySelectorAll('#erd2 svg.erDiagram .row-rect-odd path,#erd2 svg.erDiagram .row-rect-even path').forEach(p=>p.setAttribute('stroke','none'));
+</script>
