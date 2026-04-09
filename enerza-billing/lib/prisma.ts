@@ -1,14 +1,9 @@
 import { PrismaClient } from "@prisma/client";
-// Prisma Client Singleton for Enerza Billing
-import { PrismaLibSql } from "@prisma/adapter-libsql";
+import { PrismaPg } from "@prisma/adapter-pg";
 
 function createPrismaClient() {
-  // Use DATABASE_URL from .env (e.g. "file:./dev.db")
-  // If not set, fall back to relative path from project root
-  const url = process.env.DATABASE_URL ?? "file:./dev.db";
-  const adapter = new PrismaLibSql({ url });
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return new PrismaClient({ adapter } as any);
+  const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
+  return new PrismaClient({ adapter });
 }
 
 const globalForPrisma = globalThis as unknown as {

@@ -1,5 +1,3 @@
-"use client";
-
 const STATUS_COLORS: Record<string, { bg: string; text: string; border: string }> = {
   OPEN: { bg: "rgba(59,130,246,0.1)", text: "#3b82f6", border: "rgba(59,130,246,0.2)" },
   ACTIVE: { bg: "rgba(16,185,129,0.1)", text: "#10b981", border: "rgba(16,185,129,0.2)" },

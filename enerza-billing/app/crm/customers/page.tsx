@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/prisma";
 import { CRMStatusPill } from "@/components/crm/CRMStatusPill";
 import { Users, Search, Filter, ArrowRight } from "lucide-react";
