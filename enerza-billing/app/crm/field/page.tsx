@@ -1,33 +1,34 @@
 "use client";
 import React, { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
-import { 
-  Users, 
-  MapPin, 
-  ChevronRight, 
-  Search, 
-  Wrench, 
+import type { MapContainerProps, MarkerProps, TileLayerProps, PopupProps } from 'react-leaflet';
+import {
+  Users,
+  MapPin,
+  ChevronRight,
+  Search,
+  Wrench,
   Clock,
   Phone
 } from "lucide-react";
 import { CRMStatusPill } from "@/components/crm/CRMStatusPill";
 
-// Dynamic import for Leaflet (SSR fix)
-const MapContainer = dynamic(() => import('react-leaflet').then(mod => mod.MapContainer), { ssr: false });
-const TileLayer = dynamic(() => import('react-leaflet').then(mod => mod.TileLayer), { ssr: false });
-const Marker = dynamic(() => import('react-leaflet').then(mod => mod.Marker), { ssr: false });
-const Popup = dynamic(() => import('react-leaflet').then(mod => mod.Popup), { ssr: false });
+// Dynamic import for Leaflet (SSR fix) — typed to avoid @ts-ignore on props
+const MapContainer = dynamic<MapContainerProps>(() => import('react-leaflet').then(mod => mod.MapContainer), { ssr: false });
+const TileLayer = dynamic<TileLayerProps>(() => import('react-leaflet').then(mod => mod.TileLayer), { ssr: false });
+const Marker = dynamic<MarkerProps>(() => import('react-leaflet').then(mod => mod.Marker), { ssr: false });
+const Popup = dynamic<PopupProps>(() => import('react-leaflet').then(mod => mod.Popup), { ssr: false });
+
+type Technician = { id: number; name: string; status: string; pos: [number, number]; orders: number; phone: string };
 
 export default function FieldTracking() {
   const [isClient, setIsClient] = useState(false);
-  const [L, setL] = useState<any>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     setIsClient(true);
-    // Import Leaflet directly for icon fix
+    // Fix default Leaflet marker icons
     import('leaflet').then(mod => {
-      setL(mod);
-      // Fix default marker icons
       delete (mod.Icon.Default.prototype as any)._getIconUrl;
       mod.Icon.Default.mergeOptions({
         iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
@@ -35,16 +36,16 @@ export default function FieldTracking() {
         shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
       });
     });
-  }, []);
+  }, [refreshKey]);
 
-  const technicians = [
+  const technicians: Technician[] = [
     { id: 1, name: "Manoj Kumar", status: "ON_SITE", pos: [23.0225, 72.5714], orders: 3, phone: "+91 99011 22334" },
     { id: 2, name: "Dinesh Patel", status: "EN_ROUTE", pos: [23.0338, 72.5850], orders: 2, phone: "+91 99011 55667" },
     { id: 3, name: "Sundar Rao", status: "ACTIVE", pos: [23.0120, 72.5100], orders: 4, phone: "+91 98722 00112" },
     { id: 4, name: "Ramesh Sharma", status: "OFF_DUTY", pos: [23.0450, 72.6000], orders: 0, phone: "+91 98233 44556" },
   ];
 
-  if (!isClient || !L) {
+  if (!isClient) {
     return <div style={{ padding: 24, textAlign: "center", color: "var(--muted)" }}>Loading Field Operations Map...</div>;
   }
 
@@ -56,7 +57,7 @@ export default function FieldTracking() {
           <p style={{ fontSize: 13, color: "var(--muted)" }}>Live technician locations and service request dispatch board</p>
         </div>
         <div style={{ display: "flex", gap: 12 }}>
-          <button style={{ background: "var(--bg-lighter)", border: "1px solid var(--card-border)", padding: "8px 12px", borderRadius: 8, fontSize: 13, cursor: "pointer" }}>
+          <button onClick={() => setRefreshKey(k => k + 1)} style={{ background: "var(--bg-lighter)", border: "1px solid var(--card-border)", padding: "8px 12px", borderRadius: 8, fontSize: 13, cursor: "pointer" }}>
             Refresh Data
           </button>
           <button style={{ background: "var(--accent)", color: "#fff", border: "none", padding: "8px 16px", borderRadius: 8, fontWeight: 700, fontSize: 13, cursor: "pointer" }}>
@@ -101,15 +102,13 @@ export default function FieldTracking() {
           overflow: "hidden",
           position: "relative"
         }}>
-          {/* @ts-ignore */}
-          <MapContainer center={[23.0225, 72.5714] as any} zoom={13} style={{ height: "100%", width: "100%" }}>
+          <MapContainer center={[23.0225, 72.5714]} zoom={13} style={{ height: "100%", width: "100%" }}>
             <TileLayer
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
             {technicians.map(tech => (
-              /* @ts-ignore */
-              <Marker key={tech.id} position={tech.pos as any}>
+              <Marker key={tech.id} position={tech.pos}>
                 <Popup>
                   <div style={{ padding: "4px" }}>
                     <div style={{ fontWeight: 700, fontSize: "14px" }}>{tech.name}</div>

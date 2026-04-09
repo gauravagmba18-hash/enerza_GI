@@ -18,8 +18,7 @@ export default async function CrmDashboard() {
   // Fetch real data for KPIs with safety checks
   const openComplaintsCount = await prisma.serviceTicket.count({ where: { status: "OPEN" } });
   const activeWorkOrdersCount = await prisma.workOrder.count({ where: { status: "ASSIGNED" } });
-  // @ts-ignore - Prisma client property might be latent in dev
-  const pendingRequestsCount = await (prisma as any).serviceRequest?.count({ where: { status: "DRAFT" } }) || 0;
+  const pendingRequestsCount = await prisma.serviceRequest.count({ where: { status: "DRAFT" } });
   
   // Recent complaints - show only top 5 for performance
   const recentComplaints = await prisma.serviceTicket.findMany({

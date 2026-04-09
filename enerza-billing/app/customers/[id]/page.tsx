@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState, use } from "react";
+import { useRouter } from "next/navigation";
 import { Zap, CreditCard, ClipboardList, Activity, User, MapPin, Phone, Mail, Award, Clock, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
@@ -16,6 +17,7 @@ interface CustomerData {
 
 export default function CustomerProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
+  const router = useRouter();
   const [customer, setCustomer] = useState<CustomerData | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
@@ -100,11 +102,17 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
                   </div>
                   <div className="text-xs text-muted truncate mb-3">{acc.premise.addressLine1}</div>
                   <div className="flex gap-2">
-                    <button className="flex-1 text-[10px] py-1 bg-accent/10 border border-accent/20 text-accent rounded hover:bg-accent/20 transition-colors font-bold">
+                    <button
+                      onClick={() => router.push(`/data/accounts`)}
+                      className="flex-1 text-[10px] py-1 bg-accent/10 border border-accent/20 text-accent rounded hover:bg-accent/20 transition-colors font-bold"
+                    >
                       View Details
                     </button>
                     {acc.status === "ACTIVE" && (
-                      <button className="flex-1 text-[10px] py-1 bg-red-500/10 border border-red-500/20 text-red-500 rounded hover:bg-red-500/20 transition-colors font-bold">
+                      <button
+                        onClick={() => router.push(`/crm/lifecycle?type=move-out&accountId=${acc.accountId}`)}
+                        className="flex-1 text-[10px] py-1 bg-red-500/10 border border-red-500/20 text-red-500 rounded hover:bg-red-500/20 transition-colors font-bold"
+                      >
                         Move Out
                       </button>
                     )}
@@ -189,7 +197,12 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
               <div className="space-y-6">
                 <div className="flex justify-between items-center">
                   <div className="text-sm font-semibold">Service Tickets & Work Orders</div>
-                  <button className="text-xs py-1.5 px-3 bg-accent text-accent-foreground rounded-lg font-bold">New Ticket</button>
+                  <button
+                    onClick={() => router.push(`/field`)}
+                    className="text-xs py-1.5 px-3 bg-accent text-accent-foreground rounded-lg font-bold"
+                  >
+                    + New Ticket
+                  </button>
                 </div>
                 
                 <div className="space-y-4">
