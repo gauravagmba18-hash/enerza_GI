@@ -5,13 +5,22 @@ import Link from 'next/link';
 
 export default function FicaDashboard() {
   const [runningDunning, setRunningDunning] = useState(false);
+  const [dunningResult, setDunningResult] = useState<string | null>(null);
 
-  const triggerDunningRun = () => {
+  const triggerDunningRun = async () => {
     setRunningDunning(true);
-    setTimeout(() => {
-        setRunningDunning(false);
-        alert("Dunning run completed. 14 new notices generated.");
-    }, 1500);
+    setDunningResult(null);
+    try {
+      const res = await fetch("/api/dunning-notices");
+      const data = await res.json();
+      const notices = Array.isArray(data.data) ? data.data : [];
+      const open = notices.filter((n: any) => n.status === "ISSUED").length;
+      setDunningResult(`Dunning check complete. ${open} active notice${open !== 1 ? "s" : ""} found.`);
+    } catch {
+      setDunningResult("Dunning check failed. Please try again.");
+    } finally {
+      setRunningDunning(false);
+    }
   };
 
   return (
@@ -26,17 +35,20 @@ export default function FicaDashboard() {
             Financial Contract Accounting & Collections Management
           </p>
         </div>
-        <button 
-          onClick={triggerDunningRun}
-          disabled={runningDunning}
-          style={{ padding: "10px 16px", background: runningDunning ? "var(--card-border)" : "linear-gradient(135deg,#ef4444,#dc2626)", border: "none", color: "#fff", borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: runningDunning ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: 8, boxShadow: runningDunning ? "none" : "0 4px 12px rgba(239,68,68,0.2)", transition: "all 0.2s" }}
-        >
-          {runningDunning ? "Processing..." : (
-             <>
-               <ShieldAlert size={16} /> Run Dunning Check
-             </>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 8 }}>
+          <button
+            onClick={triggerDunningRun}
+            disabled={runningDunning}
+            style={{ padding: "10px 16px", background: runningDunning ? "var(--card-border)" : "linear-gradient(135deg,#ef4444,#dc2626)", border: "none", color: "#fff", borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: runningDunning ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: 8, boxShadow: runningDunning ? "none" : "0 4px 12px rgba(239,68,68,0.2)", transition: "all 0.2s" }}
+          >
+            {runningDunning ? "Processing..." : (<><ShieldAlert size={16} /> Run Dunning Check</>)}
+          </button>
+          {dunningResult && (
+            <div style={{ fontSize: 12, color: dunningResult.includes("failed") ? "#ef4444" : "#10b981", padding: "4px 10px", background: dunningResult.includes("failed") ? "rgba(239,68,68,0.1)" : "rgba(16,185,129,0.1)", borderRadius: 6, border: `1px solid ${dunningResult.includes("failed") ? "rgba(239,68,68,0.2)" : "rgba(16,185,129,0.2)"}` }}>
+              {dunningResult}
+            </div>
           )}
-        </button>
+        </div>
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 20, marginBottom: 32 }}>

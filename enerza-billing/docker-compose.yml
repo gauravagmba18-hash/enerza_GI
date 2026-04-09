@@ -12,18 +12,11 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-
-  app:
-    build: .
-    restart: unless-stopped
-    ports:
-      - "3000:3000"
-    environment:
-      DATABASE_URL: "postgresql://postgres:password@db:5432/enerza_billing"
-      NODE_ENV: "production"
-    depends_on:
-      - db
-    command: sh -c "npx prisma migrate deploy && node server.js"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
 volumes:
   postgres_data:

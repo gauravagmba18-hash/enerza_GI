@@ -1,7 +1,9 @@
+import "dotenv/config";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Prevent Turbopack from bundling native Node.js packages
+  serverExternalPackages: ["@prisma/client", "pg", "@prisma/adapter-pg"],
 };
 
 export default nextConfig;
