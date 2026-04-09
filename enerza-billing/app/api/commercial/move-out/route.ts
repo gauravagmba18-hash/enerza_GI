@@ -26,15 +26,14 @@ export async function POST(req: NextRequest) {
     // 2. Process Move Out
     const updatedAccount = await prisma.account.update({
       where: { accountId },
-      data: { 
+      data: {
         status: "PENDING_CLOSURE",
-        closedAt: new Date(moveOutDate)
       }
     });
 
     // 3. Handle Immediate Billing if configured
     let closingBill = null;
-    if (config?.moveOutBilling === "IMMEDIATE") {
+    if (config?.prorationMode === "IMMEDIATE") {
       const planId = getPlanId(conn.utilityType, account.customer.segment.utilityType) || "RP-GAS-IND-01";
       
       // Calculate days in current period (simplified for industrial demo)

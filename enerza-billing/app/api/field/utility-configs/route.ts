@@ -6,9 +6,8 @@ export async function GET(_: NextRequest) {
   try {
     const data = await prisma.utilityConfig.findFirst();
     if (!data) {
-        // Create default if missing
         const defaultDoc = await prisma.utilityConfig.create({
-            data: { minBillAmount: 500, prorateFixed: true, moveOutBilling: "IMMEDIATE" }
+            data: { utilityName: "Default Utility", prorationMode: "IMMEDIATE", minBillingMode: "FIXED", minBillingValue: 500 }
         });
         return ok(defaultDoc);
     }
@@ -22,11 +21,11 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const existing = await prisma.utilityConfig.findFirst();
-    
+
     let record;
     if (existing) {
         record = await prisma.utilityConfig.update({
-            where: { id: existing.id },
+            where: { configId: existing.configId },
             data: body
         });
     } else {

@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/prisma";
 import { CRMStatusPill } from "@/components/crm/CRMStatusPill";
 import { ZapOff, AlertCircle, Users, Clock } from "lucide-react";
@@ -35,7 +36,7 @@ export default async function OutageLinkage() {
                    <ZapOff size={22} color="#ef4444" />
                 </div>
                 <div>
-                   <div style={{ fontSize: 15, fontWeight: 700 }}>{outage.feeder?.feederName || "Unknown Feeder"}</div>
+                   <div style={{ fontSize: 15, fontWeight: 700 }}>{outage.feeder?.name || "Unknown Feeder"}</div>
                    <div style={{ fontSize: 12, color: "var(--muted)" }}>{outage.type} · Area: {outage.area}</div>
                 </div>
               </div>

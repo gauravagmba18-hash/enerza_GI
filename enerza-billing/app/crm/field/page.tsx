@@ -1,5 +1,6 @@
 "use client";
-import React, { useEffect, useState, dynamic } from 'react';
+import React, { useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { 
   Users, 
   MapPin, 

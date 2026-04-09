@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/prisma";
 // CRM Dashboard: Real-time service operational view
 import { CRMKpiCard } from "@/components/crm/CRMKpiCard";
