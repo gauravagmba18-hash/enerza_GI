@@ -85,6 +85,7 @@ model Account {
   serviceConnections ServiceConnection[]
   serviceTickets     ServiceTicket[]
   serviceRequests    ServiceRequest[]
+  serviceOptIns      ServiceOptIn[]
 
   @@index([status])
   @@index([customerId])
@@ -1168,6 +1169,22 @@ model ServiceRequest {
   account            Account?           @relation(fields: [accountId], references: [accountId])
 
   @@map("service_request")
+}
+
+// BR-009: Opt-in / opt-out for programs, meter types, billing programs
+model ServiceOptIn {
+  optInId       String    @id @default(cuid()) @map("opt_in_id")
+  accountId     String    @map("account_id")
+  programType   String    @map("program_type") // PREPAID, BUDGET_BILLING, TOU_TARIFF, NET_METERING, SMART_METER
+  status        String    @default("ACTIVE")   // ACTIVE, OPTED_OUT
+  effectiveDate DateTime  @default(now()) @map("effective_date")
+  optOutDate    DateTime? @map("opt_out_date")
+  notes         String?
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  account       Account   @relation(fields: [accountId], references: [accountId])
+
+  @@map("service_opt_in")
 }
 
 model RequestDocument {
