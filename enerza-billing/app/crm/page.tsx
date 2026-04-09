@@ -19,6 +19,14 @@ export default async function CrmDashboard() {
   const openComplaintsCount = await prisma.serviceTicket.count({ where: { status: "OPEN" } });
   const activeWorkOrdersCount = await prisma.workOrder.count({ where: { status: "ASSIGNED" } });
   const pendingRequestsCount = await prisma.serviceRequest.count({ where: { status: "DRAFT" } });
+
+  // Compute SLA breached count: open tickets older than 24h
+  const breachedSlaCount = await prisma.serviceTicket.count({
+    where: {
+      status: "OPEN",
+      createdAt: { lt: new Date(Date.now() - 24 * 60 * 60 * 1000) }
+    }
+  });
   
   // Recent complaints - show only top 5 for performance
   const recentComplaints = await prisma.serviceTicket.findMany({
@@ -50,7 +58,7 @@ export default async function CrmDashboard() {
         <CRMKpiCard 
           label="Open Complaints" 
           value={openComplaintsCount} 
-          subtext="3 breached SLA" 
+          subtext={`${breachedSlaCount} breached SLA`}
           delta={{ value: "2", isUp: true }}
           icon={AlertCircle} 
           color="#ef4444" 

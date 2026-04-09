@@ -15,6 +15,10 @@ export async function GET(_: NextRequest, { params }: Ctx) {
           include: {
             premise: true,
             serviceConnections: true,
+            bills: {
+              orderBy: { billDate: "desc" },
+              take: 5,
+            },
             serviceTickets: {
               include: {
                 workOrders: {

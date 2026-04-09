@@ -150,21 +150,25 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
 
           {/* Tab Content */}
           <div className="glass p-8 min-h-[400px]">
-            {activeTab === "overview" && (
-              <div className="space-y-6">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="p-4 bg-white/5 rounded-xl border border-white/5">
-                    <div className="text-xs text-muted mb-1">Outstanding Balance</div>
-                    <div className="text-2xl font-bold text-red-400">₹ 14,250.00</div>
+            {activeTab === "overview" && (() => {
+              const allBills = customer.accounts?.flatMap((acc: any) => acc.bills || []) ?? [];
+              const outstanding = allBills.filter((b: any) => b.status !== "PAID").reduce((s: number, b: any) => s + (b.totalAmount || 0), 0);
+              const paidBills = allBills.filter((b: any) => b.status === "PAID");
+              const lastPaid = paidBills.length > 0 ? paidBills[0].totalAmount : 0;
+              return (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-4 bg-white/5 rounded-xl border border-white/5">
+                      <div className="text-xs text-muted mb-1">Outstanding Balance</div>
+                      <div className="text-2xl font-bold text-red-400">₹ {outstanding.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</div>
+                    </div>
+                    <div className="p-4 bg-white/5 rounded-xl border border-white/5">
+                      <div className="text-xs text-muted mb-1">Last Payment</div>
+                      <div className="text-xl font-bold">₹ {lastPaid.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</div>
+                    </div>
                   </div>
-                  <div className="p-4 bg-white/5 rounded-xl border border-white/5">
-                    <div className="text-xs text-muted mb-1">Last Payment</div>
-                    <div className="text-xl font-bold">₹ 5,000.00</div>
-                  </div>
-                </div>
-                
-                <div className="text-sm font-semibold">Recent Bills</div>
-                <div className="overflow-x-auto">
+                  <div className="text-sm font-semibold">Recent Bills</div>
+                  <div className="overflow-x-auto">
                     <table className="w-full text-left text-xs border-collapse">
                       <thead>
                         <tr className="border-b border-white/10">
@@ -175,23 +179,26 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
                         </tr>
                       </thead>
                       <tbody>
-                        <tr className="border-b border-white/5 hover:bg-white/5">
-                          <td className="py-3 font-medium">BILL-2024-001</td>
-                          <td className="py-3">Oct 12, 2024</td>
-                          <td className="py-3 text-right font-bold">₹ 4,500.00</td>
-                          <td className="py-3 text-center"><span className="px-2 py-0.5 bg-green-500/10 text-green-500 rounded">PAID</span></td>
-                        </tr>
-                        <tr className="border-b border-white/5 hover:bg-white/5">
-                          <td className="py-3 font-medium">BILL-2024-002</td>
-                          <td className="py-3">Nov 12, 2024</td>
-                          <td className="py-3 text-right font-bold">₹ 9,750.00</td>
-                          <td className="py-3 text-center"><span className="px-2 py-0.5 bg-red-500/10 text-red-500 rounded">OVERDUE</span></td>
-                        </tr>
+                        {allBills.length === 0 ? (
+                          <tr><td colSpan={4} className="py-6 text-center text-muted">No bills found for this customer.</td></tr>
+                        ) : allBills.map((b: any) => (
+                          <tr key={b.billId} className="border-b border-white/5 hover:bg-white/5">
+                            <td className="py-3 font-medium">{b.billId.slice(-10).toUpperCase()}</td>
+                            <td className="py-3">{new Date(b.billDate).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}</td>
+                            <td className="py-3 text-right font-bold">₹ {(b.totalAmount || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
+                            <td className="py-3 text-center">
+                              <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${b.status === "PAID" ? "bg-green-500/10 text-green-500" : b.status === "OVERDUE" ? "bg-red-500/10 text-red-500" : "bg-yellow-500/10 text-yellow-500"}`}>
+                                {b.status}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
                       </tbody>
                     </table>
+                  </div>
                 </div>
-              </div>
-            )}
+              );
+            })()}
 
             {activeTab === "service" && (
               <div className="space-y-6">
