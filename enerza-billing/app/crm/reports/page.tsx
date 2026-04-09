@@ -1,76 +1,116 @@
-"use client";
-import { BarChart3 } from "lucide-react";
+export const dynamic = "force-dynamic";
+import { prisma } from "@/lib/prisma";
 
-const KPI_STATS = [
-  { label: "SLA Compliance", value: "91.4%", sub: "Target > 90%", status: "success" },
-  { label: "First-Time Fix Rate", value: "84%", sub: "Target > 85%", status: "warning" },
-  { label: "Avg Complaint Res.", value: "18.4h", sub: "Target < 24h", status: "success" },
-  { label: "Field Utilisation", value: "78%", sub: "12 of 18 active", status: "info" },
-];
+export default async function CrmReports() {
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-const COMPLAINT_CATEGORIES = [
-  { label: "No Supply", count: 28, pct: 38, color: "#3b82f6" },
-  { label: "Billing Dispute", count: 18, pct: 24, color: "#3b82f6" },
-  { label: "Voltage Issue", count: 12, pct: 16, color: "#3b82f6" },
-  { label: "Faulty Meter", count: 9, pct: 12, color: "#3b82f6" },
-  { label: "Payment Issue", count: 5, pct: 7, color: "#3b82f6" },
-  { label: "Other", count: 2, pct: 3, color: "#3b82f6" },
-];
+  const [tickets, workOrders] = await Promise.all([
+    prisma.serviceTicket.findMany({
+      where: { createdAt: { gte: startOfMonth } },
+      select: { ticketId: true, status: true, createdAt: true, closedAt: true, category: true },
+    }),
+    prisma.workOrder.findMany({
+      where: { scheduledDate: { gte: startOfMonth } },
+      select: { workOrderId: true, status: true, unattended_reason: true },
+    }),
+  ]);
 
-const PERF_METRICS = [
-  { label: "Total WOs Raised", count: 284, pct: 100, color: "#3b82f6" },
-  { label: "Completed", count: 238, pct: 84, color: "#22c55e" },
-  { label: "First-Time Fix", count: 200, pct: 70, color: "#22c55e" },
-  { label: "Rescheduled", count: 31, pct: 11, color: "#f59e0b" },
-  { label: "Unattended", count: 15, pct: 5, color: "#ef4444" },
-];
+  const totalTickets = tickets.length;
+  const closedTickets = tickets.filter(t => t.status === "CLOSED");
+  const breached = tickets.filter(t =>
+    t.status === "OPEN" && (now.getTime() - new Date(t.createdAt).getTime()) > 24 * 60 * 60 * 1000
+  );
+  const slaCompliance = totalTickets > 0
+    ? Math.round(((totalTickets - breached.length) / totalTickets) * 100)
+    : 100;
 
-export default function CrmReports() {
+  const avgResMs = closedTickets.filter(t => t.closedAt).reduce((sum, t) => {
+    return sum + (new Date(t.closedAt!).getTime() - new Date(t.createdAt).getTime());
+  }, 0);
+  const avgResH = closedTickets.filter(t => t.closedAt).length > 0
+    ? (avgResMs / closedTickets.filter(t => t.closedAt).length / (1000 * 60 * 60)).toFixed(1)
+    : "—";
+
+  const totalWOs = workOrders.length;
+  const completedWOs = workOrders.filter(w => w.status === "COMPLETED").length;
+  const unattendedWOs = workOrders.filter(w => w.unattended_reason).length;
+  const rescheduledWOs = workOrders.filter(w => w.status === "RESCHEDULED").length;
+
+  // Complaint categories
+  const categoryMap: Record<string, number> = {};
+  tickets.forEach(t => {
+    const cat = t.category || "General";
+    categoryMap[cat] = (categoryMap[cat] ?? 0) + 1;
+  });
+  const categories = Object.entries(categoryMap)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 6)
+    .map(([label, count]) => ({ label, count, pct: Math.round((count / Math.max(totalTickets, 1)) * 100) }));
+
+  const KPI_STATS = [
+    { label: "SLA Compliance", value: `${slaCompliance}%`, sub: "Target > 90%", ok: slaCompliance >= 90 },
+    { label: "First-Time Fix Rate", value: totalWOs > 0 ? `${Math.round((completedWOs / totalWOs) * 100)}%` : "—", sub: "Target > 85%", ok: completedWOs / Math.max(totalWOs, 1) >= 0.85 },
+    { label: "Avg Complaint Res.", value: avgResH !== "—" ? `${avgResH}h` : "—", sub: "Target < 24h", ok: parseFloat(avgResH) < 24 },
+    { label: "WOs MTD", value: totalWOs.toString(), sub: `${completedWOs} completed`, ok: true },
+  ];
+
+  const PERF_METRICS = [
+    { label: "Total WOs Raised", count: totalWOs, pct: 100, color: "#3b82f6" },
+    { label: "Completed", count: completedWOs, pct: totalWOs > 0 ? Math.round((completedWOs / totalWOs) * 100) : 0, color: "#22c55e" },
+    { label: "Rescheduled", count: rescheduledWOs, pct: totalWOs > 0 ? Math.round((rescheduledWOs / totalWOs) * 100) : 0, color: "#f59e0b" },
+    { label: "Unattended", count: unattendedWOs, pct: totalWOs > 0 ? Math.round((unattendedWOs / totalWOs) * 100) : 0, color: "#ef4444" },
+  ];
+
   return (
     <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 24 }}>
       <div>
-        <h1 style={{ fontSize: 20, fontWeight: 700 }}>📊 CRM & Field Service Analytics</h1>
-        <span style={{ fontSize: 13, color: "#64748B" }}>BR-049 to BR-052 — Operational Performance & SLA Tracking</span>
+        <h1 style={{ fontSize: 20, fontWeight: 700, color: "var(--foreground)" }}>CRM &amp; Field Service Analytics</h1>
+        <span style={{ fontSize: 13, color: "var(--muted)" }}>BR-049 to BR-052 — Month-to-date operational performance &amp; SLA tracking</span>
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
         {KPI_STATS.map((kpi) => (
-          <div key={kpi.label} style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 8, padding: 16 }}>
-            <div style={{ fontSize: 11, color: "#64748B", textTransform: "uppercase", fontWeight: 700, marginBottom: 8 }}>{kpi.label}</div>
-            <div style={{ fontSize: 24, fontWeight: 800, color: kpi.status === "warning" ? "#d97706" : kpi.status === "success" ? "#166534" : "#1e40af" }}>{kpi.value}</div>
-            <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 4 }}>{kpi.sub}</div>
+          <div key={kpi.label} style={{ background: "var(--card-bg)", border: "1px solid var(--card-border)", borderRadius: 8, padding: 16 }}>
+            <div style={{ fontSize: 11, color: "var(--muted)", textTransform: "uppercase", fontWeight: 700, marginBottom: 8 }}>{kpi.label}</div>
+            <div style={{ fontSize: 24, fontWeight: 800, color: kpi.ok ? "#10b981" : "#ef4444" }}>{kpi.value}</div>
+            <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 4 }}>{kpi.sub}</div>
           </div>
         ))}
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
-        <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 12, padding: 20 }}>
-          <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 16 }}>Complaints by Category (MTD)</h3>
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            {COMPLAINT_CATEGORIES.map((cat) => (
-              <div key={cat.label}>
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 4 }}>
-                  <span style={{ color: "#475569" }}>{cat.label}</span>
-                  <span style={{ fontWeight: 600 }}>{cat.count} ({cat.pct}%)</span>
+        <div style={{ background: "var(--card-bg)", border: "1px solid var(--card-border)", borderRadius: 12, padding: 20 }}>
+          <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 16, color: "var(--foreground)" }}>Complaints by Category (MTD)</h3>
+          {categories.length === 0 ? (
+            <div style={{ textAlign: "center", color: "var(--muted)", padding: 24 }}>No complaints this month.</div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {categories.map((cat) => (
+                <div key={cat.label}>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 4 }}>
+                    <span style={{ color: "var(--muted)" }}>{cat.label}</span>
+                    <span style={{ fontWeight: 600, color: "var(--foreground)" }}>{cat.count} ({cat.pct}%)</span>
+                  </div>
+                  <div style={{ background: "rgba(255,255,255,0.05)", height: 6, borderRadius: 3 }}>
+                    <div style={{ background: "var(--accent)", width: `${cat.pct}%`, height: "100%", borderRadius: 3 }} />
+                  </div>
                 </div>
-                <div style={{ background: "#f1f5f9", height: 6, borderRadius: 3 }}>
-                  <div style={{ background: cat.color, width: `${cat.pct}%`, height: "100%", borderRadius: 3 }} />
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
 
-        <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 12, padding: 20 }}>
-          <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 16 }}>Work Order Performance (MTD)</h3>
+        <div style={{ background: "var(--card-bg)", border: "1px solid var(--card-border)", borderRadius: 12, padding: 20 }}>
+          <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 16, color: "var(--foreground)" }}>Work Order Performance (MTD)</h3>
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {PERF_METRICS.map((perf) => (
               <div key={perf.label}>
                 <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 4 }}>
-                  <span style={{ color: "#475569" }}>{perf.label}</span>
-                  <span style={{ fontWeight: 600 }}>{perf.count}</span>
+                  <span style={{ color: "var(--muted)" }}>{perf.label}</span>
+                  <span style={{ fontWeight: 600, color: "var(--foreground)" }}>{perf.count}</span>
                 </div>
-                <div style={{ background: "#f1f5f9", height: 6, borderRadius: 3 }}>
+                <div style={{ background: "rgba(255,255,255,0.05)", height: 6, borderRadius: 3 }}>
                   <div style={{ background: perf.color, width: `${perf.pct}%`, height: "100%", borderRadius: 3 }} />
                 </div>
               </div>
