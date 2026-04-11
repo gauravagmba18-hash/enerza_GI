@@ -3,29 +3,31 @@ import { prisma } from "@/lib/prisma";
 import {
   Users, Receipt, CreditCard, MapPin,
   Smartphone, Globe, Activity, TrendingUp,
+  AlertTriangle,
 } from "lucide-react";
 
 export default async function Dashboard() {
-  const [c, a, b, po, m, cs, au, ap] = await Promise.all([
-    prisma.customer.count(),
-    prisma.account.count(),
-    prisma.bill.count(),
-    prisma.paymentOrder.count(),
-    prisma.meter.count(),
-    prisma.cngStation.count(),
-    prisma.appUser.count(),
-    prisma.apiPartner.count(),
-  ]);
+  let c = 0, a = 0, b = 0, po = 0, m = 0, cs = 0, au = 0, ap = 0;
+  let dbError: string | null = null;
+
+  try {
+    [c, a, b, po, m, cs, au, ap] = await Promise.all([
+      prisma.customer.count(),
+      prisma.account.count(),
+      prisma.bill.count(),
+      prisma.paymentOrder.count(),
+      prisma.meter.count(),
+      prisma.cngStation.count(),
+      prisma.appUser.count(),
+      prisma.apiPartner.count(),
+    ]);
+  } catch (err: any) {
+    dbError = err?.message ?? "Database query failed";
+  }
 
   const stats = {
-    customers: c,
-    accounts: a,
-    bills: b,
-    paymentOrders: po,
-    meters: m,
-    cngStations: cs,
-    appUsers: au,
-    apiPartners: ap,
+    customers: c, accounts: a, bills: b, paymentOrders: po,
+    meters: m, cngStations: cs, appUsers: au, apiPartners: ap,
   };
 
   const cards = [
@@ -59,6 +61,20 @@ export default async function Dashboard() {
           Unified utility billing management &mdash; Gas &middot; Electricity &middot; Water &middot; CNG
         </p>
       </div>
+
+      {/* DB migration warning */}
+      {dbError && (
+        <div style={{ display: "flex", alignItems: "flex-start", gap: 12, padding: "14px 18px", background: "rgba(234,179,8,0.08)", border: "1px solid rgba(234,179,8,0.3)", borderRadius: 10, marginBottom: 24 }}>
+          <AlertTriangle size={18} style={{ color: "#eab308", flexShrink: 0, marginTop: 1 }} />
+          <div>
+            <div style={{ fontWeight: 700, color: "#eab308", fontSize: 13, marginBottom: 4 }}>Database not ready — pending migrations</div>
+            <div style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.6 }}>
+              Run <code style={{ background: "rgba(255,255,255,0.06)", padding: "1px 6px", borderRadius: 4 }}>npx prisma migrate deploy</code> inside the <code style={{ background: "rgba(255,255,255,0.06)", padding: "1px 6px", borderRadius: 4 }}>enerza-billing</code> directory, then restart the server.
+            </div>
+            <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 6, fontFamily: "monospace", opacity: 0.6 }}>{dbError}</div>
+          </div>
+        </div>
+      )}
 
       {/* Stats Grid */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(240px,1fr))", gap: 20, marginBottom: 40 }}>
