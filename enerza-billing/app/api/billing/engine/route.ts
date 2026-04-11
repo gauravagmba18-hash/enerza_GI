@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
 import { generateBill, createPaymentOrder, reconcile, getPlanId, rateBill } from "@/lib/billing-engine";
 import { z } from "zod";
 
@@ -53,6 +54,16 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "prevReading and currReading are required" }, { status: 400 });
       }
 
+      // Fetch minimum billing config from DB
+      let minBillAmount: number | undefined = undefined;
+      let minBillingApplied = false;
+      try {
+        const config = await prisma.utilityConfig.findFirst();
+        if (config?.minBillingMode === "FIXED" && config.minBillingValue > 0) {
+          minBillAmount = config.minBillingValue;
+        }
+      } catch { /* non-fatal — proceed without min billing */ }
+
       const bill = generateBill({
         accountId:    data.accountId    ?? "ACCT-STANDALONE",
         connectionId: data.connectionId ?? "CONN-STANDALONE",
@@ -63,9 +74,27 @@ export async function POST(req: NextRequest) {
         prevReading: data.prevReading,
         currReading: data.currReading,
         uom: data.uom ?? "SCM",
+        minBillAmount,
       });
 
-      return NextResponse.json({ ok: true, bill });
+      // Enforce minimum billing at the route level
+      if (minBillAmount !== undefined && bill.rating.totalAmount < minBillAmount) {
+        const diff = parseFloat((minBillAmount - bill.rating.totalAmount).toFixed(2));
+        bill.rating.lines.push({
+          componentId: "MIN-BILL-CHARGE",
+          name: "Minimum Bill Charge",
+          type: "CHARGE",
+          qty: null,
+          uom: null,
+          rate: diff,
+          amount: diff,
+        });
+        bill.rating.netAmount = parseFloat((bill.rating.netAmount + diff).toFixed(2));
+        bill.rating.totalAmount = parseFloat((bill.rating.totalAmount + diff).toFixed(2));
+        minBillingApplied = true;
+      }
+
+      return NextResponse.json({ ok: true, bill, minBillingApplied, minBillAmount });
     }
 
     // ── Action: pay

@@ -1,11 +1,26 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ShieldAlert, CreditCard, CalendarDays, TrendingUp, Download, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
 
 export default function FicaDashboard() {
   const [runningDunning, setRunningDunning] = useState(false);
   const [dunningResult, setDunningResult] = useState<string | null>(null);
+  const [kpis, setKpis] = useState({ dunningCount: 0, depositTotal: 0, budgetPlans: 0 });
+
+  useEffect(() => {
+    Promise.all([
+      fetch("/api/dunning-notices?limit=1").then(r => r.json()),
+      fetch("/api/security-deposits?limit=500").then(r => r.json()),
+      fetch("/api/budget-billing-plans?limit=1").then(r => r.json()),
+    ]).then(([dunning, deposits, budget]) => {
+      const dunningCount = dunning?.data?.total ?? 0;
+      const depositRows: any[] = Array.isArray(deposits?.data?.data) ? deposits.data.data : [];
+      const depositTotal = depositRows.reduce((sum: number, d: any) => sum + (d.amount || 0), 0);
+      const budgetPlans = budget?.data?.total ?? 0;
+      setKpis({ dunningCount, depositTotal, budgetPlans });
+    }).catch(() => {});
+  }, []);
 
   const triggerDunningRun = async () => {
     setRunningDunning(true);
@@ -57,7 +72,7 @@ export default function FicaDashboard() {
             <div style={{ padding: 8, background: "rgba(244,63,94,0.1)", borderRadius: 8 }}><ShieldAlert size={20} /></div>
             <h3 style={{ fontWeight: 600, fontSize: 16 }}>Dunning Watchlist</h3>
           </div>
-          <p style={{ fontSize: 32, fontWeight: 700, color: "var(--foreground)", marginTop: 8 }}>142</p>
+          <p style={{ fontSize: 32, fontWeight: 700, color: "var(--foreground)", marginTop: 8 }}>{kpis.dunningCount}</p>
           <p style={{ fontSize: 13, color: "var(--muted)", marginTop: 4 }}>Accounts with overdue notices</p>
           <div style={{ marginTop: 20, paddingTop: 16, borderTop: "1px solid var(--card-border)" }}>
               <Link href="/data/dunning-notices" style={{ color: "#f43f5e", fontSize: 14, fontWeight: 600, textDecoration: "none" }}>View Ledger →</Link>
@@ -69,8 +84,14 @@ export default function FicaDashboard() {
             <div style={{ padding: 8, background: "rgba(16,185,129,0.1)", borderRadius: 8 }}><CreditCard size={20} /></div>
             <h3 style={{ fontWeight: 600, fontSize: 16 }}>Security Deposits</h3>
           </div>
-          <p style={{ fontSize: 32, fontWeight: 700, color: "var(--foreground)", marginTop: 8 }}>$1.4M</p>
-          <p style={{ fontSize: 13, color: "var(--muted)", marginTop: 4 }}>Total collateral held across 8,400 accounts</p>
+          <p style={{ fontSize: 32, fontWeight: 700, color: "var(--foreground)", marginTop: 8 }}>
+            {kpis.depositTotal >= 1_000_000
+              ? `₹${(kpis.depositTotal / 1_000_000).toFixed(1)}M`
+              : kpis.depositTotal >= 1_000
+              ? `₹${(kpis.depositTotal / 1_000).toFixed(0)}K`
+              : `₹${kpis.depositTotal}`}
+          </p>
+          <p style={{ fontSize: 13, color: "var(--muted)", marginTop: 4 }}>Total collateral held across active accounts</p>
           <div style={{ marginTop: 20, paddingTop: 16, borderTop: "1px solid var(--card-border)" }}>
               <Link href="/data/security-deposits" style={{ color: "#10b981", fontSize: 14, fontWeight: 600, textDecoration: "none" }}>Manage Deposits →</Link>
           </div>
@@ -81,7 +102,7 @@ export default function FicaDashboard() {
             <div style={{ padding: 8, background: "rgba(59,130,246,0.1)", borderRadius: 8 }}><CalendarDays size={20} /></div>
             <h3 style={{ fontWeight: 600, fontSize: 16 }}>Budget Billing</h3>
           </div>
-          <p style={{ fontSize: 32, fontWeight: 700, color: "var(--foreground)", marginTop: 8 }}>3,105</p>
+          <p style={{ fontSize: 32, fontWeight: 700, color: "var(--foreground)", marginTop: 8 }}>{kpis.budgetPlans.toLocaleString()}</p>
           <p style={{ fontSize: 13, color: "var(--muted)", marginTop: 4 }}>Active levelized payment plans</p>
           <div style={{ marginTop: 20, paddingTop: 16, borderTop: "1px solid var(--card-border)" }}>
               <Link href="/data/budget-billing-plans" style={{ color: "#3b82f6", fontSize: 14, fontWeight: 600, textDecoration: "none" }}>View Plans →</Link>

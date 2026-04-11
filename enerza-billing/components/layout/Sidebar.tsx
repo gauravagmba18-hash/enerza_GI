@@ -110,6 +110,7 @@ const UTILITY_GROUPS: SidebarGroup[] = [
       { label: "Inventory & Spares",  path: "/crm/inventory" },
       { label: "Asset Maintenance",   path: "/crm/maintenance" },
       { label: "Outage Linkage",      path: "/crm/outages" },
+      { label: "Technician Master",   path: "/crm/technician" },
       { label: "Analytics & Reports", path: "/crm/reports" },
     ],
   },

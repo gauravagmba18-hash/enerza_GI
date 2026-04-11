@@ -85,6 +85,7 @@ model Account {
   serviceConnections ServiceConnection[]
   serviceTickets     ServiceTicket[]
   serviceRequests    ServiceRequest[]
+  serviceOptIns      ServiceOptIn[]
 
   @@index([status])
   @@index([customerId])
@@ -869,15 +870,26 @@ model WorkOrder {
 }
 
 model Technician {
-  technicianId       String              @id @default(cuid()) @map("technician_id")
-  fullName           String              @map("full_name")
-  mobile             String              @unique
-  status             String              @default("ACTIVE")
-  pincodeScope       String?             @map("pincode_scope")
-  createdAt          DateTime            @default(now()) @map("created_at")
-  updatedAt          DateTime            @updatedAt @map("updated_at")
-  inventory_location inventory_location?
-  workOrders         WorkOrder[]
+  technicianId         String              @id @default(cuid()) @map("technician_id")
+  fullName             String              @map("full_name")
+  mobile               String              @unique
+  email                String?
+  employeeId           String?             @unique @map("employee_id")
+  designation          String?             @default("Field Technician")
+  yearsOfExperience    Int                 @default(0) @map("years_of_experience")
+  specializations      String?             // JSON: ["ELECTRICITY","GAS","WATER","METERING"]
+  certifications       String?             // JSON: [{name,issuer,expiry}]
+  clearances           String?             // JSON: ["HV_WORK_PERMIT","GAS_SAFE","CONFINED_SPACE"]
+  clearanceLevel       String              @default("LV") @map("clearance_level")
+  dateOfJoining        DateTime?           @map("date_of_joining")
+  safetyTrainingExpiry DateTime?           @map("safety_training_expiry")
+  emergencyContact     String?             @map("emergency_contact")
+  status               String              @default("ACTIVE")
+  pincodeScope         String?             @map("pincode_scope")
+  createdAt            DateTime            @default(now()) @map("created_at")
+  updatedAt            DateTime            @updatedAt @map("updated_at")
+  inventory_location   inventory_location?
+  workOrders           WorkOrder[]
 
   @@map("technician")
 }
@@ -1157,6 +1169,22 @@ model ServiceRequest {
   account            Account?           @relation(fields: [accountId], references: [accountId])
 
   @@map("service_request")
+}
+
+// BR-009: Opt-in / opt-out for programs, meter types, billing programs
+model ServiceOptIn {
+  optInId       String    @id @default(cuid()) @map("opt_in_id")
+  accountId     String    @map("account_id")
+  programType   String    @map("program_type") // PREPAID, BUDGET_BILLING, TOU_TARIFF, NET_METERING, SMART_METER
+  status        String    @default("ACTIVE")   // ACTIVE, OPTED_OUT
+  effectiveDate DateTime  @default(now()) @map("effective_date")
+  optOutDate    DateTime? @map("opt_out_date")
+  notes         String?
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  account       Account   @relation(fields: [accountId], references: [accountId])
+
+  @@map("service_opt_in")
 }
 
 model RequestDocument {

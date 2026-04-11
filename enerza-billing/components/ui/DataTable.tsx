@@ -231,14 +231,14 @@ export function DataTable({ title, apiPath, columns, color = "#3b82f6", detailPa
           </div>
         </div>
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-          <button onClick={handleExport} className="glass" style={{ display: "flex", alignItems: "center", gap: 8, padding: "12px 20px", borderRadius: 12, color: "var(--foreground)", fontSize: 13, cursor: "pointer", fontWeight: 700, transition: "all 0.2s" }}>
+          <button suppressHydrationWarning onClick={handleExport} className="glass" style={{ display: "flex", alignItems: "center", gap: 8, padding: "12px 20px", borderRadius: 12, color: "var(--foreground)", fontSize: 13, cursor: "pointer", fontWeight: 700, transition: "all 0.2s" }}>
             <Download size={15} /> Export
           </button>
           <label className="glass" style={{ display: "flex", alignItems: "center", gap: 8, padding: "12px 20px", borderRadius: 12, color: "var(--foreground)", fontSize: 13, cursor: "pointer", fontWeight: 700, transition: "all 0.2s" }}>
             <Upload size={15} /> Import
-            <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv" style={{ display: "none" }} onChange={handleImport} />
+            <input suppressHydrationWarning ref={fileRef} type="file" accept=".xlsx,.xls,.csv" style={{ display: "none" }} onChange={handleImport} />
           </label>
-          <button onClick={openAdd} style={{ display: "flex", alignItems: "center", gap: 8, padding: "12px 24px", borderRadius: 12, background: color, border: "none", color: "#fff", fontSize: 14, cursor: "pointer", fontWeight: 800, boxShadow: `0 10px 20px ${color}44`, transition: "all 0.2s" }}>
+          <button suppressHydrationWarning onClick={openAdd} style={{ display: "flex", alignItems: "center", gap: 8, padding: "12px 24px", borderRadius: 12, background: color, border: "none", color: "#fff", fontSize: 14, cursor: "pointer", fontWeight: 800, boxShadow: `0 10px 20px ${color}44`, transition: "all 0.2s" }}>
             <Plus size={18} strokeWidth={3} /> Register New
           </button>
         </div>
@@ -248,6 +248,7 @@ export function DataTable({ title, apiPath, columns, color = "#3b82f6", detailPa
       <div style={{ position: "relative", marginBottom: 32, maxWidth: 460 }}>
         <Search size={16} style={{ position: "absolute", left: 16, top: "50%", transform: "translateY(-50%)", color: "var(--muted)" }} />
         <input
+          suppressHydrationWarning
           value={search}
           onChange={(e) => { setSearch(e.target.value); setPage(1); }}
           placeholder={`Find ${title.toLowerCase()} by ID, name, or metadata...`}
