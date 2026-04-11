@@ -87,7 +87,7 @@ function ScheduleStep() {
       .catch(() => setLoading(false));
   }, []);
 
-  if (loading) return <div style={{ padding: "48px", textAlign: "center", color: "var(--ds-text-muted)" }}>Loading schedule…</div>;
+  if (loading) return <div style={{ padding: "48px", textAlign: "center", color: "#8396a8", background: "#ffffff", border: "1px solid #d1d8de", borderRadius: 10 }}>Loading schedule…</div>;
   if (!data) return null;
 
   const { cycles = [], routes = [] } = data;
@@ -281,61 +281,89 @@ function CaptureStep() {
 
   return (
     <div>
-      {/* Toolbar */}
-      <div style={{ background: "var(--ds-surface)", border: "1px solid var(--ds-border)", borderRadius: "var(--ds-radius)", padding: "var(--sp-4)", marginBottom: "var(--sp-4)", boxShadow: "var(--ds-bevel-card)", display: "flex", alignItems: "flex-end", gap: "var(--sp-4)", flexWrap: "wrap" }}>
-        {/* Search — search-as-you-type */}
-        <div className="ds-form-field" style={{ flex: "1 1 240px" }}>
-          <label className="ds-form-label">Search Customer</label>
+      {/* ── Toolbar ─────────────────────────────────────────────────────────── */}
+      <div style={{ background: "#ffffff", border: "1px solid #d1d8de", borderRadius: 10, padding: "12px 16px", marginBottom: 16, boxShadow: "0 1px 0 0 rgba(255,255,255,.9) inset, 0 -1px 0 0 rgba(0,0,0,.04) inset, 0 2px 8px rgba(29,45,62,.07), 0 1px 2px rgba(29,45,62,.08)", display: "flex", alignItems: "flex-end", gap: 16, flexWrap: "wrap" }}>
+        {/* Search */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 3, flex: "1 1 240px" }}>
+          <label style={{ fontSize: 11, fontWeight: 700, color: "#4a6070", letterSpacing: ".03em", textTransform: "uppercase" }}>Search Customer</label>
           <div style={{ position: "relative" }}>
-            <span style={{ position: "absolute", left: 8, top: "50%", transform: "translateY(-50%)", color: "var(--ds-text-muted)", fontSize: 15, pointerEvents: "none" }}>⌕</span>
-            <input className="ds-form-input" style={{ paddingLeft: 28 }} placeholder="Type name to filter…"
-              value={searchInput} onChange={e => setSearchInput(e.target.value)} />
+            <span style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "#8396a8", fontSize: 16, pointerEvents: "none" }}>⌕</span>
+            <input
+              style={{ height: 36, paddingLeft: 32, paddingRight: searchInput ? 32 : 12, border: "none", borderBottom: "2px solid #d1d8de", background: "transparent", color: "#1d2d3e", fontSize: 13, fontFamily: "inherit", width: "100%", outline: "none", transition: "border-color .15s" }}
+              placeholder="Type name to filter…"
+              value={searchInput}
+              onChange={e => setSearchInput(e.target.value)}
+              onFocus={e => e.currentTarget.style.borderBottomColor = "#0070f2"}
+              onBlur={e => e.currentTarget.style.borderBottomColor = "#d1d8de"}
+            />
             {searchInput && (
               <button onClick={() => setSearchInput("")}
-                style={{ position: "absolute", right: 6, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "var(--ds-text-muted)", fontSize: 18, lineHeight: 1, padding: 0 }}>×</button>
+                style={{ position: "absolute", right: 6, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "#8396a8", fontSize: 18, lineHeight: 1, padding: 0 }}>×</button>
             )}
           </div>
         </div>
 
-        <div className="ds-form-field">
-          <label className="ds-form-label">Reading Date</label>
-          <input type="date" className="ds-form-input" value={readingDate}
-            onChange={e => setReadingDate(e.target.value)} style={{ width: 148 }} />
+        {/* Reading Date */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+          <label style={{ fontSize: 11, fontWeight: 700, color: "#4a6070", letterSpacing: ".03em", textTransform: "uppercase" }}>Reading Date</label>
+          <input type="date"
+            style={{ height: 36, padding: "0 12px", border: "none", borderBottom: "2px solid #d1d8de", background: "transparent", color: "#1d2d3e", fontSize: 13, fontFamily: "inherit", width: 150, outline: "none" }}
+            value={readingDate}
+            onChange={e => setReadingDate(e.target.value)}
+            onFocus={e => e.currentTarget.style.borderBottomColor = "#0070f2"}
+            onBlur={e => e.currentTarget.style.borderBottomColor = "#d1d8de"}
+          />
         </div>
 
-        <button className="ds-btn ds-btn-sm" onClick={getGps} disabled={gpsLoading}
-          style={{ alignSelf: "flex-end" }}>
+        {/* GPS */}
+        <button
+          onClick={getGps}
+          disabled={gpsLoading}
+          style={{ height: 32, padding: "0 12px", border: "1px solid #d1d8de", borderRadius: 6, background: "#ffffff", color: "#1d2d3e", fontSize: 11, fontWeight: 600, fontFamily: "inherit", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 4, boxShadow: "0 1px 0 rgba(255,255,255,.8) inset, 0 1px 3px rgba(29,45,62,.08), 0 1px 1px rgba(29,45,62,.06)", flexShrink: 0 }}>
           {gps
-            ? <><span style={{ color: "var(--ds-positive)" }}>●</span> {gps.lat.toFixed(3)}, {gps.lon.toFixed(3)}</>
+            ? <><span style={{ color: "#256f3a" }}>●</span> {gps.lat.toFixed(3)}, {gps.lon.toFixed(3)}</>
             : gpsLoading ? "Locating…" : "📍 GPS Stamp"}
         </button>
 
         {pendingRows.length > 0 && (
-          <button className="ds-btn ds-btn-primary" style={{ alignSelf: "flex-end" }}
-            onClick={() => Promise.all(pendingRows.map(e => saveRow(e)))}>
-            Save All ({pendingRows.length})
+          <button
+            onClick={() => Promise.all(pendingRows.map(e => saveRow(e)))}
+            style={{ height: 32, padding: "0 16px", border: "1px solid #0058c0", borderRadius: 6, background: "#0070f2", color: "#fff", fontSize: 12, fontWeight: 700, fontFamily: "inherit", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 4, boxShadow: "0 1px 0 rgba(255,255,255,.2) inset, 0 2px 5px rgba(0,112,242,.35)", flexShrink: 0 }}>
+            ✓ Save All ({pendingRows.length})
           </button>
         )}
 
-        <span style={{ fontSize: 11, color: "var(--ds-text-muted)", alignSelf: "flex-end", marginLeft: "auto" }}>
+        <span style={{ fontSize: 11, color: "#8396a8", marginLeft: "auto", alignSelf: "flex-end", paddingBottom: 6 }}>
           {loading ? "Loading…" : `${total} connections`}
         </span>
       </div>
 
-      {/* Validation legend */}
-      <div style={{ display: "flex", gap: "var(--sp-4)", marginBottom: "var(--sp-3)", fontSize: 11, flexWrap: "wrap", alignItems: "center" }}>
-        <span style={{ fontWeight: 600, fontSize: 11, color: "var(--ds-text-2)" }}>Flag legend:</span>
-        <span><span className="ds-badge ds-badge-neg" style={{ marginRight: 4 }}>REVERSAL</span>new &lt; previous</span>
-        <span><span className="ds-badge ds-badge-warn" style={{ marginRight: 4 }}>LOW</span>&lt;30% of 3M avg</span>
-        <span><span className="ds-badge ds-badge-neg" style={{ marginRight: 4 }}>HIGH</span>&gt;300% of 3M avg</span>
-        <span><span className="ds-badge ds-badge-info" style={{ marginRight: 4 }}>ZERO</span>no consumption</span>
+      {/* ── Flag legend ─────────────────────────────────────────────────────── */}
+      <div style={{ display: "flex", gap: 16, marginBottom: 12, fontSize: 11, flexWrap: "wrap", alignItems: "center" }}>
+        <span style={{ fontWeight: 700, fontSize: 11, color: "#4a6070" }}>Flag legend:</span>
+        <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "2px 8px", borderRadius: 10, fontSize: 10, fontWeight: 600, background: "#fce8e8", border: "1px solid #f0b0b0", color: "#aa0808" }}>REVERSAL</span>
+          <span style={{ color: "#4a6070" }}>new &lt; previous</span>
+        </span>
+        <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "2px 8px", borderRadius: 10, fontSize: 10, fontWeight: 600, background: "#fef3e6", border: "1px solid #f5c98a", color: "#df6e0c" }}>LOW</span>
+          <span style={{ color: "#4a6070" }}>&lt;30% of 3M avg</span>
+        </span>
+        <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "2px 8px", borderRadius: 10, fontSize: 10, fontWeight: 600, background: "#fce8e8", border: "1px solid #f0b0b0", color: "#aa0808" }}>HIGH</span>
+          <span style={{ color: "#4a6070" }}>&gt;300% of 3M avg</span>
+        </span>
+        <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "2px 8px", borderRadius: 10, fontSize: 10, fontWeight: 600, background: "#e8f2ff", border: "1px solid #99c4f8", color: "#0070f2" }}>ZERO</span>
+          <span style={{ color: "#4a6070" }}>no consumption</span>
+        </span>
       </div>
 
       {/* Table */}
       {loading ? (
-        <div style={{ textAlign: "center", padding: 48, color: "var(--ds-text-muted)" }}>Loading connections…</div>
+        <div style={{ textAlign: "center", padding: 48, color: "#8396a8", background: "#ffffff", border: "1px solid #d1d8de", borderRadius: 10 }}>Loading connections…</div>
       ) : entries.length === 0 ? (
-        <div className="ds-msg ds-msg-info"><span>ℹ</span><span>No electricity connections found{search ? ` matching "${search}"` : ""}.</span></div>
+        <div style={{ display: "flex", alignItems: "flex-start", gap: 12, padding: "12px 16px", borderRadius: 6, background: "#e8f2ff", border: "1px solid #99c4f8", borderLeft: "3px solid #0070f2", color: "#1d2d3e", fontSize: 13 }}><span>ℹ</span><span>No electricity connections found{search ? ` matching "${search}"` : ""}.</span></div>
       ) : (
         <div className="ds-card">
           <table className="ds-table">
@@ -437,10 +465,20 @@ function CaptureStep() {
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div style={{ display: "flex", justifyContent: "center", gap: "var(--sp-2)", marginTop: "var(--sp-4)" }}>
-          <button className="ds-btn ds-btn-sm" disabled={page === 1} onClick={() => setPage(p => p - 1)}>← Prev</button>
-          <span style={{ fontSize: 13, color: "var(--ds-text-2)", display: "flex", alignItems: "center" }}>Page {page} / {totalPages}</span>
-          <button className="ds-btn ds-btn-sm" disabled={page === totalPages} onClick={() => setPage(p => p + 1)}>Next →</button>
+        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 8, marginTop: 16 }}>
+          <button
+            disabled={page === 1}
+            onClick={() => setPage(p => p - 1)}
+            style={{ height: 26, padding: "0 12px", border: "1px solid #d1d8de", borderRadius: 6, background: "#ffffff", color: "#1d2d3e", fontSize: 11, fontFamily: "inherit", cursor: page === 1 ? "not-allowed" : "pointer", opacity: page === 1 ? .45 : 1 }}>
+            ← Prev
+          </button>
+          <span style={{ fontSize: 12, color: "#4a6070", padding: "0 8px" }}>Page {page} / {totalPages}</span>
+          <button
+            disabled={page === totalPages}
+            onClick={() => setPage(p => p + 1)}
+            style={{ height: 26, padding: "0 12px", border: "1px solid #d1d8de", borderRadius: 6, background: "#ffffff", color: "#1d2d3e", fontSize: 11, fontFamily: "inherit", cursor: page === totalPages ? "not-allowed" : "pointer", opacity: page === totalPages ? .45 : 1 }}>
+            Next →
+          </button>
         </div>
       )}
     </div>
@@ -482,34 +520,43 @@ function ValidateStep() {
   const suspectCount = entries.filter(e => e.analysis.isSuspect).length;
   const visible = filter ? entries.filter(e => e.customer.fullName.toLowerCase().includes(filter.toLowerCase())) : entries;
 
-  if (loading) return <div style={{ textAlign: "center", padding: 48, color: "var(--ds-text-muted)" }}>Loading validation queue…</div>;
+  if (loading) return <div style={{ textAlign: "center", padding: 48, color: "#8396a8", background: "#ffffff", border: "1px solid #d1d8de", borderRadius: 10 }}>Loading validation queue…</div>;
 
   return (
     <div>
       {/* AI insight banner */}
       {entries.length > 0 && (
-        <div className="ds-ai-banner">
-          <span className="ds-ai-chip">Anomaly Detection</span>
-          <span className="ds-ai-text">
-            <strong>{entries.length} readings</strong> pending validation.
-            {suspectCount > 0 && <> <strong style={{ color: "var(--ds-negative)" }}>{suspectCount} suspect</strong> readings (σ &gt; 3) — possible tamper or meter fault. Review estimation options before approving.</>}
+        <div style={{ background: "linear-gradient(135deg,#eef3ff 0%,#f3f7ff 100%)", border: "1px solid #99c4f8", borderTop: "1px solid rgba(255,255,255,.9)", borderRadius: 10, padding: "12px 16px", display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 20, boxShadow: "0 1px 0 0 rgba(255,255,255,.9) inset, 0 2px 8px rgba(29,45,62,.07)" }}>
+          <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: ".07em", textTransform: "uppercase", color: "#0070f2", background: "rgba(0,112,242,.1)", border: "1px solid #99c4f8", borderRadius: 6, padding: "1px 8px", whiteSpace: "nowrap", flexShrink: 0, marginTop: 2 }}>Anomaly Detection</span>
+          <span style={{ fontSize: 12, color: "#4a6070", lineHeight: 1.6 }}>
+            <strong style={{ color: "#1d2d3e" }}>{entries.length} readings</strong> pending validation.
+            {suspectCount > 0 && <> <strong style={{ color: "#aa0808" }}>{suspectCount} suspect</strong> readings (σ &gt; 3) — possible tamper or meter fault. Review estimation options before approving.</>}
           </span>
         </div>
       )}
 
       {entries.length === 0 ? (
-        <div className="ds-msg ds-msg-ok"><span>✓</span><span>All readings validated. No pending exceptions.</span></div>
+        <div style={{ display: "flex", alignItems: "flex-start", gap: 12, padding: "12px 16px", borderRadius: 6, background: "#e6f4ea", border: "1px solid #a3d4ad", borderLeft: "3px solid #256f3a", color: "#1d2d3e", fontSize: 13 }}><span>✓</span><span>All readings validated. No pending exceptions.</span></div>
       ) : (
         <>
-          <div className="ds-section-header" style={{ marginBottom: "var(--sp-3)" }}>
-            <h3 className="ds-section-title">Validation Queue <span className="ds-section-sub">{entries.length} readings · {suspectCount} suspect</span></h3>
-            <div style={{ display: "flex", gap: "var(--sp-2)", alignItems: "center" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+            <h3 style={{ fontSize: 15, fontWeight: 700, color: "#1d2d3e", display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ display: "block", width: 3, height: 18, background: "#0070f2", borderRadius: 2 }} />
+              Validation Queue
+              <span style={{ fontSize: 11, fontWeight: 400, color: "#8396a8" }}>{entries.length} readings · {suspectCount} suspect</span>
+            </h3>
+            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
               <div style={{ position: "relative" }}>
-                <span style={{ position: "absolute", left: 8, top: "50%", transform: "translateY(-50%)", color: "var(--ds-text-muted)", fontSize: 14, pointerEvents: "none" }}>⌕</span>
-                <input className="ds-form-input" style={{ paddingLeft: 26, width: 200, height: 30, fontSize: 12 }}
+                <span style={{ position: "absolute", left: 8, top: "50%", transform: "translateY(-50%)", color: "#8396a8", fontSize: 14, pointerEvents: "none" }}>⌕</span>
+                <input
+                  style={{ height: 30, paddingLeft: 26, paddingRight: 12, width: 200, border: "none", borderBottom: "1px solid #d1d8de", background: "transparent", color: "#1d2d3e", fontSize: 12, fontFamily: "inherit", outline: "none" }}
                   placeholder="Filter by name…" value={filter} onChange={e => setFilter(e.target.value)} />
               </div>
-              <button className="ds-btn ds-btn-sm" onClick={load}>↺ Refresh</button>
+              <button
+                onClick={load}
+                style={{ height: 26, padding: "0 12px", border: "1px solid #d1d8de", borderRadius: 6, background: "#ffffff", color: "#1d2d3e", fontSize: 11, fontFamily: "inherit", cursor: "pointer" }}>
+                ↺ Refresh
+              </button>
             </div>
           </div>
 
@@ -661,37 +708,49 @@ function ApproveStep() {
 
   const visibleApprove = filter ? entries.filter(e => e.customer.fullName.toLowerCase().includes(filter.toLowerCase())) : entries;
 
-  if (loading) return <div style={{ textAlign: "center", padding: 48, color: "var(--ds-text-muted)" }}>Loading approval queue…</div>;
+  if (loading) return <div style={{ textAlign: "center", padding: 48, color: "#8396a8", background: "#ffffff", border: "1px solid #d1d8de", borderRadius: 10 }}>Loading approval queue…</div>;
 
   return (
     <div>
       {entries.length === 0 ? (
-        <div className="ds-msg ds-msg-ok"><span>✓</span><span>No readings awaiting approval. All validated readings have been released to the billing engine.</span></div>
+        <div style={{ display: "flex", alignItems: "flex-start", gap: 12, padding: "12px 16px", borderRadius: 6, background: "#e6f4ea", border: "1px solid #a3d4ad", borderLeft: "3px solid #256f3a", color: "#1d2d3e", fontSize: 13 }}><span>✓</span><span>No readings awaiting approval. All validated readings have been released to the billing engine.</span></div>
       ) : (
         <>
-          {/* Toolbar */}
-          <div style={{ display: "flex", alignItems: "center", gap: "var(--sp-3)", marginBottom: "var(--sp-4)", flexWrap: "wrap" }}>
-            <h3 className="ds-section-title">{total} readings awaiting approval</h3>
+          {/* ── Approve toolbar ──────────────────────────────────────────────── */}
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16, flexWrap: "wrap" }}>
+            <h3 style={{ fontSize: 15, fontWeight: 700, color: "#1d2d3e", display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ display: "block", width: 3, height: 18, background: "#0070f2", borderRadius: 2 }} />
+              {total} readings awaiting approval
+            </h3>
             <div style={{ position: "relative" }}>
-              <span style={{ position: "absolute", left: 8, top: "50%", transform: "translateY(-50%)", color: "var(--ds-text-muted)", fontSize: 14, pointerEvents: "none" }}>⌕</span>
-              <input className="ds-form-input" style={{ paddingLeft: 26, width: 180, height: 30, fontSize: 12 }}
+              <span style={{ position: "absolute", left: 8, top: "50%", transform: "translateY(-50%)", color: "#8396a8", fontSize: 14, pointerEvents: "none" }}>⌕</span>
+              <input
+                style={{ height: 30, paddingLeft: 26, paddingRight: 12, width: 180, border: "none", borderBottom: "1px solid #d1d8de", background: "transparent", color: "#1d2d3e", fontSize: 12, fontFamily: "inherit", outline: "none" }}
                 placeholder="Filter by name…" value={filter} onChange={e => setFilter(e.target.value)} />
             </div>
-            <div style={{ marginLeft: "auto", display: "flex", gap: "var(--sp-2)" }}>
-              <button className="ds-btn ds-btn-sm" onClick={() => toggleAll()}>
+            <div style={{ marginLeft: "auto", display: "flex", gap: 6, flexWrap: "wrap" }}>
+              <button
+                onClick={() => toggleAll()}
+                style={{ height: 26, padding: "0 12px", border: "1px solid #d1d8de", borderRadius: 6, background: "#ffffff", color: "#1d2d3e", fontSize: 11, fontFamily: "inherit", cursor: "pointer" }}>
                 {selected.size === entries.length ? "Deselect All" : "Select All"}
               </button>
-              <button className="ds-btn ds-btn-pos" disabled={approving}
-                onClick={() => approve("ACTUAL")}>
+              <button
+                disabled={approving}
+                onClick={() => approve("ACTUAL")}
+                style={{ height: 32, padding: "0 16px", border: "1px solid #1a5c2d", borderRadius: 6, background: "#256f3a", color: "#fff", fontSize: 12, fontWeight: 700, fontFamily: "inherit", cursor: "pointer", opacity: approving ? .5 : 1, boxShadow: "0 1px 0 rgba(255,255,255,.2) inset, 0 2px 5px rgba(37,111,58,.35)" }}>
                 ✓ Approve{selected.size > 0 ? ` (${selected.size})` : " All"} — ACTUAL
               </button>
-              <button className="ds-btn ds-btn-sm" disabled={approving}
-                onClick={() => approve("ESTIMATED")}>
-                ~ Approve as ESTIMATED
+              <button
+                disabled={approving}
+                onClick={() => approve("ESTIMATED")}
+                style={{ height: 32, padding: "0 12px", border: "1px solid #d1d8de", borderRadius: 6, background: "#ffffff", color: "#1d2d3e", fontSize: 12, fontFamily: "inherit", cursor: "pointer", opacity: approving ? .5 : 1 }}>
+                ~ ESTIMATED
               </button>
-              <button className="ds-btn ds-btn-sm" disabled={approving}
-                onClick={() => approve("SUBSTITUTE")}>
-                ↔ Approve as SUBSTITUTE
+              <button
+                disabled={approving}
+                onClick={() => approve("SUBSTITUTE")}
+                style={{ height: 32, padding: "0 12px", border: "1px solid #d1d8de", borderRadius: 6, background: "#ffffff", color: "#1d2d3e", fontSize: 12, fontFamily: "inherit", cursor: "pointer", opacity: approving ? .5 : 1 }}>
+                ↔ SUBSTITUTE
               </button>
             </div>
           </div>
@@ -714,18 +773,18 @@ function ApproveStep() {
               </thead>
               <tbody>
                 {visibleApprove.length === 0 && (
-                  <tr><td colSpan={7} style={{ textAlign: "center", padding: 32, color: "var(--ds-text-muted)" }}>No readings match "{filter}"</td></tr>
+                  <tr><td colSpan={7} style={{ textAlign: "center", padding: 32, color: "#8396a8" }}>No readings match "{filter}"</td></tr>
                 )}
                 {visibleApprove.map(e => (
                   <tr key={e.readingId} onClick={() => toggleSelect(e.readingId)}
-                    style={{ background: selected.has(e.readingId) ? "var(--ds-brand-light)" : undefined }}>
+                    style={{ background: selected.has(e.readingId) ? "#d1e8ff" : undefined, cursor: "pointer" }}>
                     <td>
                       <input type="checkbox" checked={selected.has(e.readingId)}
                         onChange={() => toggleSelect(e.readingId)} onClick={ev => ev.stopPropagation()} style={{ cursor: "pointer" }} />
                     </td>
-                    <td style={{ fontWeight: 600 }}>{e.customer.fullName}</td>
-                    <td className="ds-table-mono">{e.meter?.serialNo ?? "—"}</td>
-                    <td>{fmtDate(e.readingDate)}</td>
+                    <td style={{ fontWeight: 600, color: "#1d2d3e" }}>{e.customer.fullName}</td>
+                    <td style={{ fontFamily: "monospace", fontSize: 12 }}>{e.meter?.serialNo ?? "—"}</td>
+                    <td style={{ color: "#4a6070" }}>{fmtDate(e.readingDate)}</td>
                     <td className="ds-table-mono" style={{ fontWeight: 700 }}>{e.readingValue.toFixed(2)} kWh</td>
                     <td className="ds-table-mono" style={{ color: e.consumption < 0 ? "var(--ds-negative)" : "var(--ds-positive)", fontWeight: 600 }}>
                       {e.consumption >= 0 ? "+" : ""}{e.consumption.toFixed(2)}
@@ -741,58 +800,63 @@ function ApproveStep() {
             </table>
           </div>
 
-          <div className="ds-msg ds-msg-info" style={{ marginTop: "var(--sp-4)" }}>
+          <div style={{ display: "flex", alignItems: "flex-start", gap: 12, padding: "12px 16px", borderRadius: 6, marginTop: 16, background: "#e8f2ff", border: "1px solid #99c4f8", borderLeft: "3px solid #0070f2", color: "#1d2d3e", fontSize: 13 }}>
             <span>ℹ</span>
-            <span>Approved readings are tagged with their type (Actual / Estimated / Substitute) and <strong>released to the billing engine</strong> for bill generation in the next billing run.</span>
+            <span>Approved readings are tagged with their type (Actual / Estimated / Substitute) and <strong>released to the billing engine</strong> for bill generation.</span>
           </div>
         </>
       )}
 
       {/* ── Generate Bills CTA — appears after any batch approval ─────────── */}
       {lastApproved.length > 0 && (
-        <div className="ds-card" style={{ marginTop: "var(--sp-5)", boxShadow: "var(--ds-bevel-card)" }}>
-          <div className="ds-card-header" style={{ display: "flex", alignItems: "center", gap: "var(--sp-3)" }}>
-            <span style={{ fontSize: 20 }}>⚡</span>
-            <div>
-              <div style={{ fontWeight: 700, fontSize: 14, color: "var(--ds-text-1)" }}>Generate Bills</div>
-              <div style={{ fontSize: 12, color: "var(--ds-text-muted)" }}>
-                {lastApproved.length} reading{lastApproved.length > 1 ? "s" : ""} approved and ready for billing
+        <div style={{ marginTop: 20, background: "#ffffff", border: "1px solid #d1d8de", borderTop: "1px solid rgba(255,255,255,.85)", borderLeft: "1px solid rgba(255,255,255,.6)", borderRadius: 10, boxShadow: "0 1px 0 0 rgba(255,255,255,.9) inset, 0 -1px 0 0 rgba(0,0,0,.04) inset, 0 2px 8px rgba(29,45,62,.07), 0 1px 2px rgba(29,45,62,.08)" }}>
+          {/* Card header */}
+          <div style={{ padding: "12px 16px", borderBottom: "1px solid #d1d8de", display: "flex", alignItems: "center", justifyContent: "space-between", background: "linear-gradient(to bottom,#fafbfc 0%,#fff 100%)", borderRadius: "10px 10px 0 0" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <span style={{ fontSize: 22, lineHeight: 1 }}>⚡</span>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: 14, color: "#1d2d3e" }}>Generate Bills</div>
+                <div style={{ fontSize: 12, color: "#8396a8", marginTop: 1 }}>
+                  {lastApproved.length} reading{lastApproved.length > 1 ? "s" : ""} approved and ready for billing
+                </div>
               </div>
             </div>
+            {!billResults && (
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "2px 10px", borderRadius: 20, fontSize: 11, fontWeight: 700, background: "#e8f2ff", border: "1px solid #99c4f8", color: "#0070f2" }}>
+                PENDING
+              </span>
+            )}
           </div>
 
-          <div style={{ padding: "var(--sp-4)" }}>
-            {/* Preview of what will be billed */}
+          <div style={{ padding: 16 }}>
+            {/* Preview table — shown before generation */}
             {!billResults && (
-              <div style={{ marginBottom: "var(--sp-4)" }}>
-                <div className="ds-table-wrapper" style={{ maxHeight: 220, overflowY: "auto" }}>
-                  <table className="ds-table">
-                    <thead>
-                      <tr>
-                        <th>Customer</th>
-                        <th>Reading Date</th>
-                        <th>Consumption</th>
-                        <th>Reading Type</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {lastApproved.map(e => (
-                        <tr key={e.readingId}>
-                          <td style={{ fontWeight: 600 }}>{e.customer.fullName}</td>
-                          <td>{fmtDate(e.readingDate)}</td>
-                          <td className="ds-table-mono" style={{ color: "var(--ds-positive)", fontWeight: 600 }}>
-                            +{e.consumption.toFixed(2)} kWh
-                          </td>
-                          <td>
-                            <span className={`ds-badge ${e.readingType === "ACTUAL" ? "ds-badge-pos" : e.readingType === "ESTIMATED" ? "ds-badge-warn" : "ds-badge-neu"}`}>
-                              {e.readingType}
-                            </span>
-                          </td>
-                        </tr>
+              <div style={{ marginBottom: 16, border: "1px solid #d1d8de", borderRadius: 8, overflow: "hidden", maxHeight: 240, overflowY: "auto" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+                  <thead>
+                    <tr>
+                      {["Customer", "Reading Date", "Consumption", "Type"].map(h => (
+                        <th key={h} style={{ padding: "8px 16px", background: "linear-gradient(to bottom,#f0f3f6 0%,#eaecf0 100%)", borderBottom: "1px solid #d1d8de", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".05em", color: "#4a6070", textAlign: "left" }}>{h}</th>
                       ))}
-                    </tbody>
-                  </table>
-                </div>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {lastApproved.map((e, i) => (
+                      <tr key={e.readingId} style={{ borderBottom: "1px solid #d1d8de", background: i % 2 === 0 ? "#ffffff" : "#fafbfc" }}>
+                        <td style={{ padding: "8px 16px", fontWeight: 600, color: "#1d2d3e" }}>{e.customer.fullName}</td>
+                        <td style={{ padding: "8px 16px", color: "#4a6070" }}>{fmtDate(e.readingDate)}</td>
+                        <td style={{ padding: "8px 16px", fontFamily: "monospace", fontSize: 12, color: "#256f3a", fontWeight: 600 }}>
+                          +{e.consumption.toFixed(2)} kWh
+                        </td>
+                        <td style={{ padding: "8px 16px" }}>
+                          <span style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "2px 8px", borderRadius: 10, fontSize: 10, fontWeight: 600, ...(e.readingType === "ACTUAL" ? { background: "#e6f4ea", border: "1px solid #a3d4ad", color: "#256f3a" } : e.readingType === "ESTIMATED" ? { background: "#fef3e6", border: "1px solid #f5c98a", color: "#df6e0c" } : { background: "#f5f7f9", border: "1px solid #d1d8de", color: "#556b82" }) }}>
+                            {e.readingType}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             )}
 
@@ -800,58 +864,54 @@ function ApproveStep() {
             {billResults ? (
               <div>
                 {billResults.generated > 0 && (
-                  <div className="ds-msg ds-msg-ok" style={{ marginBottom: "var(--sp-3)" }}>
-                    <span>✓</span>
+                  <div style={{ display: "flex", alignItems: "flex-start", gap: 12, padding: "12px 16px", borderRadius: 6, marginBottom: 12, background: "#e6f4ea", border: "1px solid #a3d4ad", borderLeft: "3px solid #256f3a", color: "#1d2d3e", fontSize: 13 }}>
+                    <span style={{ color: "#256f3a", fontWeight: 700 }}>✓</span>
                     <span>
                       <strong>{billResults.generated} bill{billResults.generated > 1 ? "s" : ""} generated</strong>
                       {" "}— total:{" "}
-                      <strong>
+                      <strong style={{ color: "#256f3a" }}>
                         ₹{billResults.bills.reduce((s, b) => s + b.totalAmount, 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                       </strong>
                       . View in{" "}
-                      <a href="/data/bills" style={{ color: "var(--ds-brand)", textDecoration: "underline" }}>
+                      <a href="/data/bills" style={{ color: "#0070f2", textDecoration: "underline" }}>
                         Master Data → Bills
                       </a>.
                     </span>
                   </div>
                 )}
                 {billResults.failed > 0 && (
-                  <div className="ds-msg ds-msg-neg" style={{ marginBottom: "var(--sp-3)" }}>
-                    <span>✕</span>
-                    <span>
-                      {billResults.failed} reading{billResults.failed > 1 ? "s" : ""} failed:{" "}
-                      {billResults.errors.map(e => e.error).join("; ")}
-                    </span>
+                  <div style={{ display: "flex", alignItems: "flex-start", gap: 12, padding: "12px 16px", borderRadius: 6, marginBottom: 12, background: "#fce8e8", border: "1px solid #f0b0b0", borderLeft: "3px solid #aa0808", color: "#1d2d3e", fontSize: 13 }}>
+                    <span style={{ color: "#aa0808" }}>✕</span>
+                    <span>{billResults.failed} failed: {billResults.errors.map(e => e.error).join("; ")}</span>
                   </div>
                 )}
-                <div style={{ display: "flex", gap: "var(--sp-2)" }}>
-                  <button className="ds-btn ds-btn-sm"
-                    onClick={() => { setLastApproved([]); setBillResults(null); }}>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button
+                    onClick={() => { setLastApproved([]); setBillResults(null); }}
+                    style={{ height: 26, padding: "0 12px", border: "1px solid #d1d8de", borderRadius: 6, background: "#ffffff", color: "#1d2d3e", fontSize: 11, fontFamily: "inherit", cursor: "pointer" }}>
                     Clear
                   </button>
-                  <a href="/data/bills" className="ds-btn ds-btn-sm">
+                  <a href="/data/bills"
+                    style={{ height: 26, padding: "0 12px", border: "1px solid #d1d8de", borderRadius: 6, background: "#ffffff", color: "#0070f2", fontSize: 11, fontFamily: "inherit", cursor: "pointer", display: "inline-flex", alignItems: "center", textDecoration: "none" }}>
                     View Bills →
                   </a>
                 </div>
               </div>
             ) : (
-              <div style={{ display: "flex", alignItems: "center", gap: "var(--sp-3)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
                 <button
-                  className="ds-btn ds-btn-primary"
                   disabled={generatingBills}
                   onClick={generateBills}
-                  style={{ minWidth: 200 }}
-                >
-                  {generatingBills
-                    ? "Generating bills…"
-                    : `⚡ Generate ${lastApproved.length} Bill${lastApproved.length > 1 ? "s" : ""}`}
+                  style={{ height: 38, padding: "0 24px", border: "1px solid #0058c0", borderRadius: 6, background: generatingBills ? "#4a9de0" : "#0070f2", color: "#fff", fontSize: 14, fontWeight: 700, fontFamily: "inherit", cursor: generatingBills ? "not-allowed" : "pointer", display: "inline-flex", alignItems: "center", gap: 6, boxShadow: "0 1px 0 rgba(255,255,255,.2) inset, 0 2px 5px rgba(0,112,242,.35)", minWidth: 220 }}>
+                  {generatingBills ? "Generating bills…" : `⚡ Generate ${lastApproved.length} Bill${lastApproved.length > 1 ? "s" : ""}`}
                 </button>
-                <button className="ds-btn ds-btn-sm"
+                <button
                   disabled={generatingBills}
-                  onClick={() => { setLastApproved([]); setBillResults(null); }}>
+                  onClick={() => { setLastApproved([]); setBillResults(null); }}
+                  style={{ height: 32, padding: "0 12px", border: "1px solid #d1d8de", borderRadius: 6, background: "#ffffff", color: "#4a6070", fontSize: 12, fontFamily: "inherit", cursor: "pointer", opacity: generatingBills ? .5 : 1 }}>
                   Discard
                 </button>
-                <span style={{ fontSize: 12, color: "var(--ds-text-muted)" }}>
+                <span style={{ fontSize: 12, color: "#8396a8" }}>
                   Bills will be created in PENDING status and released to collections.
                 </span>
               </div>
@@ -878,20 +938,27 @@ export default function MeterReadingCyclePage() {
 
   return (
     <div className="ds-page">
-      {/* Page header */}
-      <div className="ds-section-header" style={{ marginBottom: "var(--sp-4)" }}>
+      {/* ── Page header ─────────────────────────────────────────────────────── */}
+      <div style={{ marginBottom: "var(--sp-5)", display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "var(--sp-4)" }}>
         <div>
-          <h1 style={{ fontSize: 20, fontWeight: 700, color: "var(--ds-text)", letterSpacing: "-.3px" }}>
+          <div style={{ fontSize: 11, fontWeight: 600, color: "var(--ds-text-muted)", letterSpacing: ".06em", textTransform: "uppercase", marginBottom: 4 }}>
+            Metering &amp; Billing
+          </div>
+          <h1 style={{ fontSize: 24, fontWeight: 800, color: "#1d2d3e", letterSpacing: "-.4px", lineHeight: 1.2 }}>
             Meter Reading Cycle
           </h1>
-          <p style={{ fontSize: 12, color: "var(--ds-text-muted)", marginTop: 2 }}>
-            Electricity · Schedule → Capture → Validate → Approve
+          <p style={{ fontSize: 13, color: "#4a6070", marginTop: 4 }}>
+            Electricity · Schedule → Capture → Validate → Approve → Generate Bills
           </p>
         </div>
-        <span className="ds-badge ds-badge-pos">ACTIVE</span>
+        <div style={{ display: "flex", alignItems: "center", gap: "var(--sp-2)", flexShrink: 0, paddingTop: 4 }}>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "3px 10px", borderRadius: 20, fontSize: 11, fontWeight: 700, background: "#e6f4ea", border: "1px solid #a3d4ad", color: "#256f3a" }}>
+            ● ACTIVE
+          </span>
+        </div>
       </div>
 
-      {/* Step bar */}
+      {/* ── Step bar ────────────────────────────────────────────────────────── */}
       <div className="ds-step-bar">
         {steps.map(s => (
           <button
@@ -900,9 +967,9 @@ export default function MeterReadingCyclePage() {
             onClick={() => setStep(s.key)}
           >
             <span className="ds-step-num">{s.num}</span>
-            <span>
-              {s.label}
-              <span style={{ display: "block", fontSize: 10, fontWeight: 400, color: step === s.key ? "var(--ds-brand-dark)" : "var(--ds-text-muted)" }}>
+            <span style={{ textAlign: "left" }}>
+              <span style={{ display: "block", fontSize: 13, fontWeight: 700 }}>{s.label}</span>
+              <span style={{ display: "block", fontSize: 10, fontWeight: 400, color: step === s.key ? "#0058c0" : "#8396a8", marginTop: 1 }}>
                 {s.desc}
               </span>
             </span>
@@ -910,7 +977,7 @@ export default function MeterReadingCyclePage() {
         ))}
       </div>
 
-      {/* Tab content */}
+      {/* ── Tab content ─────────────────────────────────────────────────────── */}
       {step === "schedule" && <ScheduleStep />}
       {step === "capture"  && <CaptureStep />}
       {step === "validate" && <ValidateStep />}
