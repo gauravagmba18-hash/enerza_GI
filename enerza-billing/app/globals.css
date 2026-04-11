@@ -180,13 +180,13 @@ body {
 
 /* ── Step bar ── */
 .ds-step-bar { display:flex; background:var(--ds-surface); border:1px solid var(--ds-border); border-radius:var(--ds-radius); overflow:hidden; margin-bottom:var(--sp-5); box-shadow:var(--ds-bevel-flat); }
-.ds-step { flex:1; padding:var(--sp-3) var(--sp-4); font-size:13px; font-weight:600; color:var(--ds-text-2); cursor:pointer; border-bottom:2px solid transparent; display:flex; align-items:center; gap:var(--sp-2); transition:all .12s; justify-content:center; border-right:1px solid var(--ds-border); }
+.ds-step { flex:1; padding:var(--sp-3) var(--sp-4); font-size:13px; font-weight:600; color:var(--ds-text-2); cursor:pointer; border-bottom:2px solid transparent; border-top:none; border-left:none; border-right:1px solid var(--ds-border); background:var(--ds-surface); display:flex; align-items:center; gap:var(--sp-2); transition:all .12s; justify-content:center; font-family:inherit; }
 .ds-step:last-child { border-right:none; }
 .ds-step:hover { color:var(--ds-text); background:var(--ds-surface-2); }
 .ds-step.active { color:var(--ds-brand); border-bottom-color:var(--ds-brand); background:var(--ds-brand-light); }
-.ds-step.done   { color:var(--ds-positive); }
-.ds-step-num { width:20px; height:20px; border-radius:50%; background:var(--ds-surface-3); border:1px solid var(--ds-border); font-size:10px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-.ds-step.active .ds-step-num { background:var(--ds-brand); color:#fff; border-color:var(--ds-brand); }
+.ds-step.done   { color:var(--ds-positive); background:var(--ds-positive-bg); }
+.ds-step-num { width:22px; height:22px; border-radius:50%; background:var(--ds-surface-3); border:1px solid var(--ds-border); font-size:10px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.ds-step.active .ds-step-num { background:var(--ds-brand); color:#fff; border-color:var(--ds-brand); box-shadow:0 1px 3px rgba(0,112,242,.4); }
 .ds-step.done   .ds-step-num { background:var(--ds-positive); color:#fff; border-color:var(--ds-positive); }
 
 /* ── Card ── */

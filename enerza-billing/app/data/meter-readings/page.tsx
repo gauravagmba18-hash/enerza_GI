@@ -185,14 +185,25 @@ function CaptureStep() {
   const [entries, setEntries] = useState<ConnectionEntry[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
-  const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
+  const [searchInput, setSearchInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [rowState, setRowState] = useState<Record<string, RowState>>({});
   const [readingDate, setReadingDate] = useState(new Date().toISOString().slice(0, 10));
   const [gps, setGps] = useState<{ lat: number; lon: number } | null>(null);
   const [gpsLoading, setGpsLoading] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const LIMIT = 20;
+
+  // Debounced search — triggers 400 ms after user stops typing
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      setSearch(searchInput);
+      setPage(1);
+    }, 400);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, [searchInput]);
 
   const fetchEntries = useCallback(async () => {
     setLoading(true);
@@ -271,41 +282,49 @@ function CaptureStep() {
   return (
     <div>
       {/* Toolbar */}
-      <div className="ds-card" style={{ marginBottom: "var(--sp-4)", padding: "var(--sp-3) var(--sp-4)", display: "flex", alignItems: "center", gap: "var(--sp-3)", flexWrap: "wrap" }}>
-        <div style={{ display: "flex", gap: "var(--sp-2)", flex: 1, minWidth: 240 }}>
-          <div className="ds-form-field" style={{ flex: 1 }}>
-            <label className="ds-form-label">Search customer</label>
-            <input className="ds-form-input" placeholder="Name…" value={searchInput}
-              onChange={e => setSearchInput(e.target.value)}
-              onKeyDown={e => { if (e.key === "Enter") { setSearch(searchInput); setPage(1); } }} />
+      <div style={{ background: "var(--ds-surface)", border: "1px solid var(--ds-border)", borderRadius: "var(--ds-radius)", padding: "var(--sp-4)", marginBottom: "var(--sp-4)", boxShadow: "var(--ds-bevel-card)", display: "flex", alignItems: "flex-end", gap: "var(--sp-4)", flexWrap: "wrap" }}>
+        {/* Search — search-as-you-type */}
+        <div className="ds-form-field" style={{ flex: "1 1 240px" }}>
+          <label className="ds-form-label">Search Customer</label>
+          <div style={{ position: "relative" }}>
+            <span style={{ position: "absolute", left: 8, top: "50%", transform: "translateY(-50%)", color: "var(--ds-text-muted)", fontSize: 15, pointerEvents: "none" }}>⌕</span>
+            <input className="ds-form-input" style={{ paddingLeft: 28 }} placeholder="Type name to filter…"
+              value={searchInput} onChange={e => setSearchInput(e.target.value)} />
+            {searchInput && (
+              <button onClick={() => setSearchInput("")}
+                style={{ position: "absolute", right: 6, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "var(--ds-text-muted)", fontSize: 18, lineHeight: 1, padding: 0 }}>×</button>
+            )}
           </div>
-          <button className="ds-btn ds-btn-primary ds-btn-sm" style={{ alignSelf: "flex-end" }}
-            onClick={() => { setSearch(searchInput); setPage(1); }}>Search</button>
-          {search && <button className="ds-btn ds-btn-sm" style={{ alignSelf: "flex-end" }}
-            onClick={() => { setSearch(""); setSearchInput(""); setPage(1); }}>Clear</button>}
         </div>
 
         <div className="ds-form-field">
           <label className="ds-form-label">Reading Date</label>
-          <input type="date" className="ds-form-input" value={readingDate} onChange={e => setReadingDate(e.target.value)} style={{ width: 150 }} />
+          <input type="date" className="ds-form-input" value={readingDate}
+            onChange={e => setReadingDate(e.target.value)} style={{ width: 148 }} />
         </div>
 
-        <button className="ds-btn ds-btn-sm" onClick={getGps} disabled={gpsLoading} style={{ alignSelf: "flex-end" }}>
-          {gps ? `📍 ${gps.lat.toFixed(4)}, ${gps.lon.toFixed(4)}` : gpsLoading ? "Getting GPS…" : "📍 GPS Stamp"}
+        <button className="ds-btn ds-btn-sm" onClick={getGps} disabled={gpsLoading}
+          style={{ alignSelf: "flex-end" }}>
+          {gps
+            ? <><span style={{ color: "var(--ds-positive)" }}>●</span> {gps.lat.toFixed(3)}, {gps.lon.toFixed(3)}</>
+            : gpsLoading ? "Locating…" : "📍 GPS Stamp"}
         </button>
 
         {pendingRows.length > 0 && (
           <button className="ds-btn ds-btn-primary" style={{ alignSelf: "flex-end" }}
             onClick={() => Promise.all(pendingRows.map(e => saveRow(e)))}>
-            💾 Save All ({pendingRows.length})
+            Save All ({pendingRows.length})
           </button>
         )}
 
-        <span style={{ fontSize: 11, color: "var(--ds-text-muted)", alignSelf: "flex-end" }}>{total} connections</span>
+        <span style={{ fontSize: 11, color: "var(--ds-text-muted)", alignSelf: "flex-end", marginLeft: "auto" }}>
+          {loading ? "Loading…" : `${total} connections`}
+        </span>
       </div>
 
       {/* Validation legend */}
-      <div style={{ display: "flex", gap: "var(--sp-5)", marginBottom: "var(--sp-3)", fontSize: 11, flexWrap: "wrap" }}>
+      <div style={{ display: "flex", gap: "var(--sp-4)", marginBottom: "var(--sp-3)", fontSize: 11, flexWrap: "wrap", alignItems: "center" }}>
+        <span style={{ fontWeight: 600, fontSize: 11, color: "var(--ds-text-2)" }}>Flag legend:</span>
         <span><span className="ds-badge ds-badge-neg" style={{ marginRight: 4 }}>REVERSAL</span>new &lt; previous</span>
         <span><span className="ds-badge ds-badge-warn" style={{ marginRight: 4 }}>LOW</span>&lt;30% of 3M avg</span>
         <span><span className="ds-badge ds-badge-neg" style={{ marginRight: 4 }}>HIGH</span>&gt;300% of 3M avg</span>
@@ -435,6 +454,7 @@ function ValidateStep() {
   const [entries, setEntries] = useState<ValidationEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [acting, setActing] = useState<Record<string, boolean>>({});
+  const [filter, setFilter] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -460,6 +480,7 @@ function ValidateStep() {
   };
 
   const suspectCount = entries.filter(e => e.analysis.isSuspect).length;
+  const visible = filter ? entries.filter(e => e.customer.fullName.toLowerCase().includes(filter.toLowerCase())) : entries;
 
   if (loading) return <div style={{ textAlign: "center", padding: 48, color: "var(--ds-text-muted)" }}>Loading validation queue…</div>;
 
@@ -482,7 +503,14 @@ function ValidateStep() {
         <>
           <div className="ds-section-header" style={{ marginBottom: "var(--sp-3)" }}>
             <h3 className="ds-section-title">Validation Queue <span className="ds-section-sub">{entries.length} readings · {suspectCount} suspect</span></h3>
-            <button className="ds-btn ds-btn-sm" onClick={load}>↺ Refresh</button>
+            <div style={{ display: "flex", gap: "var(--sp-2)", alignItems: "center" }}>
+              <div style={{ position: "relative" }}>
+                <span style={{ position: "absolute", left: 8, top: "50%", transform: "translateY(-50%)", color: "var(--ds-text-muted)", fontSize: 14, pointerEvents: "none" }}>⌕</span>
+                <input className="ds-form-input" style={{ paddingLeft: 26, width: 200, height: 30, fontSize: 12 }}
+                  placeholder="Filter by name…" value={filter} onChange={e => setFilter(e.target.value)} />
+              </div>
+              <button className="ds-btn ds-btn-sm" onClick={load}>↺ Refresh</button>
+            </div>
           </div>
 
           <div className="ds-card">
@@ -498,7 +526,10 @@ function ValidateStep() {
                 </tr>
               </thead>
               <tbody>
-                {entries.map(e => {
+                {visible.length === 0 && (
+                  <tr><td colSpan={6} style={{ textAlign: "center", padding: 32, color: "var(--ds-text-muted)" }}>No readings match "{filter}"</td></tr>
+                )}
+                {visible.map(e => {
                   const a = e.analysis;
                   const prevVal = a.prevReadingValue ?? 0;
                   const isActing = acting[e.readingId];
@@ -574,6 +605,7 @@ function ApproveStep() {
   const [lastApproved, setLastApproved] = useState<ApproveEntry[]>([]);
   const [generatingBills, setGeneratingBills] = useState(false);
   const [billResults, setBillResults] = useState<BillResult | null>(null);
+  const [filter, setFilter] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -627,6 +659,8 @@ function ApproveStep() {
     } finally { setGeneratingBills(false); }
   };
 
+  const visibleApprove = filter ? entries.filter(e => e.customer.fullName.toLowerCase().includes(filter.toLowerCase())) : entries;
+
   if (loading) return <div style={{ textAlign: "center", padding: 48, color: "var(--ds-text-muted)" }}>Loading approval queue…</div>;
 
   return (
@@ -638,6 +672,11 @@ function ApproveStep() {
           {/* Toolbar */}
           <div style={{ display: "flex", alignItems: "center", gap: "var(--sp-3)", marginBottom: "var(--sp-4)", flexWrap: "wrap" }}>
             <h3 className="ds-section-title">{total} readings awaiting approval</h3>
+            <div style={{ position: "relative" }}>
+              <span style={{ position: "absolute", left: 8, top: "50%", transform: "translateY(-50%)", color: "var(--ds-text-muted)", fontSize: 14, pointerEvents: "none" }}>⌕</span>
+              <input className="ds-form-input" style={{ paddingLeft: 26, width: 180, height: 30, fontSize: 12 }}
+                placeholder="Filter by name…" value={filter} onChange={e => setFilter(e.target.value)} />
+            </div>
             <div style={{ marginLeft: "auto", display: "flex", gap: "var(--sp-2)" }}>
               <button className="ds-btn ds-btn-sm" onClick={() => toggleAll()}>
                 {selected.size === entries.length ? "Deselect All" : "Select All"}
@@ -674,7 +713,10 @@ function ApproveStep() {
                 </tr>
               </thead>
               <tbody>
-                {entries.map(e => (
+                {visibleApprove.length === 0 && (
+                  <tr><td colSpan={7} style={{ textAlign: "center", padding: 32, color: "var(--ds-text-muted)" }}>No readings match "{filter}"</td></tr>
+                )}
+                {visibleApprove.map(e => (
                   <tr key={e.readingId} onClick={() => toggleSelect(e.readingId)}
                     style={{ background: selected.has(e.readingId) ? "var(--ds-brand-light)" : undefined }}>
                     <td>
