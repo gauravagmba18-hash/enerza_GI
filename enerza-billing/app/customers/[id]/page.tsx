@@ -26,7 +26,7 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
     fetch(`/api/customers/${resolvedParams.id}`)
       .then(res => res.json())
       .then(data => {
-        setCustomer(data);
+        setCustomer(data.data ?? data);
         setLoading(false);
       })
       .catch(() => setLoading(false));

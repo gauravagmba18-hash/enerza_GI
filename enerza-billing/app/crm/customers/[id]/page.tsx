@@ -142,7 +142,13 @@ export default async function Customer360Profile({ params }: { params: Promise<{
 
         <div style={{ textAlign: "right" }}>
           <div style={{ fontSize: 11, color: "var(--muted)", textTransform: "uppercase", letterSpacing: 0.5 }}>Total Outstanding</div>
-          <div style={{ fontSize: 28, fontWeight: 700, color: "#ef4444" }}>₹14,284</div>
+          <div style={{ fontSize: 28, fontWeight: 700, color: "#ef4444" }}>
+            ₹{customer.accounts
+              .flatMap(a => a.bills)
+              .filter(b => b.status !== "PAID")
+              .reduce((s, b) => s + (b.totalAmount ?? 0), 0)
+              .toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+          </div>
           <button style={{ 
             background: "var(--accent)", 
             color: "#fff", 
