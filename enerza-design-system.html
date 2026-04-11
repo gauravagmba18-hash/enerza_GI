@@ -1,0 +1,1491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Enerza UI — SAP Fiori Design System</title>
+
+<!--
+╔══════════════════════════════════════════════════════════════════════════════════╗
+║  ENERZA UTILITY BILLING — FIORI DESIGN SYSTEM                                  ║
+║  For Claude Code: This file is the AUTHORITATIVE design reference.             ║
+║  Every component, token, pattern and spacing rule used in this app             ║
+║  is defined here. When generating any UI for this project:                     ║
+║                                                                                  ║
+║  1. Use the CSS custom properties defined in :root (never hardcode hex)        ║
+║  2. Follow the tile hierarchy: Page → Section → Tile → Sub-tile                ║
+║  3. Bevelled tiles = box-shadow layered system (see --bevel-* tokens)          ║
+║  4. Shell bar always #354a5e, brand accent always #0070f2                      ║
+║  5. Typography: "72" font family (SAP's font) with system fallback             ║
+║  6. Semantic colors: positive=#256f3a, critical=#e76500, negative=#aa0808      ║
+║  7. All spacing on 4px grid (--space-1=4px through --space-10=40px)            ║
+╚══════════════════════════════════════════════════════════════════════════════════╝
+-->
+
+<style>
+/* ════════════════════════════════════════════════════════════════
+   DESIGN TOKENS — CLAUDE CODE: Import these as your token source
+   All CSS custom properties are consumed throughout this system.
+   Never hardcode colors, shadows, or spacing — use these tokens.
+   ════════════════════════════════════════════════════════════════ */
+:root {
+
+  /* ── BRAND & SHELL ── */
+  --brand:           #0070f2;   /* sapBrandColor — primary CTA, links, active states */
+  --brand-dark:      #0058c0;   /* Hover state for brand elements */
+  --brand-light:     #d1e8ff;   /* Brand tint for backgrounds */
+  --shell-bg:        #354a5e;   /* SAP Fiori shell bar / sidebar background */
+  --shell-active:    rgba(0,112,242,0.22); /* Active nav item overlay */
+  --shell-hover:     rgba(255,255,255,0.10);
+
+  /* ── PAGE BACKGROUNDS ── */
+  --page-bg:         #eef1f4;   /* sapBackgroundColor — outer canvas */
+  --surface:         #ffffff;   /* sapBaseColor — cards, tiles, modals */
+  --surface-2:       #f5f7f9;   /* Slightly off-white for sub-sections */
+  --surface-3:       #edf0f3;   /* Hover states on tiles */
+
+  /* ── TYPOGRAPHY ── */
+  --text-primary:    #1d2d3e;   /* sapTextColor — body text */
+  --text-secondary:  #4a6070;   /* sapContent_LabelColor — labels */
+  --text-muted:      #8396a8;   /* Placeholder, de-emphasized */
+  --text-inverted:   #ffffff;   /* Text on dark backgrounds */
+  --text-link:       #0070f2;   /* Anchor text */
+
+  /* ── SEMANTIC COLORS ── */
+  --positive:        #256f3a;   /* sapPositiveColor — success, paid, good */
+  --positive-bg:     #e6f4ea;
+  --positive-border: #a3d4ad;
+  --negative:        #aa0808;   /* sapNegativeColor — error, overdue, danger */
+  --negative-bg:     #fce8e8;
+  --negative-border: #f0b0b0;
+  --critical:        #df6e0c;   /* sapCriticalColor — warning, exception */
+  --critical-bg:     #fef3e6;
+  --critical-border: #f5c98a;
+  --info:            #0070f2;   /* sapInformativeColor */
+  --info-bg:         #e8f2ff;
+  --info-border:     #99c4f8;
+  --neutral:         #556b82;
+
+  /* ── BORDERS ── */
+  --border:          #d1d8de;   /* sapContent_ForegroundBorderColor */
+  --border-strong:   #9aacba;
+  --border-focus:    #0070f2;   /* 2px focus ring */
+  --border-radius:   10px;      /* Tile corner radius */
+  --border-radius-sm: 6px;
+  --border-radius-lg: 14px;
+
+  /* ══ BEVEL SHADOW SYSTEM ══
+     This is the core visual language of the Enerza UI.
+     Tiles use a three-layer shadow to create a modern bevelled / lifted effect.
+     CLAUDE CODE: Apply --bevel-tile to every .tile, --bevel-card to every .card,
+     --bevel-hover when user hovers a tile, --bevel-pressed on :active.
+     Never use a single flat box-shadow — always use the layered system.         */
+  --bevel-tile:
+    0 1px 0 0 rgba(255,255,255,0.9) inset,          /* top inner highlight */
+    0 -1px 0 0 rgba(0,0,0,0.06) inset,              /* bottom inner shadow */
+    0 2px 0 0 rgba(255,255,255,0.6) inset,          /* second highlight layer */
+    0 2px 4px rgba(29,45,62,0.06),                  /* close ambient */
+    0 4px 8px rgba(29,45,62,0.08),                  /* mid shadow */
+    0 1px 2px rgba(29,45,62,0.10);                  /* base shadow */
+
+  --bevel-hover:
+    0 1px 0 0 rgba(255,255,255,0.95) inset,
+    0 -1px 0 0 rgba(0,0,0,0.08) inset,
+    0 2px 0 0 rgba(255,255,255,0.7) inset,
+    0 6px 16px rgba(29,45,62,0.13),
+    0 3px 6px rgba(29,45,62,0.10),
+    0 1px 3px rgba(0,112,242,0.08);
+
+  --bevel-pressed:
+    0 1px 0 0 rgba(255,255,255,0.6) inset,
+    0 2px 4px rgba(0,0,0,0.08) inset,              /* inset on press */
+    0 1px 2px rgba(29,45,62,0.08);
+
+  --bevel-card:
+    0 1px 0 0 rgba(255,255,255,0.9) inset,
+    0 -1px 0 0 rgba(0,0,0,0.04) inset,
+    0 2px 8px rgba(29,45,62,0.07),
+    0 1px 2px rgba(29,45,62,0.08);
+
+  --bevel-card-hover:
+    0 1px 0 0 rgba(255,255,255,0.95) inset,
+    0 -1px 0 0 rgba(0,0,0,0.06) inset,
+    0 8px 24px rgba(29,45,62,0.12),
+    0 2px 4px rgba(29,45,62,0.10);
+
+  --bevel-inset:                                    /* Sub-tiles, inner wells */
+    0 2px 4px rgba(0,0,0,0.07) inset,
+    0 1px 2px rgba(0,0,0,0.05) inset,
+    0 1px 0 rgba(255,255,255,0.6);
+
+  --bevel-flat:                                     /* Flat tiles, link tiles */
+    0 1px 0 rgba(255,255,255,0.8) inset,
+    0 1px 3px rgba(29,45,62,0.08),
+    0 1px 1px rgba(29,45,62,0.06);
+
+  --bevel-kpi-number:                               /* Lifted KPI digit blocks */
+    0 1px 0 rgba(255,255,255,0.5) inset,
+    0 2px 6px rgba(29,45,62,0.10);
+
+  /* ── SPACING (4px grid) ── */
+  --sp-1: 4px;   --sp-2: 8px;   --sp-3: 12px;  --sp-4: 16px;
+  --sp-5: 20px;  --sp-6: 24px;  --sp-7: 28px;  --sp-8: 32px;
+  --sp-10: 40px; --sp-12: 48px;
+
+  /* ── TILE DIMENSIONS ── */
+  --tile-1x1: 176px;   /* Standard square tile */
+  --tile-2x1: 362px;   /* Wide tile (2 columns) */
+  --tile-h:   176px;   /* Standard height */
+  --tile-h-flat: 82px; /* Flat / compact tile height */
+  --tile-gap: 10px;    /* Gap between tiles in a section */
+
+  /* ── SHELL DIMENSIONS ── */
+  --shell-h:  44px;
+  --anchor-h: 36px;
+
+  /* ── TYPOGRAPHY SCALE ── */
+  --font:       "72","72full",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --font-mono:  "72Mono","72Mono-Bold",ui-monospace,monospace;
+  --fs-xs:  10px;   /* Footnotes, badges */
+  --fs-sm:  11px;   /* Tile subtitles, footers */
+  --fs-base: 13px;  /* Body, table cells */
+  --fs-md:  14px;   /* Labels, nav items */
+  --fs-lg:  15px;   /* Section titles */
+  --fs-xl:  20px;   /* Page titles */
+  --fs-kpi-sm: 28px; /* Small KPI numbers */
+  --fs-kpi:    36px; /* Standard KPI numbers */
+  --fs-kpi-lg: 44px; /* Hero KPI numbers */
+
+  /* ── TRANSITIONS ── */
+  --transition-fast: 120ms cubic-bezier(0.4,0,0.2,1);
+  --transition-mid:  200ms cubic-bezier(0.4,0,0.2,1);
+  --transition-slow: 350ms cubic-bezier(0.4,0,0.2,1);
+
+  /* ── Z-INDEX LAYERS ── */
+  --z-tile:    1;
+  --z-overlay: 100;
+  --z-anchor:  200;
+  --z-shell:   300;
+  --z-modal:   400;
+  --z-toast:   500;
+}
+
+/* ════════════════════════════════════
+   RESET & BASE
+   CLAUDE CODE: All pages use this base.
+   ════════════════════════════════════ */
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+html,body {
+  height:100%; font-family:var(--font); font-size:var(--fs-base);
+  color:var(--text-primary); background:var(--page-bg);
+  -webkit-font-smoothing:antialiased;
+}
+a { color:var(--text-link); text-decoration:none; }
+a:hover { text-decoration:underline; }
+button { font-family:var(--font); cursor:pointer; }
+
+
+/* ════════════════════════════════════════════════════════
+   SHELL BAR
+   CLAUDE CODE: Fixed top bar. Always --shell-bg background.
+   Height always --shell-h. z-index always --z-shell.
+   ════════════════════════════════════════════════════════ */
+.shell {
+  position: fixed; top:0; left:0; right:0;
+  height: var(--shell-h);
+  background: var(--shell-bg);
+  display: flex; align-items: center;
+  padding: 0 var(--sp-3);
+  gap: 0; z-index: var(--z-shell);
+  /* Shell gets a strong bevel-style bottom border */
+  border-bottom: 1px solid rgba(0,0,0,0.25);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.28), 0 1px 0 rgba(255,255,255,0.06) inset;
+}
+.shell-logo {
+  display: flex; align-items: center; gap: var(--sp-2);
+  color: var(--text-inverted);
+  font-size: 15px; font-weight: 700; letter-spacing: -0.3px;
+  padding-right: var(--sp-4);
+  border-right: 1px solid rgba(255,255,255,0.15);
+  flex-shrink: 0;
+}
+.shell-wordmark {
+  width: 28px; height: 28px;
+  background: var(--brand);
+  border-radius: var(--border-radius-sm);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 800; color: #fff;
+  /* Bevelled logo mark */
+  box-shadow: 0 1px 0 rgba(255,255,255,0.3) inset,
+              0 2px 4px rgba(0,0,0,0.3);
+}
+.shell-app-name {
+  color: rgba(255,255,255,0.55); font-size: 12px; font-weight: 400;
+  padding-left: var(--sp-4); white-space: nowrap;
+}
+.shell-role {
+  height: 20px; padding: 0 8px;
+  background: rgba(0,112,242,0.25);
+  border: 1px solid rgba(0,112,242,0.4);
+  border-radius: 10px;
+  font-size: var(--fs-xs); font-weight: 700;
+  color: rgba(255,255,255,0.9);
+  display: flex; align-items: center;
+  margin-left: var(--sp-3);
+}
+.shell-search {
+  flex: 1; max-width: 380px; margin: 0 var(--sp-4); position: relative;
+}
+.shell-search-input {
+  width: 100%; height: 30px;
+  background: rgba(0,0,0,0.2);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 15px;
+  color: #fff; font-size: var(--fs-sm); font-family: var(--font);
+  padding: 0 32px 0 14px;
+  transition: var(--transition-fast);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2) inset;
+}
+.shell-search-input::placeholder { color: rgba(255,255,255,0.45); }
+.shell-search-input:focus {
+  outline: none;
+  background: rgba(0,0,0,0.28);
+  border-color: rgba(255,255,255,0.3);
+}
+.shell-search-icon {
+  position: absolute; right: 11px; top: 50%; transform: translateY(-50%);
+  color: rgba(255,255,255,0.45); font-size: 13px; pointer-events: none;
+}
+.shell-actions { margin-left: auto; display: flex; align-items: center; gap: var(--sp-1); }
+.shell-icon-btn {
+  width: 34px; height: 34px;
+  border: none; background: transparent;
+  color: rgba(255,255,255,0.75);
+  border-radius: var(--border-radius-sm);
+  font-size: 15px;
+  display: flex; align-items: center; justify-content: center;
+  transition: background var(--transition-fast);
+  position: relative;
+}
+.shell-icon-btn:hover { background: var(--shell-hover); }
+.shell-notif-dot {
+  position: absolute; top: 5px; right: 5px;
+  width: 7px; height: 7px;
+  background: var(--critical); border-radius: 50%;
+  border: 2px solid var(--shell-bg);
+}
+.shell-avatar {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: var(--brand); color: #fff;
+  font-size: 11px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  margin-left: var(--sp-2);
+  border: 2px solid rgba(255,255,255,0.25);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  cursor: pointer;
+}
+
+
+/* ════════════════════════════════════════════════════════════
+   ANCHOR BAR
+   CLAUDE CODE: Fixed below shell. Group navigation for launchpad.
+   Height --anchor-h, z-index --z-anchor.
+   Active group gets brand underline border.
+   ════════════════════════════════════════════════════════════ */
+.anchor-bar {
+  position: fixed;
+  top: var(--shell-h); left: 0; right: 0;
+  height: var(--anchor-h);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center;
+  padding: 0 var(--sp-6);
+  z-index: var(--z-anchor);
+  overflow-x: auto; scrollbar-width: none;
+  /* Subtle bevel under anchor bar */
+  box-shadow: 0 2px 6px rgba(29,45,62,0.07),
+              0 1px 0 rgba(255,255,255,0.8) inset;
+}
+.anchor-bar::-webkit-scrollbar { display: none; }
+.anchor-link {
+  height: var(--anchor-h);
+  padding: 0 var(--sp-4);
+  font-size: 13px; font-weight: 500;
+  color: var(--text-secondary);
+  border-bottom: 2px solid transparent;
+  display: flex; align-items: center;
+  white-space: nowrap; cursor: pointer;
+  transition: color var(--transition-fast), border-color var(--transition-fast);
+  text-decoration: none;
+}
+.anchor-link:hover { color: var(--text-primary); text-decoration: none; }
+.anchor-link.active { color: var(--brand); border-bottom-color: var(--brand); }
+.anchor-actions { margin-left: auto; display: flex; gap: var(--sp-2); align-items: center; }
+
+
+/* ════════════════════════════════════════════════════════════
+   BUTTON SYSTEM
+   CLAUDE CODE: Three variants. All use 4px border-radius.
+   btn-primary = brand filled
+   btn-default = outlined
+   btn-ghost   = no border, hover only
+   Sizes: default=32px, sm=26px, lg=38px
+   ════════════════════════════════════════════════════════════ */
+.btn {
+  height: 32px; padding: 0 var(--sp-4);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-primary);
+  font-size: var(--fs-base); font-weight: 500;
+  border-radius: var(--border-radius-sm);
+  display: inline-flex; align-items: center; gap: var(--sp-1);
+  white-space: nowrap;
+  transition: all var(--transition-fast);
+  box-shadow: var(--bevel-flat);
+}
+.btn:hover {
+  background: var(--surface-2);
+  box-shadow: var(--bevel-card);
+}
+.btn:active { box-shadow: var(--bevel-pressed); transform: translateY(1px); }
+
+.btn-primary {
+  background: var(--brand); border-color: var(--brand-dark);
+  color: #fff;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.2) inset,
+              0 2px 5px rgba(0,112,242,0.35);
+}
+.btn-primary:hover {
+  background: var(--brand-dark);
+  box-shadow: 0 1px 0 rgba(255,255,255,0.15) inset,
+              0 4px 10px rgba(0,112,242,0.4);
+}
+.btn-ghost {
+  border-color: transparent; background: transparent;
+  box-shadow: none;
+}
+.btn-ghost:hover { background: var(--surface-3); box-shadow: none; }
+.btn-sm { height: 26px; padding: 0 var(--sp-3); font-size: var(--fs-sm); }
+.btn-lg { height: 38px; padding: 0 var(--sp-5); font-size: var(--fs-md); }
+
+
+/* ════════════════════════════════════════════════════════════
+   PAGE CANVAS
+   CLAUDE CODE: Offset by shell+anchor height.
+   All launchpad content lives inside .canvas.
+   ════════════════════════════════════════════════════════════ */
+.canvas {
+  margin-top: calc(var(--shell-h) + var(--anchor-h));
+  padding: var(--sp-5) var(--sp-6);
+  min-height: calc(100vh - var(--shell-h) - var(--anchor-h));
+}
+
+
+/* ════════════════════════════════════════════════════════════
+   SECTION SYSTEM
+   CLAUDE CODE: Each group of tiles is a .section.
+   Section header has a title with a left-border accent
+   and an optional right-side action link.
+   ════════════════════════════════════════════════════════════ */
+.section { margin-bottom: var(--sp-8); }
+.section-header {
+  display: flex; align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--sp-3);
+}
+.section-title {
+  font-size: var(--fs-lg); font-weight: 700;
+  color: var(--text-primary);
+  display: flex; align-items: center; gap: var(--sp-2);
+}
+/* Accent bar left of section title */
+.section-title::before {
+  content: '';
+  display: block; width: 3px; height: 18px;
+  background: var(--brand); border-radius: 2px;
+}
+.section-sub {
+  font-size: var(--fs-sm); font-weight: 400;
+  color: var(--text-muted); margin-left: var(--sp-1);
+}
+.section-action {
+  font-size: var(--fs-sm); color: var(--brand);
+  cursor: pointer;
+}
+.section-action:hover { text-decoration: underline; }
+
+
+/* ════════════════════════════════════════════════════════════
+   ████████████████████████████████████████████████████████████
+   TILE SYSTEM — THE CORE VISUAL LANGUAGE
+   CLAUDE CODE: This is the most important section.
+   
+   HIERARCHY:
+   .tile-grid → wraps all tiles in a section (flex, wraps)
+   .tile      → base tile (1×1 = 176px square)
+   .tile.wide → 2×1 wide tile (362px × 176px)
+   .tile.flat → compact tile (176px or 362px × 82px)
+   .sub-tile  → nested tile inside a wide tile (inset bevel)
+   
+   BEVEL RULES:
+   - Every .tile gets --bevel-tile by default
+   - On hover: --bevel-hover + translateY(-2px)
+   - On :active: --bevel-pressed + translateY(0)
+   - Sub-tiles get --bevel-inset (pressed-in look)
+   - KPI number blocks get --bevel-kpi-number
+   ████████████████████████████████████████████████████████████
+   ════════════════════════════════════════════════════════════ */
+
+.tile-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--tile-gap);
+  align-items: flex-start;
+}
+
+/* ─── BASE TILE ─── */
+.tile {
+  width: var(--tile-1x1);
+  height: var(--tile-h);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: box-shadow var(--transition-mid),
+              transform var(--transition-mid),
+              background var(--transition-fast);
+  /* THE BEVEL — do not remove or flatten */
+  box-shadow: var(--bevel-tile);
+  /* Subtle top edge highlight mimics physical bevel */
+  border-top-color: rgba(255,255,255,0.9);
+  border-left-color: rgba(255,255,255,0.7);
+  border-bottom-color: #b8c2cc;
+  border-right-color: #c4ced7;
+}
+.tile:hover {
+  box-shadow: var(--bevel-hover);
+  transform: translateY(-3px);
+  background: #fafbfc;
+  z-index: var(--z-tile);
+}
+.tile:active {
+  box-shadow: var(--bevel-pressed);
+  transform: translateY(0);
+}
+/* Size variants */
+.tile.wide  { width: var(--tile-2x1); }
+.tile.flat  { height: var(--tile-h-flat); }
+.tile.flat.wide { width: var(--tile-2x1); height: var(--tile-h-flat); }
+
+/* ─── SUB-TILE (nested, inset bevel) ─── */
+/*
+  CLAUDE CODE: Use .sub-tile inside .tile.wide to create two sub-sections.
+  Sub-tiles use --bevel-inset (they look pressed INTO the parent tile).
+  They sit on a --surface-2 background and have no outer radius.
+*/
+.sub-tile {
+  flex: 1;
+  background: var(--surface-2);
+  padding: var(--sp-3);
+  display: flex; flex-direction: column;
+  gap: var(--sp-2);
+  box-shadow: var(--bevel-inset);
+  border-right: 1px solid var(--border);
+  position: relative;
+}
+.sub-tile:last-child { border-right: none; }
+/* Sub-tile wrapper for wide tiles */
+.tile-sub-row {
+  display: flex; flex: 1;
+  border-top: 1px solid var(--border);
+  overflow: hidden;
+  border-radius: 0 0 var(--border-radius) var(--border-radius);
+}
+
+/* ─── TILE ACCENT BAR (top color stripe) ─── */
+/*
+  CLAUDE CODE: Add .tile-accent-bar as first child of .tile.
+  Change --accent-color inline or via modifier class.
+*/
+.tile-accent-bar {
+  height: 3px;
+  background: var(--accent-color, var(--brand));
+  flex-shrink: 0;
+  border-radius: var(--border-radius) var(--border-radius) 0 0;
+}
+.accent-positive { --accent-color: var(--positive); }
+.accent-critical  { --accent-color: var(--critical); }
+.accent-negative { --accent-color: var(--negative); }
+.accent-teal     { --accent-color: #0e7d71; }
+.accent-violet   { --accent-color: #6b48e8; }
+.accent-gray     { --accent-color: #8396a8; }
+
+/* ─── TILE BODY SECTIONS ─── */
+.tile-head {
+  padding: var(--sp-3) var(--sp-3) 0;
+  flex-shrink: 0;
+}
+.tile-body {
+  flex: 1;
+  display: flex; flex-direction: column;
+  justify-content: center;
+  padding: 0 var(--sp-3);
+}
+.tile-foot {
+  padding: var(--sp-2) var(--sp-3);
+  border-top: 1px solid var(--border);
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  display: flex; align-items: center; justify-content: space-between;
+  flex-shrink: 0;
+  /* Inset shadow on footer to reinforce depth */
+  box-shadow: 0 1px 0 rgba(255,255,255,0.6) inset;
+  background: linear-gradient(to bottom, var(--surface) 0%, #f8f9fa 100%);
+}
+
+/* ─── TILE ICON ─── */
+/*
+  CLAUDE CODE: Icon blocks are bevelled pill shapes.
+  Use .tile-icon with a color modifier class.
+  Always 36×36px, border-radius 8px.
+  Icon SVG or emoji inside at font-size 17px.
+*/
+.tile-icon {
+  width: 36px; height: 36px;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px; flex-shrink: 0;
+  margin-bottom: var(--sp-2);
+  /* Bevelled icon container */
+  box-shadow: 0 1px 0 rgba(255,255,255,0.5) inset,
+              0 1px 3px rgba(0,0,0,0.12);
+}
+.ti-blue   { background:#deeeff; color:#0058c0; border:1px solid #aacff7; }
+.ti-green  { background:#d8f0dd; color:#1a5c2d; border:1px solid #8fcf9c; }
+.ti-orange { background:#fde8c8; color:#b85000; border:1px solid #f5b870; }
+.ti-red    { background:#fad5d5; color:#880606; border:1px solid #eda8a8; }
+.ti-teal   { background:#d4f0ec; color:#0a6157; border:1px solid #7fd0c8; }
+.ti-violet { background:#e8e0ff; color:#4a2fc0; border:1px solid #b8a4f8; }
+.ti-gray   { background:#e8ecf0; color:#3d5066; border:1px solid #bac5cf; }
+
+/* ─── TILE TYPOGRAPHY ─── */
+.tile-title    { font-size: 12px; font-weight: 700; color: var(--text-primary); line-height: 1.3; margin-bottom: 1px; }
+.tile-subtitle { font-size: var(--fs-xs); color: var(--text-muted); line-height: 1.4; }
+
+/* ─── KPI NUMBER BLOCK ─── */
+/*
+  CLAUDE CODE: KPI numbers are always in a .kpi-val span.
+  Apply semantic color class for status indication.
+  The .kpi-block wraps number + unit + delta row.
+*/
+.kpi-block { display: flex; flex-direction: column; gap: 3px; }
+.kpi-val {
+  font-size: var(--fs-kpi);
+  font-weight: 700;
+  line-height: 1;
+  color: var(--text-primary);
+  /* Subtle text shadow for depth */
+  text-shadow: 0 1px 2px rgba(0,0,0,0.08);
+  letter-spacing: -0.5px;
+}
+.kpi-val.brand    { color: var(--brand); }
+.kpi-val.positive { color: var(--positive); }
+.kpi-val.negative { color: var(--negative); }
+.kpi-val.critical { color: var(--critical); }
+.kpi-unit  { font-size: 15px; font-weight: 400; color: var(--text-secondary); margin-left: 2px; }
+.kpi-small { font-size: var(--fs-kpi-sm); }
+.kpi-large { font-size: var(--fs-kpi-lg); }
+
+/* ─── DELTA BADGE ─── */
+/*
+  CLAUDE CODE: Always wrap deviation with .delta badge.
+  Use .delta-up / .delta-down / .delta-warn / .delta-neutral.
+  Arrow prefix: ▲ for up, ▼ for down, → for neutral.
+*/
+.delta {
+  display: inline-flex; align-items: center; gap: 3px;
+  padding: 2px 7px; border-radius: 10px;
+  font-size: var(--fs-xs); font-weight: 700;
+  /* Bevelled pill badge */
+  box-shadow: 0 1px 0 rgba(255,255,255,0.5) inset,
+              0 1px 2px rgba(0,0,0,0.08);
+}
+.delta-up   { color: var(--positive); background: var(--positive-bg); border: 1px solid var(--positive-border); }
+.delta-down { color: var(--negative); background: var(--negative-bg); border: 1px solid var(--negative-border); }
+.delta-warn { color: var(--critical); background: var(--critical-bg); border: 1px solid var(--critical-border); }
+.delta-neutral { color: var(--neutral); background: var(--surface-2); border: 1px solid var(--border); }
+
+/* ─── STATUS BADGE ─── */
+.badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 8px; border-radius: 10px;
+  font-size: var(--fs-xs); font-weight: 600;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.4) inset, 0 1px 2px rgba(0,0,0,0.07);
+}
+.badge::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+.badge-pos  { color: var(--positive); background: var(--positive-bg); border: 1px solid var(--positive-border); }
+.badge-neg  { color: var(--negative); background: var(--negative-bg); border: 1px solid var(--negative-border); }
+.badge-warn { color: var(--critical); background: var(--critical-bg); border: 1px solid var(--critical-border); }
+.badge-info { color: var(--info);     background: var(--info-bg);     border: 1px solid var(--info-border); }
+.badge-neu  { color: var(--neutral);  background: var(--surface-3);   border: 1px solid var(--border); }
+
+/* ─── MICRO CHART (tile bar chart) ─── */
+.micro-chart {
+  display: flex; align-items: flex-end; gap: 3px;
+  height: 44px; padding: 0 var(--sp-3) var(--sp-2);
+}
+.mc-bar {
+  flex: 1; border-radius: 3px 3px 0 0;
+  background: var(--info-bg);
+  transition: background var(--transition-fast);
+  /* Each bar gets a subtle bevel */
+  box-shadow: 1px 0 0 rgba(255,255,255,0.4) inset,
+              0 1px 0 rgba(255,255,255,0.3) inset;
+}
+.mc-bar.active { background: var(--brand); }
+.mc-bar.warn   { background: var(--critical); }
+.mc-bar.ok     { background: var(--positive); }
+
+/* ─── PROGRESS BAR ─── */
+.progress-track {
+  height: 5px; border-radius: 3px;
+  background: var(--surface-3);
+  overflow: hidden;
+  margin: var(--sp-1) var(--sp-3) var(--sp-2);
+  /* Inset shadow on progress track */
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1) inset;
+}
+.progress-fill {
+  height: 100%; border-radius: 3px;
+  background: var(--brand);
+  /* Shine on fill bar */
+  box-shadow: 0 1px 0 rgba(255,255,255,0.35) inset;
+}
+
+/* ─── NOTIFICATION ROW (inside notification tile) ─── */
+.notif-tile-row {
+  padding: var(--sp-2) var(--sp-3);
+  border-bottom: 1px solid var(--border);
+  font-size: var(--fs-xs); color: var(--text-primary);
+  display: flex; align-items: center; gap: var(--sp-2);
+  flex-shrink: 0;
+  background: var(--surface);
+  transition: background var(--transition-fast);
+}
+.notif-tile-row:hover { background: var(--surface-2); }
+.notif-tile-row:last-child { border-bottom: none; }
+.notif-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+
+/* ─── FLAT TILE INNER LAYOUT ─── */
+.tile-flat-body {
+  display: flex; align-items: center;
+  gap: var(--sp-3); padding: 0 var(--sp-4);
+  height: 100%;
+}
+.tile-flat-text .tile-title   { font-size: 12px; margin-bottom: 0; }
+.tile-flat-text .tile-subtitle{ font-size: var(--fs-xs); }
+.tile-flat-kpi {
+  margin-left: auto;
+  font-size: 22px; font-weight: 700;
+  white-space: nowrap;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.07);
+}
+
+/* ─── LINK STRIP (below tile groups) ─── */
+/*
+  CLAUDE CODE: Link chips render as small flat .tile-link elements
+  below each section's tile grid. These are "flat tiles" that act as shortcuts.
+*/
+.link-strip {
+  display: flex; flex-wrap: wrap; gap: var(--sp-2);
+  margin-top: var(--sp-2);
+}
+.tile-link {
+  height: 28px; padding: 0 var(--sp-3);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--border-radius-sm);
+  font-size: var(--fs-sm); font-weight: 500;
+  color: var(--brand);
+  display: flex; align-items: center; gap: 4px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  box-shadow: var(--bevel-flat);
+  border-top-color: rgba(255,255,255,0.9);
+}
+.tile-link:hover {
+  background: var(--info-bg);
+  border-color: var(--info-border);
+  box-shadow: var(--bevel-card);
+  transform: translateY(-1px);
+  text-decoration: none;
+}
+
+
+/* ════════════════════════════════════════════════════════════
+   CARD SYSTEM (app interiors — not launchpad tiles)
+   CLAUDE CODE: Inside any app (object page, list report, etc),
+   use .card for content containers. These differ from .tile:
+   - Tiles are launchpad navigation elements (square/fixed size)
+   - Cards are app-interior content containers (flexible size)
+   ════════════════════════════════════════════════════════════ */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--border-radius);
+  box-shadow: var(--bevel-card);
+  border-top-color: rgba(255,255,255,0.85);
+  border-left-color: rgba(255,255,255,0.6);
+}
+.card:hover { box-shadow: var(--bevel-card-hover); }
+.card-header {
+  padding: var(--sp-3) var(--sp-4);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  background: linear-gradient(to bottom, #fafbfc 0%, var(--surface) 100%);
+  border-radius: var(--border-radius) var(--border-radius) 0 0;
+}
+.card-title { font-size: 14px; font-weight: 700; color: var(--text-primary); }
+.card-body  { padding: var(--sp-4); }
+
+/* ════════════════════════════════════════════════════════════
+   TABLE SYSTEM
+   CLAUDE CODE: Use .fiori-table for all data tables.
+   thead gets a gradient header background.
+   tr:hover gets surface-2 background.
+   ════════════════════════════════════════════════════════════ */
+.fiori-table { width: 100%; border-collapse: collapse; font-size: var(--fs-base); }
+.fiori-table thead th {
+  padding: var(--sp-2) var(--sp-4);
+  background: linear-gradient(to bottom, #f0f3f6 0%, #eaecf0 100%);
+  border-bottom: 1px solid var(--border);
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.05em; color: var(--text-secondary);
+  text-align: left; white-space: nowrap;
+  /* Bevel on column headers */
+  box-shadow: 0 1px 0 rgba(255,255,255,0.6) inset;
+}
+.fiori-table tbody tr {
+  border-bottom: 1px solid var(--border);
+  transition: background var(--transition-fast);
+  cursor: pointer;
+}
+.fiori-table tbody tr:hover { background: var(--surface-2); }
+.fiori-table tbody td {
+  padding: var(--sp-2) var(--sp-4);
+  color: var(--text-primary);
+  vertical-align: middle;
+}
+
+/* ════════════════════════════════════════════════════════════
+   FORM SYSTEM
+   CLAUDE CODE: Fiori Horizon-style bottom-border inputs.
+   No box border on all sides — only a bottom line.
+   On focus, the bottom line becomes brand color at 2px.
+   ════════════════════════════════════════════════════════════ */
+.form-field { display: flex; flex-direction: column; gap: 3px; }
+.form-label { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+.form-input {
+  height: 36px; padding: 0 var(--sp-2);
+  border: none; border-bottom: 1px solid var(--text-muted);
+  background: transparent; color: var(--text-primary);
+  font-size: var(--fs-base); font-family: var(--font);
+  transition: border-color var(--transition-fast);
+}
+.form-input:focus {
+  outline: none;
+  border-bottom: 2px solid var(--brand);
+}
+
+/* ════════════════════════════════════════════════════════════
+   AI INSIGHT BANNER
+   CLAUDE CODE: Use .ai-banner at top of any section that has
+   AI-driven content. Brand-tinted background with a label chip.
+   ════════════════════════════════════════════════════════════ */
+.ai-banner {
+  background: linear-gradient(135deg, #eef3ff 0%, #f3f7ff 100%);
+  border: 1px solid var(--info-border);
+  border-radius: var(--border-radius);
+  padding: var(--sp-3) var(--sp-4);
+  display: flex; align-items: flex-start; gap: var(--sp-3);
+  margin-bottom: var(--sp-5);
+  box-shadow: var(--bevel-card);
+  border-top-color: rgba(255,255,255,0.9);
+}
+.ai-chip {
+  font-size: var(--fs-xs); font-weight: 700; letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--brand);
+  background: rgba(0,112,242,0.1);
+  border: 1px solid var(--info-border);
+  border-radius: var(--border-radius-sm);
+  padding: 1px 8px;
+  white-space: nowrap;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.5) inset;
+}
+.ai-text { font-size: 12px; color: var(--text-secondary); line-height: 1.6; flex: 1; }
+.ai-text strong { color: var(--text-primary); }
+.ai-action { height: 26px; padding: 0 var(--sp-3); background: var(--brand); color: #fff; border: none; border-radius: var(--border-radius-sm); font-size: 12px; font-weight: 600; font-family: var(--font); cursor: pointer; white-space: nowrap; box-shadow: 0 1px 0 rgba(255,255,255,0.2) inset, 0 2px 4px rgba(0,112,242,0.3); }
+.ai-action:hover { background: var(--brand-dark); }
+
+/* ════════════════════════════════════════════════════════════
+   MESSAGE STRIP
+   CLAUDE CODE: In-page status messages. Four variants.
+   Left border accent, matching tinted background.
+   ════════════════════════════════════════════════════════════ */
+.msg-strip {
+  display: flex; align-items: flex-start; gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--border-radius-sm);
+  margin-bottom: var(--sp-4);
+  font-size: var(--fs-base);
+  border-left: 3px solid;
+  box-shadow: var(--bevel-flat);
+}
+.msg-info     { background: var(--info-bg);     border-color: var(--info);     }
+.msg-warning  { background: var(--critical-bg); border-color: var(--critical); }
+.msg-error    { background: var(--negative-bg); border-color: var(--negative); }
+.msg-success  { background: var(--positive-bg); border-color: var(--positive); }
+.msg-text     { color: var(--text-primary); }
+.msg-icon     { font-size: 15px; flex-shrink: 0; margin-top: 1px; }
+
+/* ════════════════════════════════════════════════
+   SCROLLBAR
+   ════════════════════════════════════════════════ */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border-strong); }
+
+/* ════════════════════════════════════════════════
+   TOAST NOTIFICATION
+   CLAUDE CODE: Inject .toast into <body> to show
+   transient feedback. Always z-index --z-toast.
+   ════════════════════════════════════════════════ */
+.toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+  background: var(--text-primary); color: var(--text-inverted);
+  padding: var(--sp-2) var(--sp-5);
+  border-radius: var(--border-radius-sm);
+  font-size: var(--fs-base);
+  z-index: var(--z-toast);
+  box-shadow: var(--bevel-card-hover);
+  pointer-events: none;
+  animation: toastIn 0.2s ease, toastOut 0.3s ease 1.4s forwards;
+}
+@keyframes toastIn  { from{opacity:0;transform:translateX(-50%) translateY(10px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
+@keyframes toastOut { from{opacity:1} to{opacity:0} }
+
+/* ═══════════════════════════════════
+   PAGE-LOAD STAGGER ANIMATION
+   CLAUDE CODE: Add .tile-enter to each
+   .tile to get staggered entrance.
+   Set style="--i:N" for delay index.
+   ═══════════════════════════════════ */
+.tile-enter {
+  animation: tileEnter 0.35s cubic-bezier(0.4,0,0.2,1) both;
+  animation-delay: calc(var(--i, 0) * 55ms);
+}
+@keyframes tileEnter {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════
+     SHELL BAR
+══════════════════════ -->
+<header class="shell">
+  <a class="shell-logo" href="#">
+    <div class="shell-wordmark">E</div>
+    Enerza
+  </a>
+  <span class="shell-app-name">SAP IS-U · S/4HANA Utilities</span>
+  <span class="shell-role">Billing Manager</span>
+
+  <div class="shell-search">
+    <input class="shell-search-input" type="text" placeholder="Search apps, accounts, transactions…">
+    <span class="shell-search-icon">&#128269;</span>
+  </div>
+
+  <div class="shell-actions">
+    <button class="shell-icon-btn" title="Notifications">
+      &#128276;
+      <span class="shell-notif-dot"></span>
+    </button>
+    <button class="shell-icon-btn" title="AI Copilot">&#129302;</button>
+    <button class="shell-icon-btn" title="Settings">&#9881;</button>
+    <button class="shell-icon-btn" title="App Finder">&#8864;</button>
+    <div class="shell-avatar">GA</div>
+  </div>
+</header>
+
+<!-- ══════════════════════
+     ANCHOR BAR
+══════════════════════ -->
+<nav class="anchor-bar">
+  <a class="anchor-link active" href="#billing" onclick="anchor(this,event)">Billing</a>
+  <a class="anchor-link" href="#meter"    onclick="anchor(this,event)">Meter &amp; Device</a>
+  <a class="anchor-link" href="#customer" onclick="anchor(this,event)">Customer</a>
+  <a class="anchor-link" href="#payments" onclick="anchor(this,event)">Payments</a>
+  <a class="anchor-link" href="#analytics"onclick="anchor(this,event)">Analytics</a>
+  <a class="anchor-link" href="#admin"    onclick="anchor(this,event)">Admin</a>
+  <div class="anchor-actions">
+    <button class="btn btn-sm">&#9998; Edit Page</button>
+    <button class="btn btn-primary btn-sm">&#9654;&nbsp; Run Billing Cycle</button>
+  </div>
+</nav>
+
+<!-- ══════════════════════
+     CANVAS
+══════════════════════ -->
+<main class="canvas">
+
+  <!-- AI Banner -->
+  <div class="ai-banner">
+    <span class="ai-chip">AI Insight</span>
+    <span class="ai-text">
+      <strong>23 billing exceptions</strong> in Cycle 03 (Apr 2025). CT ratio mismatch on 3 HT accounts — revenue at risk: <strong>₹1,24,800</strong>. Recommend triggering a meter audit WO before cycle finalisation.
+    </span>
+    <button class="ai-action">View Exceptions ›</button>
+  </div>
+
+  <!-- Message Strip example -->
+  <div class="msg-strip msg-warning">
+    <span class="msg-icon">&#9888;</span>
+    <span class="msg-text"><strong>651 accounts pending</strong> — billing run not yet complete. Cycle completion: 92.3%.</span>
+  </div>
+
+  <!-- ══ SECTION: BILLING ══ -->
+  <section class="section" id="billing">
+    <div class="section-header">
+      <h2 class="section-title">Billing <span class="section-sub">Cycle 03 · Apr 2025</span></h2>
+      <a class="section-action" href="#">All billing apps ›</a>
+    </div>
+    <div class="tile-grid">
+
+      <!-- 1×1 Dynamic KPI: Bills Generated -->
+      <div class="tile tile-enter" style="--i:0" onclick="toast('Billing Hub')">
+        <div class="tile-accent-bar"></div>
+        <div class="tile-head">
+          <div class="tile-icon ti-blue">&#9689;</div>
+          <div class="tile-title">Billing Hub</div>
+          <div class="tile-subtitle">Current cycle status</div>
+        </div>
+        <div class="tile-body">
+          <div class="kpi-block">
+            <div><span class="kpi-val brand">7,841</span></div>
+            <span class="delta delta-up">&#9650; 98.4% billed</span>
+          </div>
+        </div>
+        <div class="tile-foot">
+          <span>of 8,492 accounts</span><span>Apr 2025</span>
+        </div>
+      </div>
+
+      <!-- 2×1 Wide: Revenue + Exceptions (with sub-tiles) -->
+      <div class="tile wide tile-enter" style="--i:1" onclick="toast('Revenue Overview')">
+        <div class="tile-accent-bar accent-positive"></div>
+        <div class="tile-head" style="padding-bottom:var(--sp-2);">
+          <div class="tile-title">Billing Performance</div>
+          <div class="tile-subtitle">Revenue vs Exceptions · Apr 2025</div>
+        </div>
+        <!-- Sub-tiles row (bevelled inset) -->
+        <div class="tile-sub-row">
+          <div class="sub-tile">
+            <div style="display:flex;align-items:center;gap:var(--sp-2);">
+              <div class="tile-icon ti-green" style="width:28px;height:28px;font-size:13px;border-radius:6px;margin:0;">&#8377;</div>
+              <span class="tile-subtitle">Billed Revenue</span>
+            </div>
+            <div class="kpi-block">
+              <div><span class="kpi-val positive kpi-small">2.48</span><span class="kpi-unit">Cr</span></div>
+              <span class="delta delta-warn" style="font-size:10px;">&#9660; ₹6L below forecast</span>
+            </div>
+            <div style="font-size:10px;color:var(--text-muted);">Forecast: ₹2.54 Cr</div>
+          </div>
+          <div class="sub-tile">
+            <div style="display:flex;align-items:center;gap:var(--sp-2);">
+              <div class="tile-icon ti-orange" style="width:28px;height:28px;font-size:13px;border-radius:6px;margin:0;">&#9888;</div>
+              <span class="tile-subtitle">Exceptions</span>
+            </div>
+            <div class="kpi-block">
+              <div><span class="kpi-val critical kpi-small">23</span></div>
+              <span class="delta delta-down" style="font-size:10px;">8 critical · 15 standard</span>
+            </div>
+            <div style="font-size:10px;color:var(--text-muted);">Zero-read: 9 · Spikes: 7</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 1×1 Chart tile: Consumption trend -->
+      <div class="tile tile-enter" style="--i:2" onclick="toast('Consumption Trend')">
+        <div class="tile-accent-bar accent-teal"></div>
+        <div class="tile-head">
+          <div class="tile-icon ti-teal">&#128200;</div>
+          <div class="tile-title">Consumption Trend</div>
+          <div class="tile-subtitle">Network kWh · 6 months</div>
+        </div>
+        <div id="trend-chart" class="micro-chart"></div>
+        <div class="tile-foot">
+          <span>Apr: 94.2M kWh</span>
+          <span class="delta delta-up" style="font-size:10px;">&#9650; 3.8%</span>
+        </div>
+      </div>
+
+      <!-- 1×1 Static: Billing Engine -->
+      <div class="tile tile-enter" style="--i:3" onclick="toast('Billing Engine')">
+        <div class="tile-accent-bar accent-violet"></div>
+        <div class="tile-head">
+          <div class="tile-icon ti-violet">&#9881;</div>
+          <div class="tile-title">Billing Engine</div>
+          <div class="tile-subtitle">Rate · Calculate · Validate</div>
+        </div>
+        <div class="tile-body" style="justify-content:flex-end;padding-bottom:0;">
+          <div style="font-size:11px;color:var(--text-muted);">SAP IS-U · ERCH</div>
+          <div style="font-size:10px;color:var(--text-muted);">Last run: 10 Apr · 02:14 AM</div>
+        </div>
+        <div class="tile-foot">
+          <span>Batch BL-2504-001</span>
+        </div>
+      </div>
+
+      <!-- 1×1 KPI: Disputes -->
+      <div class="tile tile-enter" style="--i:4" onclick="toast('Bill Disputes')">
+        <div class="tile-accent-bar accent-negative"></div>
+        <div class="tile-head">
+          <div class="tile-icon ti-red">&#128462;</div>
+          <div class="tile-title">Bill Disputes</div>
+          <div class="tile-subtitle">Open &amp; unresolved</div>
+        </div>
+        <div class="tile-body">
+          <div class="kpi-block">
+            <div><span class="kpi-val negative">47</span></div>
+            <span class="delta delta-down">&#9650; 12 new this week</span>
+          </div>
+        </div>
+        <div class="tile-foot">
+          <span>SLA breach: 6</span><span>Avg: 4.2 days</span>
+        </div>
+      </div>
+
+      <!-- 1×1 Progress: Cycle completion -->
+      <div class="tile tile-enter" style="--i:5" onclick="toast('Cycle Manager')">
+        <div class="tile-accent-bar"></div>
+        <div class="tile-head">
+          <div class="tile-icon ti-gray">&#9654;</div>
+          <div class="tile-title">Cycle Completion</div>
+          <div class="tile-subtitle">BL-2504-001</div>
+        </div>
+        <div class="tile-body">
+          <div class="kpi-block">
+            <div><span class="kpi-val brand">92.3</span><span class="kpi-unit">%</span></div>
+          </div>
+        </div>
+        <div class="progress-track"><div class="progress-fill" style="width:92.3%"></div></div>
+        <div class="tile-foot"><span>651 pending</span></div>
+      </div>
+
+    </div>
+    <div class="link-strip">
+      <a class="tile-link" href="#">Manage Bill Documents</a>
+      <a class="tile-link" href="#">Billing Reversal</a>
+      <a class="tile-link" href="#">Budget Billing Plan</a>
+      <a class="tile-link" href="#">Tariff Config</a>
+      <a class="tile-link" href="#">Simulate Billing</a>
+    </div>
+  </section>
+
+  <!-- ══ SECTION: METER ══ -->
+  <section class="section" id="meter">
+    <div class="section-header">
+      <h2 class="section-title">Meter &amp; Device</h2>
+      <a class="section-action" href="#">All meter apps ›</a>
+    </div>
+    <div class="tile-grid">
+
+      <!-- 1×1 Notification tile -->
+      <div class="tile tile-enter" style="--i:0" onclick="toast('Meter Exceptions')">
+        <div class="tile-accent-bar accent-critical"></div>
+        <div class="tile-head" style="display:flex;align-items:center;justify-content:space-between;padding-bottom:0;">
+          <div>
+            <div class="tile-icon ti-orange" style="width:28px;height:28px;font-size:13px;border-radius:6px;">&#128268;</div>
+            <div class="tile-title">Reading Exceptions</div>
+          </div>
+          <span class="kpi-val critical" style="font-size:28px;">23</span>
+        </div>
+        <div style="flex:1;overflow:hidden;margin-top:var(--sp-2);">
+          <div class="notif-tile-row"><div class="notif-dot" style="background:var(--negative);"></div>Zero reads · 9</div>
+          <div class="notif-tile-row"><div class="notif-dot" style="background:var(--critical);"></div>High usage spikes · 7</div>
+          <div class="notif-tile-row"><div class="notif-dot" style="background:var(--brand);"></div>Estimation applied · 5</div>
+          <div class="notif-tile-row"><div class="notif-dot" style="background:var(--text-muted);"></div>CT ratio flag · 2</div>
+        </div>
+      </div>
+
+      <!-- 1×1 AMI Coverage KPI -->
+      <div class="tile tile-enter" style="--i:1" onclick="toast('AMI Coverage')">
+        <div class="tile-accent-bar accent-teal"></div>
+        <div class="tile-head">
+          <div class="tile-icon ti-teal">&#128225;</div>
+          <div class="tile-title">AMI Coverage</div>
+          <div class="tile-subtitle">Smart meter penetration</div>
+        </div>
+        <div class="tile-body">
+          <div class="kpi-block">
+            <div><span class="kpi-val brand">74.2</span><span class="kpi-unit">%</span></div>
+            <span class="delta delta-up">&#9650; +2.1% this quarter</span>
+          </div>
+        </div>
+        <div class="tile-foot"><span>6,300 / 8,492 meters</span></div>
+      </div>
+
+      <!-- 2×1 Wide: Device Master + MRO (sub-tiles) -->
+      <div class="tile wide tile-enter" style="--i:2" onclick="toast('Meter Management')">
+        <div class="tile-accent-bar accent-gray"></div>
+        <div class="tile-head" style="padding-bottom:var(--sp-2);">
+          <div class="tile-title">Meter &amp; Device Management</div>
+          <div class="tile-subtitle">Master data · Orders · Schedule</div>
+        </div>
+        <div class="tile-sub-row">
+          <div class="sub-tile">
+            <div class="tile-icon ti-gray" style="width:28px;height:28px;font-size:13px;border-radius:6px;margin-bottom:var(--sp-2);">&#128268;</div>
+            <div class="tile-title">Device Master</div>
+            <div class="tile-subtitle">Meter · CT/PT · Registers</div>
+            <div style="margin-top:auto;font-size:10px;color:var(--text-muted);">DEVID · DIR · ILART</div>
+          </div>
+          <div class="sub-tile">
+            <div class="tile-icon ti-blue" style="width:28px;height:28px;font-size:13px;border-radius:6px;margin-bottom:var(--sp-2);">&#128204;</div>
+            <div class="tile-title">Reading Orders</div>
+            <div class="tile-subtitle">Schedule · Route · Capture</div>
+            <div style="margin-top:auto;font-size:10px;color:var(--text-muted);">Next cycle: 5 May 2025</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <div class="link-strip">
+      <a class="tile-link" href="#">VEE Results</a>
+      <a class="tile-link" href="#">Meter Replacement WOs</a>
+      <a class="tile-link" href="#">Tamper &amp; Fraud Alerts</a>
+      <a class="tile-link" href="#">Profile (AMI)</a>
+    </div>
+  </section>
+
+  <!-- ══ SECTION: CUSTOMER ══ -->
+  <section class="section" id="customer">
+    <div class="section-header">
+      <h2 class="section-title">Customer Accounts</h2>
+      <a class="section-action" href="#">All customer apps ›</a>
+    </div>
+    <div class="tile-grid">
+
+      <div class="tile tile-enter" style="--i:0" onclick="toast('Active Accounts')">
+        <div class="tile-accent-bar"></div>
+        <div class="tile-head">
+          <div class="tile-icon ti-blue">&#128101;</div>
+          <div class="tile-title">Active Accounts</div>
+          <div class="tile-subtitle">All consumer categories</div>
+        </div>
+        <div class="tile-body">
+          <div class="kpi-block">
+            <div><span class="kpi-val brand">8,492</span></div>
+            <span class="delta delta-up">&#9650; 264 new this month</span>
+          </div>
+        </div>
+        <div class="tile-foot"><span>+3.1% MoM</span></div>
+      </div>
+
+      <div class="tile tile-enter" style="--i:1" onclick="toast('New Connection Applications')">
+        <div class="tile-accent-bar accent-positive"></div>
+        <div class="tile-head">
+          <div class="tile-icon ti-green">&#128279;</div>
+          <div class="tile-title">New Connections</div>
+          <div class="tile-subtitle">Pending approval</div>
+        </div>
+        <div class="tile-body">
+          <div class="kpi-block">
+            <div><span class="kpi-val positive">38</span></div>
+            <span class="delta delta-neutral">12 in feasibility</span>
+          </div>
+        </div>
+        <div class="tile-foot"><span>SLA: 30d · Avg: 18d</span></div>
+      </div>
+
+      <!-- 2×1 Wide: BP + Contracts sub-tiles -->
+      <div class="tile wide tile-enter" style="--i:2" onclick="toast('Business Partners & Contracts')">
+        <div class="tile-accent-bar accent-violet"></div>
+        <div class="tile-head" style="padding-bottom:var(--sp-2);">
+          <div class="tile-title">Business Partners &amp; Contracts</div>
+          <div class="tile-subtitle">SAP IS-U master data objects</div>
+        </div>
+        <div class="tile-sub-row">
+          <div class="sub-tile">
+            <div class="tile-icon ti-gray" style="width:28px;height:28px;font-size:13px;border-radius:6px;margin-bottom:var(--sp-2);">&#128100;</div>
+            <div class="tile-title">Business Partners</div>
+            <div class="tile-subtitle">BP Master · Credit class · Comms prefs</div>
+            <div style="margin-top:auto;font-size:10px;color:var(--text-muted);">BUT000 · FKKVK</div>
+          </div>
+          <div class="sub-tile">
+            <div class="tile-icon ti-violet" style="width:28px;height:28px;font-size:13px;border-radius:6px;margin-bottom:var(--sp-2);">&#128221;</div>
+            <div class="tile-title">Supply Contracts</div>
+            <div class="tile-subtitle">Tariff · Cycle · Premise link</div>
+            <div style="margin-top:auto;font-size:10px;color:var(--text-muted);">EVERTRAG · 8,311 active</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <div class="link-strip">
+      <a class="tile-link" href="#">Move-In / Move-Out</a>
+      <a class="tile-link" href="#">Premise Master</a>
+      <a class="tile-link" href="#">Service Connections</a>
+      <a class="tile-link" href="#">Contract Accounts (FI-CA)</a>
+    </div>
+  </section>
+
+  <!-- ══ SECTION: PAYMENTS ══ -->
+  <section class="section" id="payments">
+    <div class="section-header">
+      <h2 class="section-title">Payments &amp; Collections</h2>
+      <a class="section-action" href="#">All payment apps ›</a>
+    </div>
+    <div class="tile-grid">
+
+      <!-- 2×1 Wide: Collections + Overdue sub-tiles -->
+      <div class="tile wide tile-enter" style="--i:0" onclick="toast('Collections Overview')">
+        <div class="tile-accent-bar accent-positive"></div>
+        <div class="tile-head" style="padding-bottom:var(--sp-2);">
+          <div class="tile-title">Collections Overview</div>
+          <div class="tile-subtitle">Mar 2025 billing cycle</div>
+        </div>
+        <div class="tile-sub-row">
+          <div class="sub-tile">
+            <div style="display:flex;align-items:center;gap:var(--sp-2);margin-bottom:var(--sp-2);">
+              <div class="tile-icon ti-green" style="width:26px;height:26px;font-size:12px;border-radius:5px;margin:0;">&#9989;</div>
+              <span class="tile-subtitle">Collection Rate</span>
+            </div>
+            <div class="kpi-block">
+              <div><span class="kpi-val positive kpi-small">88.4</span><span class="kpi-unit">%</span></div>
+              <span class="delta delta-up" style="font-size:10px;">&#9650; +1.2% vs last</span>
+            </div>
+          </div>
+          <div class="sub-tile">
+            <div style="display:flex;align-items:center;gap:var(--sp-2);margin-bottom:var(--sp-2);">
+              <div class="tile-icon ti-red" style="width:26px;height:26px;font-size:12px;border-radius:5px;margin:0;">&#9888;</div>
+              <span class="tile-subtitle">Overdue 30d+</span>
+            </div>
+            <div class="kpi-block">
+              <div><span class="kpi-val negative kpi-small">412</span></div>
+              <span class="delta delta-down" style="font-size:10px;">&#8377; 38.2L outstanding</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tile tile-enter" style="--i:1" onclick="toast('Dunning Processing')">
+        <div class="tile-accent-bar accent-critical"></div>
+        <div class="tile-head">
+          <div class="tile-icon ti-orange">&#128339;</div>
+          <div class="tile-title">Dunning Notices</div>
+          <div class="tile-subtitle">Pending dispatch</div>
+        </div>
+        <div class="tile-body">
+          <div class="kpi-block">
+            <div><span class="kpi-val critical">186</span></div>
+            <span class="delta delta-warn">24 in final notice</span>
+          </div>
+        </div>
+        <div class="tile-foot"><span>FPVA · FI-CA</span></div>
+      </div>
+
+      <div class="tile tile-enter" style="--i:2" onclick="toast('Security Deposits')">
+        <div class="tile-accent-bar accent-gray"></div>
+        <div class="tile-head">
+          <div class="tile-icon ti-gray">&#128180;</div>
+          <div class="tile-title">Security Deposits</div>
+          <div class="tile-subtitle">Interest · Refunds · Reviews</div>
+        </div>
+        <div class="tile-body">
+          <div style="font-size:11px;color:var(--text-muted);">Total held in escrow</div>
+          <div><span class="kpi-val brand" style="font-size:26px;">₹2.1</span><span class="kpi-unit">Cr</span></div>
+        </div>
+        <div class="tile-foot"><span>FI-CA Sub-ledger</span></div>
+      </div>
+
+    </div>
+    <div class="link-strip">
+      <a class="tile-link" href="#">Disconnection Orders</a>
+      <a class="tile-link" href="#">Reconnection Requests</a>
+      <a class="tile-link" href="#">Installment Plans</a>
+      <a class="tile-link" href="#">Write-Off Processing</a>
+    </div>
+  </section>
+
+  <!-- ══ SECTION: ANALYTICS ══ -->
+  <section class="section" id="analytics">
+    <div class="section-header">
+      <h2 class="section-title">Analytics &amp; KPIs</h2>
+      <a class="section-action" href="#">All analytics ›</a>
+    </div>
+    <div class="tile-grid">
+      <div class="tile flat wide tile-enter" style="--i:0" onclick="toast('Revenue Analytics')">
+        <div class="tile-flat-body">
+          <div class="tile-icon ti-blue" style="margin:0;">&#128202;</div>
+          <div class="tile-flat-text">
+            <div class="tile-title">Revenue Analytics</div>
+            <div class="tile-subtitle">Billed vs Collected · Trend · Forecast</div>
+          </div>
+          <div class="tile-flat-kpi brand">₹2.48Cr</div>
+        </div>
+      </div>
+      <div class="tile flat wide tile-enter" style="--i:1" onclick="toast('Consumption Analytics')">
+        <div class="tile-flat-body">
+          <div class="tile-icon ti-teal" style="margin:0;">&#9889;</div>
+          <div class="tile-flat-text">
+            <div class="tile-title">Consumption Analytics</div>
+            <div class="tile-subtitle">Category · Zone · Trend · AT&amp;C Losses</div>
+          </div>
+          <div class="tile-flat-kpi" style="color:var(--positive);">94.2M</div>
+        </div>
+      </div>
+      <div class="tile flat wide tile-enter" style="--i:2" onclick="toast('Billing Analytics')">
+        <div class="tile-flat-body">
+          <div class="tile-icon ti-violet" style="margin:0;">&#128197;</div>
+          <div class="tile-flat-text">
+            <div class="tile-title">Billing Cycle Analytics</div>
+            <div class="tile-subtitle">Completion · Exceptions · SLA Compliance</div>
+          </div>
+          <div class="tile-flat-kpi brand">92.3%</div>
+        </div>
+      </div>
+      <div class="tile flat wide tile-enter" style="--i:3" onclick="toast('Collections Dashboard')">
+        <div class="tile-flat-body">
+          <div class="tile-icon ti-green" style="margin:0;">&#128178;</div>
+          <div class="tile-flat-text">
+            <div class="tile-title">Collections Dashboard</div>
+            <div class="tile-subtitle">Ageing · Dunning Effectiveness · DSO</div>
+          </div>
+          <div class="tile-flat-kpi" style="color:var(--positive);">88.4%</div>
+        </div>
+      </div>
+    </div>
+    <div class="link-strip">
+      <a class="tile-link" href="#">AI Anomaly Dashboard</a>
+      <a class="tile-link" href="#">Market Intelligence</a>
+      <a class="tile-link" href="#">Regulatory Reports</a>
+      <a class="tile-link" href="#">AT&amp;C Loss Report</a>
+    </div>
+  </section>
+
+  <!-- ══ SECTION: ADMIN ══ -->
+  <section class="section" id="admin">
+    <div class="section-header">
+      <h2 class="section-title">Administration</h2>
+    </div>
+    <div class="tile-grid">
+      <div class="tile flat tile-enter" style="--i:0" onclick="toast('Tariff Configuration')">
+        <div class="tile-flat-body">
+          <div class="tile-icon ti-orange" style="margin:0;width:30px;height:30px;font-size:14px;">&#128200;</div>
+          <div class="tile-flat-text">
+            <div class="tile-title">Tariff Configuration</div>
+            <div class="tile-subtitle">Rate categories · Slabs · FAC</div>
+          </div>
+        </div>
+      </div>
+      <div class="tile flat tile-enter" style="--i:1" onclick="toast('Roles & Authorizations')">
+        <div class="tile-flat-body">
+          <div class="tile-icon ti-gray" style="margin:0;width:30px;height:30px;font-size:14px;">&#128274;</div>
+          <div class="tile-flat-text">
+            <div class="tile-title">Roles &amp; Authorizations</div>
+            <div class="tile-subtitle">PFCG · Business Catalogs · Groups</div>
+          </div>
+        </div>
+      </div>
+      <div class="tile flat tile-enter" style="--i:2" onclick="toast('OData Monitor')">
+        <div class="tile-flat-body">
+          <div class="tile-icon ti-teal" style="margin:0;width:30px;height:30px;font-size:14px;">&#128299;</div>
+          <div class="tile-flat-text">
+            <div class="tile-title">OData Service Monitor</div>
+            <div class="tile-subtitle">Gateway · API health · Trace</div>
+          </div>
+        </div>
+      </div>
+      <div class="tile flat tile-enter" style="--i:3" onclick="toast('Print Workbench')">
+        <div class="tile-flat-body">
+          <div class="tile-icon ti-blue" style="margin:0;width:30px;height:30px;font-size:14px;">&#128438;</div>
+          <div class="tile-flat-text">
+            <div class="tile-title">Print Workbench</div>
+            <div class="tile-subtitle">Adobe Forms · Smart Forms · Output</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="link-strip">
+      <a class="tile-link" href="#">Launchpad Settings</a>
+      <a class="tile-link" href="#">Background Jobs (SM37)</a>
+      <a class="tile-link" href="#">System Monitor</a>
+    </div>
+  </section>
+
+</main>
+
+<script>
+// Anchor bar navigation
+function anchor(el, e) {
+  e.preventDefault();
+  document.querySelectorAll('.anchor-link').forEach(a => a.classList.remove('active'));
+  el.classList.add('active');
+  const id = el.getAttribute('href').slice(1);
+  const sec = document.getElementById(id);
+  if (sec) {
+    const top = sec.getBoundingClientRect().top + window.scrollY - (44 + 36 + 16);
+    window.scrollTo({ top, behavior: 'smooth' });
+  }
+}
+
+// Toast feedback
+function toast(label) {
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.textContent = 'Opening: ' + label + ' →';
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 1800);
+}
+
+// Render micro chart
+(function() {
+  const data = [82, 78, 86, 91, 88, 94];
+  const max = Math.max(...data);
+  const wrap = document.getElementById('trend-chart');
+  if (!wrap) return;
+  data.forEach((v, i) => {
+    const b = document.createElement('div');
+    b.className = 'mc-bar' + (i === data.length - 1 ? ' active' : (v > 90 ? ' ok' : ''));
+    b.style.height = Math.round((v / max) * 100) + '%';
+    wrap.appendChild(b);
+  });
+})();
+
+// Scroll spy for anchor bar
+window.addEventListener('scroll', () => {
+  const offset = 44 + 36 + 48;
+  let current = '';
+  document.querySelectorAll('section.section').forEach(s => {
+    if (s.getBoundingClientRect().top <= offset) current = s.id;
+  });
+  if (current) {
+    document.querySelectorAll('.anchor-link').forEach(a => {
+      a.classList.toggle('active', a.getAttribute('href') === '#' + current);
+    });
+  }
+}, { passive: true });
+</script>
+
+</body>
+</html>
