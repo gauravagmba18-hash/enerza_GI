@@ -42,6 +42,16 @@ interface ApproveEntry {
   accountId: string | null;
   customer: { fullName: string };
   meter: { serialNo: string; meterType: string } | null;
+  anomaly: {
+    isAnomaly: boolean;
+    isReverse: boolean;
+    isZero: boolean;
+    isHigh: boolean;
+    isLow: boolean;
+    avg3: number;
+    avg12: number;
+    factor: number | null;
+  };
 }
 
 interface BillResult {
@@ -77,59 +87,102 @@ function sigmaLabel(s: number) {
    STEP 1 — SCHEDULE
    ═══════════════════════════════════════════════════════════════════════════ */
 function ScheduleStep() {
-  const [data, setData] = useState<{ cycles: any[]; routes: any[] } | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [data, setData]             = useState<{ cycles: any[]; routes: any[] } | null>(null);
+  const [loading, setLoading]       = useState(true);
+  const [technicians, setTechs]     = useState<any[]>([]);
+  const [assigning, setAssigning]   = useState<Record<string, boolean>>({});
+  const [assigned, setAssigned]     = useState<Record<string, string>>({}); // routeId → techName
+  const [techSel, setTechSel]       = useState<Record<string, string>>({}); // routeId → techId
 
   useEffect(() => {
-    fetch("/api/meter-readings/schedule")
-      .then(r => r.json())
-      .then(j => { setData(j.data ?? j); setLoading(false); })
-      .catch(() => setLoading(false));
+    Promise.all([
+      fetch("/api/meter-readings/schedule").then(r => r.json()),
+      fetch("/api/field/technicians").then(r => r.json()),
+    ]).then(([sched, techs]) => {
+      setData(sched.data ?? sched);
+      setTechs(Array.isArray(techs.data) ? techs.data : []);
+      setLoading(false);
+    }).catch(() => setLoading(false));
   }, []);
 
-  if (loading) return <div style={{ padding: "48px", textAlign: "center", color: "#8396a8", background: "#ffffff", border: "1px solid #d1d8de", borderRadius: 10 }}>Loading schedule…</div>;
+  const assignRoute = async (route: any) => {
+    const techId = techSel[route.routeId];
+    if (!techId) return;
+    setAssigning(p => ({ ...p, [route.routeId]: true }));
+    try {
+      // Create a service ticket and work order for this route reading round
+      const ticketRes = await fetch("/api/field/tickets", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          subject: `Meter Reading Round — ${route.routeName}`,
+          description: `Scheduled meter reading for route ${route.routeName}. Pending: ${route.pendingCount} reads.`,
+          status: "OPEN", priority: "MEDIUM", category: "METER_READING",
+          accountId: "account_hq_01", // system account
+        }),
+      });
+      const ticketJson = await ticketRes.json();
+      const ticketId = ticketJson.data?.ticketId;
+      if (ticketId) {
+        await fetch("/api/field/work-orders", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ticketId,
+            technicianId: techId,
+            scheduledDate: new Date().toISOString(),
+            notes: `Reading round for ${route.routeName}`,
+          }),
+        });
+      }
+      const tech = technicians.find((t: any) => t.technicianId === techId);
+      setAssigned(p => ({ ...p, [route.routeId]: tech?.fullName ?? "Technician" }));
+    } finally {
+      setAssigning(p => ({ ...p, [route.routeId]: false }));
+    }
+  };
+
+  if (loading) return <div style={{ padding: 48, textAlign: "center", color: "var(--muted)" }}>Loading schedule…</div>;
   if (!data) return null;
 
   const { cycles = [], routes = [] } = data;
 
   return (
-    <div>
+    <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
       {/* Cycle cards */}
-      <div className="ds-section">
-        <div className="ds-section-header">
-          <h3 className="ds-section-title">Reading Calendar <span className="ds-section-sub">Active billing cycles</span></h3>
+      <div>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+          <h3 style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)", display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ width: 3, height: 18, background: "var(--accent)", borderRadius: 2, display: "block" }} />
+            Reading Calendar <span style={{ fontSize: 11, fontWeight: 400, color: "var(--muted)", marginLeft: 4 }}>Active billing cycles</span>
+          </h3>
         </div>
         {cycles.length === 0 ? (
-          <div className="ds-msg ds-msg-info"><span>ℹ</span><span>No active billing cycles configured. Add cycles in Master Data → Tariff &amp; Billing → Bill Cycles.</span></div>
+          <div className="ds-msg ds-msg-info"><span>ℹ</span><span>No active billing cycles configured.</span></div>
         ) : (
-          <div className="ds-tile-grid">
-            {cycles.map((c: any, i: number) => (
-              <div className="ds-tile" key={c.cycleId} style={{ animationDelay: `${i * 55}ms` }}>
-                <div className="ds-tile-accent" />
-                <div className="ds-tile-head">
-                  <div className="ds-tile-title">{c.cycleName}</div>
-                  <div className="ds-tile-sub">Read: {c.readDateRule}</div>
-                </div>
-                <div className="ds-tile-body">
-                  <div className="ds-kpi brand">{c.accountCount}</div>
-                  <span className="ds-delta ds-delta-neu">accounts</span>
-                </div>
-                <div className="ds-tile-foot">
-                  <span>Bill: {c.billDateRule || "—"}</span><span>ACTIVE</span>
-                </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
+            {cycles.map((c: any) => (
+              <div key={c.cycleId} className="ds-card" style={{ minWidth: 180, flex: 1, padding: 16 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: "var(--foreground)", marginBottom: 4 }}>{c.cycleName}</div>
+                <div style={{ fontSize: 10, color: "var(--muted)", marginBottom: 8 }}>Read: {c.readDateRule}</div>
+                <div style={{ fontSize: 28, fontWeight: 800, color: "var(--accent)", letterSpacing: "-1px" }}>{c.accountCount}</div>
+                <div style={{ fontSize: 10, color: "var(--muted)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em" }}>accounts</div>
               </div>
             ))}
           </div>
         )}
       </div>
 
-      {/* Route worksheet */}
-      <div className="ds-section">
-        <div className="ds-section-header">
-          <h3 className="ds-section-title">Route Worksheet <span className="ds-section-sub">Reading progress by route</span></h3>
+      {/* Route worksheet with technician assignment */}
+      <div>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+          <h3 style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)", display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ width: 3, height: 18, background: "var(--accent)", borderRadius: 2, display: "block" }} />
+            Route Worksheet <span style={{ fontSize: 11, fontWeight: 400, color: "var(--muted)", marginLeft: 4 }}>Assign routes to technicians</span>
+          </h3>
         </div>
         {routes.length === 0 ? (
-          <div className="ds-msg ds-msg-info"><span>ℹ</span><span>No active routes configured. Add routes in Master Data → Metering &amp; Network → Routes.</span></div>
+          <div className="ds-msg ds-msg-info"><span>ℹ</span><span>No active routes configured. Add routes in Master Data → Routes.</span></div>
         ) : (
           <div className="ds-card">
             <table className="ds-table">
@@ -141,18 +194,19 @@ function ScheduleStep() {
                   <th>Read This Month</th>
                   <th>Pending</th>
                   <th>Completion</th>
+                  <th>Assign Technician</th>
                 </tr>
               </thead>
               <tbody>
                 {routes.map((r: any) => {
                   const pct = r.connectionCount > 0 ? Math.round((r.readThisMonth / r.connectionCount) * 100) : 0;
-                  const barColor = pct >= 80 ? "var(--ds-positive)" : pct >= 50 ? "var(--ds-critical)" : "var(--ds-negative)";
+                  const barColor = pct >= 80 ? "var(--success)" : pct >= 50 ? "var(--warning)" : "var(--danger)";
                   return (
                     <tr key={r.routeId}>
                       <td style={{ fontWeight: 600 }}>{r.routeName}</td>
-                      <td className="ds-table-mono">{r.cycleGroup || "—"}</td>
-                      <td className="ds-table-mono">{r.connectionCount}</td>
-                      <td className="ds-table-mono" style={{ color: "var(--ds-positive)", fontWeight: 600 }}>{r.readThisMonth}</td>
+                      <td style={{ fontFamily: "monospace", fontSize: 12 }}>{r.cycleGroup || "—"}</td>
+                      <td style={{ fontFamily: "monospace", fontSize: 12 }}>{r.connectionCount}</td>
+                      <td style={{ fontFamily: "monospace", fontSize: 12, color: "var(--success)", fontWeight: 600 }}>{r.readThisMonth}</td>
                       <td>
                         {r.pendingCount > 0
                           ? <span className="ds-badge ds-badge-warn">{r.pendingCount}</span>
@@ -165,6 +219,28 @@ function ScheduleStep() {
                           </div>
                           <span style={{ fontSize: 11, fontWeight: 700, color: barColor, minWidth: 32 }}>{pct}%</span>
                         </div>
+                      </td>
+                      <td>
+                        {assigned[r.routeId] ? (
+                          <span className="ds-badge ds-badge-pos">✓ {assigned[r.routeId]}</span>
+                        ) : (
+                          <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                            <select
+                              value={techSel[r.routeId] ?? ""}
+                              onChange={e => setTechSel(p => ({ ...p, [r.routeId]: e.target.value }))}
+                              style={{ height: 28, padding: "0 8px", border: "1px solid var(--card-border)", borderRadius: 6, background: "rgba(255,255,255,0.05)", color: "var(--foreground)", fontSize: 11, fontFamily: "inherit" }}>
+                              <option value="">Select…</option>
+                              {technicians.map((t: any) => (
+                                <option key={t.technicianId} value={t.technicianId}>{t.fullName}</option>
+                              ))}
+                            </select>
+                            <button className="ds-btn ds-btn-primary ds-btn-sm"
+                              disabled={!techSel[r.routeId] || assigning[r.routeId]}
+                              onClick={() => assignRoute(r)}>
+                              {assigning[r.routeId] ? "…" : "Assign"}
+                            </button>
+                          </div>
+                        )}
                       </td>
                     </tr>
                   );
@@ -229,7 +305,7 @@ function CaptureStep() {
 
   const saveRow = async (entry: ConnectionEntry) => {
     const rs = rowState[entry.connectionId];
-    if (!rs?.value || !entry.meter || !entry.route) return;
+    if (!rs?.value || !entry.meter) return;  // route is optional for manual entry
     const newVal = parseFloat(rs.value);
     if (isNaN(newVal)) return;
     updateRow(entry.connectionId, { saving: true, error: null, saved: false });
@@ -237,7 +313,7 @@ function CaptureStep() {
       const res = await fetch("/api/meter-readings/batch", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ readings: [{ connectionId: entry.connectionId, meterId: entry.meter.meterId, routeId: entry.route.routeId, readingValue: newVal, readingDate, gpsLat: gps?.lat, gpsLon: gps?.lon }] }),
+        body: JSON.stringify({ readings: [{ connectionId: entry.connectionId, meterId: entry.meter.meterId, routeId: entry.route?.routeId ?? null, readingValue: newVal, readingDate, gpsLat: gps?.lat, gpsLon: gps?.lon }] }),
       });
       const json = await res.json();
       if (json.data?.errors?.length) {
@@ -262,7 +338,7 @@ function CaptureStep() {
     );
   };
 
-  const pendingRows = entries.filter(e => rowState[e.connectionId]?.value && !rowState[e.connectionId]?.saved && !rowState[e.connectionId]?.saving && e.meter && e.route);
+  const pendingRows = entries.filter(e => rowState[e.connectionId]?.value && !rowState[e.connectionId]?.saved && !rowState[e.connectionId]?.saving && e.meter);
   const totalPages = Math.ceil(total / LIMIT);
 
   const getValidation = (entry: ConnectionEntry, value: string) => {
@@ -424,7 +500,7 @@ function CaptureStep() {
                         value={rs.value}
                         onChange={e => updateRow(entry.connectionId, { value: e.target.value, saved: false, error: null })}
                         onKeyDown={e => { if (e.key === "Enter") saveRow(entry); }}
-                        disabled={rs.saving || !entry.meter || !entry.route}
+                        disabled={rs.saving || !entry.meter}
                         style={{
                           width: 130, borderBottom: `1px solid ${vr?.reversal || vr?.high ? "var(--ds-negative)" : vr?.low || vr?.zero ? "var(--ds-critical)" : rs.saved ? "var(--ds-positive)" : "var(--ds-text-muted)"}`,
                           fontFamily: "monospace"
@@ -449,11 +525,15 @@ function CaptureStep() {
                       )}
                     </td>
                     <td style={{ textAlign: "center" }}>
-                      <button className={`ds-btn ds-btn-sm ${rs.saved ? "ds-btn-pos" : hasInput ? (vr?.reversal || vr?.high ? "ds-btn-neg" : "ds-btn-primary") : ""}`}
-                        disabled={!hasInput || rs.saving || rs.saved || !entry.meter || !entry.route}
-                        onClick={() => saveRow(entry)}>
-                        {rs.saving ? "…" : rs.saved ? "✓" : "Save"}
-                      </button>
+                      {!entry.meter ? (
+                        <span style={{ fontSize: 10, color: "var(--warning)", fontWeight: 600 }}>No meter<br/>assigned</span>
+                      ) : (
+                        <button className={`ds-btn ds-btn-sm ${rs.saved ? "ds-btn-pos" : hasInput ? (vr?.reversal || vr?.high ? "ds-btn-neg" : "ds-btn-primary") : ""}`}
+                          disabled={!hasInput || rs.saving || rs.saved}
+                          onClick={() => saveRow(entry)}>
+                          {rs.saving ? "…" : rs.saved ? "✓ Saved" : "Save"}
+                        </button>
+                      )}
                     </td>
                   </tr>
                 );
@@ -641,23 +721,25 @@ function ValidateStep() {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   STEP 4 — APPROVE
+   STEP 4 — APPROVE  (with anomaly detection + raise service ticket)
    ═══════════════════════════════════════════════════════════════════════════ */
 function ApproveStep() {
-  const [entries, setEntries] = useState<ApproveEntry[]>([]);
-  const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [approving, setApproving] = useState(false);
+  const [entries, setEntries]           = useState<ApproveEntry[]>([]);
+  const [total, setTotal]               = useState(0);
+  const [loading, setLoading]           = useState(true);
+  const [selected, setSelected]         = useState<Set<string>>(new Set());
+  const [approving, setApproving]       = useState(false);
   const [lastApproved, setLastApproved] = useState<ApproveEntry[]>([]);
   const [generatingBills, setGeneratingBills] = useState(false);
-  const [billResults, setBillResults] = useState<BillResult | null>(null);
-  const [filter, setFilter] = useState("");
+  const [billResults, setBillResults]   = useState<BillResult | null>(null);
+  const [filter, setFilter]             = useState("");
+  const [ticketing, setTicketing]       = useState<Record<string, boolean>>({});
+  const [ticketed, setTicketed]         = useState<Record<string, string>>({}); // readingId → ticketId
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/meter-readings/approve");
+      const res  = await fetch("/api/meter-readings/approve");
       const json = await res.json();
       const data = json.data?.data ?? json.data ?? [];
       setEntries(Array.isArray(data) ? data : []);
@@ -673,6 +755,7 @@ function ApproveStep() {
   const toggleAll = () =>
     setSelected(selected.size === entries.length ? new Set() : new Set(entries.map(e => e.readingId)));
 
+  // Approve selected (or all) readings
   const approve = async (type: "ACTUAL" | "ESTIMATED" | "SUBSTITUTE") => {
     const ids = selected.size > 0 ? [...selected] : entries.map(e => e.readingId);
     if (ids.length === 0) return;
@@ -683,7 +766,6 @@ function ApproveStep() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ readings: ids.map(id => ({ readingId: id, readingType: type })) }),
       });
-      // Capture entries being approved so Generate Bills CTA can reference them
       const approved = entries.filter(e => ids.includes(e.readingId));
       setLastApproved(prev => [...prev, ...approved]);
       setBillResults(null);
@@ -692,6 +774,28 @@ function ApproveStep() {
     } finally { setApproving(false); }
   };
 
+  // Raise a service ticket for a suspicious reading and move it to EXCEPTION
+  const raiseTicket = async (entry: ApproveEntry) => {
+    if (!entry.accountId) return;
+    setTicketing(p => ({ ...p, [entry.readingId]: true }));
+    const a = entry.anomaly;
+    const reason = a.isReverse ? "REVERSE" : a.isHigh ? "HIGH_CONSUMPTION" : a.isLow ? "LOW_CONSUMPTION" : "ANOMALY";
+    const factor = a.factor !== null ? ` (${a.factor}× avg)` : "";
+    const description = `Meter: ${entry.meter?.serialNo ?? "unknown"}. Consumption: ${entry.consumption.toFixed(2)} kWh${factor}. 3M avg: ${a.avg3} kWh.`;
+    try {
+      const res  = await fetch("/api/meter-readings/raise-ticket", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ readingId: entry.readingId, accountId: entry.accountId, reason, description }),
+      });
+      const json = await res.json();
+      const tid  = json.data?.ticketId ?? "created";
+      setTicketed(p => ({ ...p, [entry.readingId]: tid }));
+      setEntries(prev => prev.filter(e => e.readingId !== entry.readingId));
+    } finally { setTicketing(p => ({ ...p, [entry.readingId]: false })); }
+  };
+
+  // Generate bills using the billing engine for all approved readings
   const generateBills = async () => {
     if (lastApproved.length === 0) return;
     setGeneratingBills(true);
@@ -706,153 +810,173 @@ function ApproveStep() {
     } finally { setGeneratingBills(false); }
   };
 
-  const visibleApprove = filter ? entries.filter(e => e.customer.fullName.toLowerCase().includes(filter.toLowerCase())) : entries;
+  const anomalyCount = entries.filter(e => e.anomaly?.isAnomaly).length;
+  const visible = filter ? entries.filter(e => e.customer.fullName.toLowerCase().includes(filter.toLowerCase())) : entries;
 
-  if (loading) return <div style={{ textAlign: "center", padding: 48, color: "#8396a8", background: "#ffffff", border: "1px solid #d1d8de", borderRadius: 10 }}>Loading approval queue…</div>;
+  if (loading) return <div style={{ textAlign: "center", padding: 48, color: "var(--muted)" }}>Loading approval queue…</div>;
 
   return (
-    <div>
+    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+
+      {/* ── Anomaly summary banner ───────────────────────────────────────── */}
+      {anomalyCount > 0 && (
+        <div className="ds-ai-banner">
+          <span className="ds-ai-chip">Tamper Detection</span>
+          <span className="ds-ai-text">
+            Billing engine flagged <strong>{anomalyCount} reading{anomalyCount > 1 ? "s" : ""}</strong> with anomalies —
+            reverse consumption, high consumption (&gt;3× avg), or low consumption (&lt;30% avg).
+            Review each flag and either <strong>approve</strong> (genuine) or <strong>raise a service ticket</strong> for field investigation.
+          </span>
+        </div>
+      )}
+
       {entries.length === 0 ? (
-        <div style={{ display: "flex", alignItems: "flex-start", gap: 12, padding: "12px 16px", borderRadius: 6, background: "#e6f4ea", border: "1px solid #a3d4ad", borderLeft: "3px solid #256f3a", color: "#1d2d3e", fontSize: 13 }}><span>✓</span><span>No readings awaiting approval. All validated readings have been released to the billing engine.</span></div>
+        <div className="ds-msg ds-msg-ok"><span>✓</span><span>No readings awaiting approval. All validated readings have been released to the billing engine.</span></div>
       ) : (
         <>
-          {/* ── Approve toolbar ──────────────────────────────────────────────── */}
-          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16, flexWrap: "wrap" }}>
-            <h3 style={{ fontSize: 15, fontWeight: 700, color: "#1d2d3e", display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ display: "block", width: 3, height: 18, background: "#0070f2", borderRadius: 2 }} />
+          {/* ── Toolbar ─────────────────────────────────────────────────── */}
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+            <h3 style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)", display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ width: 3, height: 18, background: "var(--accent)", borderRadius: 2, display: "block" }} />
               {total} readings awaiting approval
+              {anomalyCount > 0 && <span className="ds-badge ds-badge-warn">{anomalyCount} anomalies</span>}
             </h3>
             <div style={{ position: "relative" }}>
-              <span style={{ position: "absolute", left: 8, top: "50%", transform: "translateY(-50%)", color: "#8396a8", fontSize: 14, pointerEvents: "none" }}>⌕</span>
-              <input
-                style={{ height: 30, paddingLeft: 26, paddingRight: 12, width: 180, border: "none", borderBottom: "1px solid #d1d8de", background: "transparent", color: "#1d2d3e", fontSize: 12, fontFamily: "inherit", outline: "none" }}
+              <span style={{ position: "absolute", left: 8, top: "50%", transform: "translateY(-50%)", color: "var(--muted)", fontSize: 14, pointerEvents: "none" }}>⌕</span>
+              <input className="ds-form-input" style={{ paddingLeft: 26, width: 180, height: 30, fontSize: 12 }}
                 placeholder="Filter by name…" value={filter} onChange={e => setFilter(e.target.value)} />
             </div>
             <div style={{ marginLeft: "auto", display: "flex", gap: 6, flexWrap: "wrap" }}>
-              <button
-                onClick={() => toggleAll()}
-                style={{ height: 26, padding: "0 12px", border: "1px solid #d1d8de", borderRadius: 6, background: "#ffffff", color: "#1d2d3e", fontSize: 11, fontFamily: "inherit", cursor: "pointer" }}>
+              <button className="ds-btn ds-btn-sm" onClick={toggleAll}>
                 {selected.size === entries.length ? "Deselect All" : "Select All"}
               </button>
-              <button
-                disabled={approving}
-                onClick={() => approve("ACTUAL")}
-                style={{ height: 32, padding: "0 16px", border: "1px solid #1a5c2d", borderRadius: 6, background: "#256f3a", color: "#fff", fontSize: 12, fontWeight: 700, fontFamily: "inherit", cursor: "pointer", opacity: approving ? .5 : 1, boxShadow: "0 1px 0 rgba(255,255,255,.2) inset, 0 2px 5px rgba(37,111,58,.35)" }}>
+              <button className="ds-btn ds-btn-pos" disabled={approving} onClick={() => approve("ACTUAL")}>
                 ✓ Approve{selected.size > 0 ? ` (${selected.size})` : " All"} — ACTUAL
               </button>
-              <button
-                disabled={approving}
-                onClick={() => approve("ESTIMATED")}
-                style={{ height: 32, padding: "0 12px", border: "1px solid #d1d8de", borderRadius: 6, background: "#ffffff", color: "#1d2d3e", fontSize: 12, fontFamily: "inherit", cursor: "pointer", opacity: approving ? .5 : 1 }}>
-                ~ ESTIMATED
-              </button>
-              <button
-                disabled={approving}
-                onClick={() => approve("SUBSTITUTE")}
-                style={{ height: 32, padding: "0 12px", border: "1px solid #d1d8de", borderRadius: 6, background: "#ffffff", color: "#1d2d3e", fontSize: 12, fontFamily: "inherit", cursor: "pointer", opacity: approving ? .5 : 1 }}>
-                ↔ SUBSTITUTE
-              </button>
+              <button className="ds-btn ds-btn-sm" disabled={approving} onClick={() => approve("ESTIMATED")}>~ ESTIMATED</button>
+              <button className="ds-btn ds-btn-sm" disabled={approving} onClick={() => approve("SUBSTITUTE")}>↔ SUBSTITUTE</button>
             </div>
           </div>
 
+          {/* ── Readings table with anomaly column ──────────────────────── */}
           <div className="ds-card">
             <table className="ds-table">
               <thead>
                 <tr>
                   <th style={{ width: 40 }}>
                     <input type="checkbox" checked={selected.size === entries.length && entries.length > 0}
-                      onChange={toggleAll} style={{ cursor: "pointer" }} />
+                      onChange={toggleAll} style={{ cursor: "pointer", accentColor: "var(--accent)" }} />
                   </th>
                   <th>Customer</th>
                   <th>Meter</th>
                   <th>Reading Date</th>
-                  <th>Reading Value</th>
+                  <th>Reading</th>
                   <th>Consumption</th>
-                  <th>Type</th>
+                  <th>Anomaly Check</th>
+                  <th style={{ textAlign: "center" }}>Action</th>
                 </tr>
               </thead>
               <tbody>
-                {visibleApprove.length === 0 && (
-                  <tr><td colSpan={7} style={{ textAlign: "center", padding: 32, color: "#8396a8" }}>No readings match "{filter}"</td></tr>
+                {visible.length === 0 && (
+                  <tr><td colSpan={8} style={{ textAlign: "center", padding: 32, color: "var(--muted)" }}>No readings match "{filter}"</td></tr>
                 )}
-                {visibleApprove.map(e => (
-                  <tr key={e.readingId} onClick={() => toggleSelect(e.readingId)}
-                    style={{ background: selected.has(e.readingId) ? "#d1e8ff" : undefined, cursor: "pointer" }}>
-                    <td>
-                      <input type="checkbox" checked={selected.has(e.readingId)}
-                        onChange={() => toggleSelect(e.readingId)} onClick={ev => ev.stopPropagation()} style={{ cursor: "pointer" }} />
-                    </td>
-                    <td style={{ fontWeight: 600, color: "#1d2d3e" }}>{e.customer.fullName}</td>
-                    <td style={{ fontFamily: "monospace", fontSize: 12 }}>{e.meter?.serialNo ?? "—"}</td>
-                    <td style={{ color: "#4a6070" }}>{fmtDate(e.readingDate)}</td>
-                    <td className="ds-table-mono" style={{ fontWeight: 700 }}>{e.readingValue.toFixed(2)} kWh</td>
-                    <td className="ds-table-mono" style={{ color: e.consumption < 0 ? "var(--ds-negative)" : "var(--ds-positive)", fontWeight: 600 }}>
-                      {e.consumption >= 0 ? "+" : ""}{e.consumption.toFixed(2)}
-                    </td>
-                    <td>
-                      <span className={`ds-badge ${e.readingType === "ACTUAL" ? "ds-badge-pos" : e.readingType === "ESTIMATED" ? "ds-badge-warn" : "ds-badge-neu"}`}>
-                        {e.readingType}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
+                {visible.map(e => {
+                  const a  = e.anomaly ?? {};
+                  const rowBg = selected.has(e.readingId) ? "rgba(6,182,212,0.08)"
+                    : a.isReverse ? "rgba(239,68,68,0.07)"
+                    : a.isHigh    ? "rgba(245,158,11,0.07)"
+                    : undefined;
+                  return (
+                    <tr key={e.readingId} onClick={() => toggleSelect(e.readingId)}
+                      style={{ cursor: "pointer", background: rowBg }}>
+                      <td onClick={ev => ev.stopPropagation()}>
+                        <input type="checkbox" checked={selected.has(e.readingId)}
+                          onChange={() => toggleSelect(e.readingId)}
+                          style={{ cursor: "pointer", accentColor: "var(--accent)" }} />
+                      </td>
+                      <td style={{ fontWeight: 600 }}>{e.customer.fullName}</td>
+                      <td style={{ fontFamily: "monospace", fontSize: 12 }}>{e.meter?.serialNo ?? "—"}</td>
+                      <td style={{ color: "var(--muted)", fontSize: 12 }}>{fmtDate(e.readingDate)}</td>
+                      <td style={{ fontFamily: "monospace", fontWeight: 700 }}>{e.readingValue.toFixed(2)} kWh</td>
+                      <td style={{ fontFamily: "monospace", fontWeight: 700,
+                        color: a.isReverse ? "var(--danger)" : a.isHigh ? "var(--warning)" : "var(--success)" }}>
+                        {e.consumption >= 0 ? "+" : ""}{e.consumption.toFixed(2)} kWh
+                      </td>
+                      {/* Anomaly column */}
+                      <td>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+                          {a.isReverse && <span className="ds-badge ds-badge-neg">⚠ REVERSE</span>}
+                          {a.isHigh    && <span className="ds-badge ds-badge-warn">↑ HIGH {a.factor}×</span>}
+                          {a.isLow     && <span className="ds-badge ds-badge-info">↓ LOW</span>}
+                          {a.isZero    && <span className="ds-badge ds-badge-neu">ZERO</span>}
+                          {!a.isAnomaly && <span className="ds-badge ds-badge-pos">✓ Normal</span>}
+                          {(a.avg3 > 0) && (
+                            <span style={{ fontSize: 10, color: "var(--muted)", display: "block", width: "100%", marginTop: 2 }}>
+                              3M avg: {a.avg3} kWh
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      {/* Action column */}
+                      <td style={{ textAlign: "center" }} onClick={ev => ev.stopPropagation()}>
+                        {ticketed[e.readingId] ? (
+                          <span className="ds-badge ds-badge-warn">⚑ Ticket raised</span>
+                        ) : a.isAnomaly ? (
+                          <button className="ds-btn ds-btn-neg ds-btn-sm"
+                            disabled={ticketing[e.readingId] || !e.accountId}
+                            onClick={() => raiseTicket(e)}
+                            title="Flag for field investigation — reading moved to EXCEPTION">
+                            {ticketing[e.readingId] ? "…" : "⚑ Raise Ticket"}
+                          </button>
+                        ) : null}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
 
-          <div style={{ display: "flex", alignItems: "flex-start", gap: 12, padding: "12px 16px", borderRadius: 6, marginTop: 16, background: "#e8f2ff", border: "1px solid #99c4f8", borderLeft: "3px solid #0070f2", color: "#1d2d3e", fontSize: 13 }}>
+          <div className="ds-msg ds-msg-info">
             <span>ℹ</span>
-            <span>Approved readings are tagged with their type (Actual / Estimated / Substitute) and <strong>released to the billing engine</strong> for bill generation.</span>
+            <span>
+              <strong>Approve</strong> normal readings. For anomalies (reverse, high, low), either approve if genuine or click <strong>Raise Ticket</strong> to send to field for inspection. Only approved readings proceed to bill generation.
+            </span>
           </div>
         </>
       )}
 
-      {/* ── Generate Bills CTA — appears after any batch approval ─────────── */}
+      {/* ── Generate Bills CTA — appears after any batch approval ─────── */}
       {lastApproved.length > 0 && (
-        <div style={{ marginTop: 20, background: "#ffffff", border: "1px solid #d1d8de", borderTop: "1px solid rgba(255,255,255,.85)", borderLeft: "1px solid rgba(255,255,255,.6)", borderRadius: 10, boxShadow: "0 1px 0 0 rgba(255,255,255,.9) inset, 0 -1px 0 0 rgba(0,0,0,.04) inset, 0 2px 8px rgba(29,45,62,.07), 0 1px 2px rgba(29,45,62,.08)" }}>
-          {/* Card header */}
-          <div style={{ padding: "12px 16px", borderBottom: "1px solid #d1d8de", display: "flex", alignItems: "center", justifyContent: "space-between", background: "linear-gradient(to bottom,#fafbfc 0%,#fff 100%)", borderRadius: "10px 10px 0 0" }}>
+        <div className="ds-card">
+          <div className="ds-card-header">
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <span style={{ fontSize: 22, lineHeight: 1 }}>⚡</span>
+              <span style={{ fontSize: 22 }}>⚡</span>
               <div>
-                <div style={{ fontWeight: 700, fontSize: 14, color: "#1d2d3e" }}>Generate Bills</div>
-                <div style={{ fontSize: 12, color: "#8396a8", marginTop: 1 }}>
-                  {lastApproved.length} reading{lastApproved.length > 1 ? "s" : ""} approved and ready for billing
+                <div style={{ fontWeight: 700, fontSize: 14, color: "var(--foreground)" }}>Generate Bills via Billing Engine</div>
+                <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 1 }}>
+                  {lastApproved.length} reading{lastApproved.length > 1 ? "s" : ""} approved — ready to bill
                 </div>
               </div>
             </div>
-            {!billResults && (
-              <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "2px 10px", borderRadius: 20, fontSize: 11, fontWeight: 700, background: "#e8f2ff", border: "1px solid #99c4f8", color: "#0070f2" }}>
-                PENDING
-              </span>
-            )}
+            {!billResults && <span className="ds-badge ds-badge-info">PENDING</span>}
           </div>
-
           <div style={{ padding: 16 }}>
-            {/* Preview table — shown before generation */}
             {!billResults && (
-              <div style={{ marginBottom: 16, border: "1px solid #d1d8de", borderRadius: 8, overflow: "hidden", maxHeight: 240, overflowY: "auto" }}>
-                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+              <div style={{ marginBottom: 16, maxHeight: 220, overflowY: "auto" }}>
+                <table className="ds-table">
                   <thead>
                     <tr>
-                      {["Customer", "Reading Date", "Consumption", "Type"].map(h => (
-                        <th key={h} style={{ padding: "8px 16px", background: "linear-gradient(to bottom,#f0f3f6 0%,#eaecf0 100%)", borderBottom: "1px solid #d1d8de", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".05em", color: "#4a6070", textAlign: "left" }}>{h}</th>
-                      ))}
+                      <th>Customer</th><th>Reading Date</th><th>Consumption</th><th>Type</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {lastApproved.map((e, i) => (
-                      <tr key={e.readingId} style={{ borderBottom: "1px solid #d1d8de", background: i % 2 === 0 ? "#ffffff" : "#fafbfc" }}>
-                        <td style={{ padding: "8px 16px", fontWeight: 600, color: "#1d2d3e" }}>{e.customer.fullName}</td>
-                        <td style={{ padding: "8px 16px", color: "#4a6070" }}>{fmtDate(e.readingDate)}</td>
-                        <td style={{ padding: "8px 16px", fontFamily: "monospace", fontSize: 12, color: "#256f3a", fontWeight: 600 }}>
-                          +{e.consumption.toFixed(2)} kWh
-                        </td>
-                        <td style={{ padding: "8px 16px" }}>
-                          <span style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "2px 8px", borderRadius: 10, fontSize: 10, fontWeight: 600, ...(e.readingType === "ACTUAL" ? { background: "#e6f4ea", border: "1px solid #a3d4ad", color: "#256f3a" } : e.readingType === "ESTIMATED" ? { background: "#fef3e6", border: "1px solid #f5c98a", color: "#df6e0c" } : { background: "#f5f7f9", border: "1px solid #d1d8de", color: "#556b82" }) }}>
-                            {e.readingType}
-                          </span>
-                        </td>
+                    {lastApproved.map(e => (
+                      <tr key={e.readingId}>
+                        <td style={{ fontWeight: 600 }}>{e.customer.fullName}</td>
+                        <td>{fmtDate(e.readingDate)}</td>
+                        <td style={{ fontFamily: "monospace", color: "var(--success)", fontWeight: 600 }}>+{e.consumption.toFixed(2)} kWh</td>
+                        <td><span className={`ds-badge ${e.readingType === "ACTUAL" ? "ds-badge-pos" : e.readingType === "ESTIMATED" ? "ds-badge-warn" : "ds-badge-neu"}`}>{e.readingType}</span></td>
                       </tr>
                     ))}
                   </tbody>
