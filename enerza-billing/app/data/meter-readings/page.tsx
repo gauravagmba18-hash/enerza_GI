@@ -864,54 +864,51 @@ function ApproveStep() {
             {billResults ? (
               <div>
                 {billResults.generated > 0 && (
-                  <div style={{ display: "flex", alignItems: "flex-start", gap: 12, padding: "12px 16px", borderRadius: 6, marginBottom: 12, background: "#e6f4ea", border: "1px solid #a3d4ad", borderLeft: "3px solid #256f3a", color: "#1d2d3e", fontSize: 13 }}>
-                    <span style={{ color: "#256f3a", fontWeight: 700 }}>✓</span>
+                  <div className="ds-msg ds-msg-ok" style={{ marginBottom: 12 }}>
+                    <span style={{ color: "var(--success)", fontWeight: 700 }}>✓</span>
                     <span>
                       <strong>{billResults.generated} bill{billResults.generated > 1 ? "s" : ""} generated</strong>
                       {" "}— total:{" "}
-                      <strong style={{ color: "#256f3a" }}>
+                      <strong style={{ color: "var(--success)" }}>
                         ₹{billResults.bills.reduce((s, b) => s + b.totalAmount, 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                       </strong>
                       . View in{" "}
-                      <a href="/data/bills" style={{ color: "#0070f2", textDecoration: "underline" }}>
+                      <a href="/data/bills" style={{ color: "var(--accent)", textDecoration: "underline" }}>
                         Master Data → Bills
                       </a>.
                     </span>
                   </div>
                 )}
                 {billResults.failed > 0 && (
-                  <div style={{ display: "flex", alignItems: "flex-start", gap: 12, padding: "12px 16px", borderRadius: 6, marginBottom: 12, background: "#fce8e8", border: "1px solid #f0b0b0", borderLeft: "3px solid #aa0808", color: "#1d2d3e", fontSize: 13 }}>
-                    <span style={{ color: "#aa0808" }}>✕</span>
+                  <div className="ds-msg ds-msg-error" style={{ marginBottom: 12 }}>
+                    <span style={{ color: "var(--danger)" }}>✕</span>
                     <span>{billResults.failed} failed: {billResults.errors.map(e => e.error).join("; ")}</span>
                   </div>
                 )}
                 <div style={{ display: "flex", gap: 8 }}>
-                  <button
-                    onClick={() => { setLastApproved([]); setBillResults(null); }}
-                    style={{ height: 26, padding: "0 12px", border: "1px solid #d1d8de", borderRadius: 6, background: "#ffffff", color: "#1d2d3e", fontSize: 11, fontFamily: "inherit", cursor: "pointer" }}>
+                  <button className="ds-btn ds-btn-sm"
+                    onClick={() => { setLastApproved([]); setBillResults(null); }}>
                     Clear
                   </button>
-                  <a href="/data/bills"
-                    style={{ height: 26, padding: "0 12px", border: "1px solid #d1d8de", borderRadius: 6, background: "#ffffff", color: "#0070f2", fontSize: 11, fontFamily: "inherit", cursor: "pointer", display: "inline-flex", alignItems: "center", textDecoration: "none" }}>
+                  <a href="/data/bills" className="ds-btn ds-btn-sm" style={{ textDecoration: "none", color: "var(--accent)" }}>
                     View Bills →
                   </a>
                 </div>
               </div>
             ) : (
               <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-                <button
+                <button className="ds-btn ds-btn-primary ds-btn-lg"
                   disabled={generatingBills}
                   onClick={generateBills}
-                  style={{ height: 38, padding: "0 24px", border: "1px solid #0058c0", borderRadius: 6, background: generatingBills ? "#4a9de0" : "#0070f2", color: "#fff", fontSize: 14, fontWeight: 700, fontFamily: "inherit", cursor: generatingBills ? "not-allowed" : "pointer", display: "inline-flex", alignItems: "center", gap: 6, boxShadow: "0 1px 0 rgba(255,255,255,.2) inset, 0 2px 5px rgba(0,112,242,.35)", minWidth: 220 }}>
+                  style={{ minWidth: 220 }}>
                   {generatingBills ? "Generating bills…" : `⚡ Generate ${lastApproved.length} Bill${lastApproved.length > 1 ? "s" : ""}`}
                 </button>
-                <button
+                <button className="ds-btn ds-btn-sm"
                   disabled={generatingBills}
-                  onClick={() => { setLastApproved([]); setBillResults(null); }}
-                  style={{ height: 32, padding: "0 12px", border: "1px solid #d1d8de", borderRadius: 6, background: "#ffffff", color: "#4a6070", fontSize: 12, fontFamily: "inherit", cursor: "pointer", opacity: generatingBills ? .5 : 1 }}>
+                  onClick={() => { setLastApproved([]); setBillResults(null); }}>
                   Discard
                 </button>
-                <span style={{ fontSize: 12, color: "#8396a8" }}>
+                <span style={{ fontSize: 12, color: "var(--muted)" }}>
                   Bills will be created in PENDING status and released to collections.
                 </span>
               </div>
@@ -937,25 +934,21 @@ export default function MeterReadingCyclePage() {
   ];
 
   return (
-    <div className="ds-page">
-      {/* ── Page header ─────────────────────────────────────────────────────── */}
-      <div style={{ marginBottom: "var(--sp-5)", display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "var(--sp-4)" }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+      {/* ── Page header — matches app-wide DataTable style ─────────────────── */}
+      <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", flexWrap: "wrap", gap: 16 }}>
         <div>
-          <div style={{ fontSize: 11, fontWeight: 600, color: "var(--ds-text-muted)", letterSpacing: ".06em", textTransform: "uppercase", marginBottom: 4 }}>
-            Metering &amp; Billing
-          </div>
-          <h1 style={{ fontSize: 24, fontWeight: 800, color: "#1d2d3e", letterSpacing: "-.4px", lineHeight: 1.2 }}>
+          <h1 style={{ fontSize: 32, fontWeight: 800, color: "var(--foreground)", letterSpacing: "-1px" }}>
             Meter Reading Cycle
           </h1>
-          <p style={{ fontSize: 13, color: "#4a6070", marginTop: 4 }}>
-            Electricity · Schedule → Capture → Validate → Approve → Generate Bills
-          </p>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4 }}>
+            <div style={{ width: 4, height: 4, borderRadius: "50%", background: "var(--accent)" }} />
+            <span style={{ fontSize: 11, color: "var(--muted)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em" }}>
+              Electricity · Schedule → Capture → Validate → Approve → Generate Bills
+            </span>
+          </div>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "var(--sp-2)", flexShrink: 0, paddingTop: 4 }}>
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "3px 10px", borderRadius: 20, fontSize: 11, fontWeight: 700, background: "#e6f4ea", border: "1px solid #a3d4ad", color: "#256f3a" }}>
-            ● ACTIVE
-          </span>
-        </div>
+        <span className="ds-badge ds-badge-pos">ACTIVE</span>
       </div>
 
       {/* ── Step bar ────────────────────────────────────────────────────────── */}
@@ -969,7 +962,7 @@ export default function MeterReadingCyclePage() {
             <span className="ds-step-num">{s.num}</span>
             <span style={{ textAlign: "left" }}>
               <span style={{ display: "block", fontSize: 13, fontWeight: 700 }}>{s.label}</span>
-              <span style={{ display: "block", fontSize: 10, fontWeight: 400, color: step === s.key ? "#0058c0" : "#8396a8", marginTop: 1 }}>
+              <span style={{ display: "block", fontSize: 10, fontWeight: 400, color: step === s.key ? "var(--accent)" : "var(--muted)", marginTop: 1 }}>
                 {s.desc}
               </span>
             </span>
