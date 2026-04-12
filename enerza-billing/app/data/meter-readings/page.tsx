@@ -189,7 +189,8 @@ function ScheduleStep() {
               <thead>
                 <tr>
                   <th>Route</th>
-                  <th>Cycle Group</th>
+                  <th>Billing Cycle</th>
+                  <th>Due</th>
                   <th>Total Reads</th>
                   <th>Read This Month</th>
                   <th>Pending</th>
@@ -201,10 +202,26 @@ function ScheduleStep() {
                 {routes.map((r: any) => {
                   const pct = r.connectionCount > 0 ? Math.round((r.readThisMonth / r.connectionCount) * 100) : 0;
                   const barColor = pct >= 80 ? "var(--success)" : pct >= 50 ? "var(--warning)" : "var(--danger)";
+                  // isAssigned from API (already assigned this month) OR from local state (just assigned now)
+                  const isAssigned = r.isAssigned || !!assigned[r.routeId];
+                  const assignedTo = assigned[r.routeId] ?? r.assignedTo;
+                  const scheduledDate = r.scheduledDate;
+                  const isDue = r.isDue !== false; // default true if field missing
+                  const rowOpacity = isDue ? 1 : 0.45;
                   return (
-                    <tr key={r.routeId}>
-                      <td style={{ fontWeight: 600 }}>{r.routeName}</td>
-                      <td style={{ fontFamily: "monospace", fontSize: 12 }}>{r.cycleGroup || "—"}</td>
+                    <tr key={r.routeId} style={{ opacity: rowOpacity }}>
+                      <td style={{ fontWeight: 600 }}>
+                        {r.routeName}
+                        {!isDue && (
+                          <div style={{ fontSize: 10, color: "var(--muted)", marginTop: 2 }}>Not due this month</div>
+                        )}
+                      </td>
+                      <td style={{ fontFamily: "monospace", fontSize: 12 }}>{r.cycleName || r.cycleGroup || "—"}</td>
+                      <td>
+                        {isDue
+                          ? <span className="ds-badge ds-badge-pos">Due</span>
+                          : <span className="ds-badge ds-badge-neu">Upcoming</span>}
+                      </td>
                       <td style={{ fontFamily: "monospace", fontSize: 12 }}>{r.connectionCount}</td>
                       <td style={{ fontFamily: "monospace", fontSize: 12, color: "var(--success)", fontWeight: 600 }}>{r.readThisMonth}</td>
                       <td>
@@ -221,8 +238,15 @@ function ScheduleStep() {
                         </div>
                       </td>
                       <td>
-                        {assigned[r.routeId] ? (
-                          <span className="ds-badge ds-badge-pos">✓ {assigned[r.routeId]}</span>
+                        {isAssigned ? (
+                          <div>
+                            <span className="ds-badge ds-badge-pos">✓ {assignedTo}</span>
+                            {scheduledDate && (
+                              <div style={{ fontSize: 10, color: "var(--muted)", marginTop: 3 }}>{scheduledDate}</div>
+                            )}
+                          </div>
+                        ) : !isDue ? (
+                          <span style={{ fontSize: 11, color: "var(--muted)" }}>—</span>
                         ) : (
                           <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
                             <select
