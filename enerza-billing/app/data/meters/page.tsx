@@ -3,10 +3,6 @@ import { DataTable } from "@/components/ui/DataTable";
 export default function Page() {
   const columns = [
       {
-            "key": "meterId",
-            "label": "ID"
-      },
-      {
             "key": "serialNo",
             "label": "Serial No."
       },

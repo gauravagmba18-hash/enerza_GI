@@ -34,7 +34,7 @@ export async function GET(_req: NextRequest) {
           include: {
             account: {
               include: {
-                customer: { select: { fullName: true } },
+                customer: { select: { fullName: true, customerId: true } },
               },
             },
           },
@@ -117,7 +117,7 @@ export async function GET(_req: NextRequest) {
           status:       r.status,
           connectionId: r.connectionId,
           accountId:    r.connection?.accountId ?? null,
-          customer:     { fullName: r.connection?.account?.customer?.fullName ?? "Unknown" },
+          customer:     { fullName: r.connection?.account?.customer?.fullName ?? "Unknown", customerId: r.connection?.account?.customer?.customerId ?? null },
           meter:        r.meter
             ? { serialNo: r.meter.serialNo, meterType: r.meter.meterType }
             : null,
