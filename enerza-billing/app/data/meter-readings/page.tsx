@@ -93,15 +93,26 @@ function ScheduleStep() {
   const [assigning, setAssigning]   = useState<Record<string, boolean>>({});
   const [assigned, setAssigned]     = useState<Record<string, string>>({}); // routeId → techName
   const [techSel, setTechSel]       = useState<Record<string, string>>({}); // routeId → techId
+  const [showRouteModal, setShowRouteModal] = useState(false);
+  const [modalSel, setModalSel]     = useState<Set<string>>(new Set()); // routeIds selected in modal
+  const [worksheetIds, setWorksheetIds] = useState<Set<string>>(new Set()); // routes added to worksheet
 
   useEffect(() => {
     Promise.all([
       fetch("/api/meter-readings/schedule").then(r => r.json()),
       fetch("/api/field/technicians").then(r => r.json()),
     ]).then(([sched, techs]) => {
-      setData(sched.data ?? sched);
+      const schedData = sched.data ?? sched;
+      setData(schedData);
       setTechs(Array.isArray(techs.data) ? techs.data : []);
       setLoading(false);
+      // Auto-add already-assigned routes to worksheet so they always appear
+      if (schedData?.routes) {
+        const preAssigned = new Set<string>(
+          (schedData.routes as any[]).filter((r: any) => r.isAssigned).map((r: any) => r.routeId)
+        );
+        setWorksheetIds(preAssigned);
+      }
     }).catch(() => setLoading(false));
   }, []);
 
@@ -180,9 +191,103 @@ function ScheduleStep() {
             <span style={{ width: 3, height: 18, background: "var(--accent)", borderRadius: 2, display: "block" }} />
             Route Worksheet <span style={{ fontSize: 11, fontWeight: 400, color: "var(--muted)", marginLeft: 4 }}>Assign routes to technicians</span>
           </h3>
+          <button
+            className="ds-btn ds-btn-primary ds-btn-sm"
+            onClick={() => { setModalSel(new Set()); setShowRouteModal(true); }}
+            style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 14px" }}>
+            + Generate Route
+          </button>
         </div>
-        {routes.length === 0 ? (
-          <div className="ds-msg ds-msg-info"><span>ℹ</span><span>No active routes configured. Add routes in Master Data → Routes.</span></div>
+
+        {/* Route Selection Modal */}
+        {showRouteModal && (
+          <div style={{ position: "fixed", inset: 0, zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.6)", backdropFilter: "blur(12px)" }}>
+            <div className="ds-card" style={{ width: "min(680px,96vw)", maxHeight: "80vh", display: "flex", flexDirection: "column", padding: 0 }}>
+              {/* Modal header */}
+              <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--card-border)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: "var(--foreground)" }}>Generate Route</div>
+                  <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 2 }}>Select routes to add to this month&apos;s reading schedule</div>
+                </div>
+                <button onClick={() => setShowRouteModal(false)} style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--card-border)", borderRadius: 6, width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "var(--muted)", fontSize: 14 }}>✕</button>
+              </div>
+              {/* Route list */}
+              <div style={{ overflowY: "auto", flex: 1 }}>
+                <table className="ds-table">
+                  <thead>
+                    <tr>
+                      <th style={{ width: 36 }}>
+                        <input type="checkbox"
+                          style={{ accentColor: "var(--accent)" }}
+                          checked={routes.length > 0 && routes.every((r: any) => modalSel.has(r.routeId))}
+                          onChange={e => setModalSel(e.target.checked ? new Set(routes.map((r: any) => r.routeId)) : new Set())} />
+                      </th>
+                      <th>Route</th>
+                      <th>Billing Cycle</th>
+                      <th>Read Day</th>
+                      <th>Connections</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {routes.map((r: any) => {
+                      const alreadyInSheet = worksheetIds.has(r.routeId);
+                      const isDueR = r.isDue !== false;
+                      return (
+                        <tr key={r.routeId} style={{ opacity: alreadyInSheet ? 0.4 : 1 }}>
+                          <td>
+                            <input type="checkbox"
+                              style={{ accentColor: "var(--accent)" }}
+                              disabled={alreadyInSheet}
+                              checked={modalSel.has(r.routeId) || alreadyInSheet}
+                              onChange={e => setModalSel(prev => {
+                                const next = new Set(prev);
+                                e.target.checked ? next.add(r.routeId) : next.delete(r.routeId);
+                                return next;
+                              })} />
+                          </td>
+                          <td style={{ fontWeight: 600 }}>
+                            {r.routeName}
+                            {alreadyInSheet && <span style={{ fontSize: 10, color: "var(--muted)", marginLeft: 6 }}>already in worksheet</span>}
+                          </td>
+                          <td style={{ fontSize: 12 }}>{r.cycleName || r.cycleGroup || "—"}</td>
+                          <td style={{ fontFamily: "monospace", fontSize: 12 }}>{r.readDateRule || "—"}</td>
+                          <td style={{ fontFamily: "monospace", fontSize: 12 }}>{r.connectionCount}</td>
+                          <td>
+                            {r.isAssigned
+                              ? <span className="ds-badge ds-badge-pos">Assigned</span>
+                              : isDueR
+                              ? <span className="ds-badge ds-badge-warn">Due</span>
+                              : <span className="ds-badge ds-badge-neu">Upcoming</span>}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+              {/* Modal footer */}
+              <div style={{ padding: "12px 20px", borderTop: "1px solid var(--card-border)", display: "flex", justifyContent: "flex-end", gap: 8 }}>
+                <button className="ds-btn ds-btn-sm" onClick={() => setShowRouteModal(false)} style={{ background: "rgba(255,255,255,0.05)", border: "1px solid var(--card-border)" }}>Cancel</button>
+                <button
+                  className="ds-btn ds-btn-primary ds-btn-sm"
+                  disabled={modalSel.size === 0}
+                  onClick={() => {
+                    setWorksheetIds(prev => new Set([...prev, ...modalSel]));
+                    setShowRouteModal(false);
+                  }}>
+                  Add {modalSel.size > 0 ? modalSel.size : ""} Route{modalSel.size !== 1 ? "s" : ""} to Worksheet
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {worksheetIds.size === 0 ? (
+          <div className="ds-msg ds-msg-info" style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <span>ℹ</span>
+            <span>No routes in worksheet. Click <strong>+ Generate Route</strong> to select routes for this month&apos;s reading schedule.</span>
+          </div>
         ) : (
           <div className="ds-card">
             <table className="ds-table">
@@ -199,7 +304,7 @@ function ScheduleStep() {
                 </tr>
               </thead>
               <tbody>
-                {routes.map((r: any) => {
+                {routes.filter((r: any) => worksheetIds.has(r.routeId)).map((r: any) => {
                   const pct = r.connectionCount > 0 ? Math.round((r.readThisMonth / r.connectionCount) * 100) : 0;
                   const barColor = pct >= 80 ? "var(--success)" : pct >= 50 ? "var(--warning)" : "var(--danger)";
                   // isAssigned from API (already assigned this month) OR from local state (just assigned now)

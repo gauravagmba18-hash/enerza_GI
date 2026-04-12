@@ -239,10 +239,10 @@ async function main() {
   // 14. Routes
   // ──────────────────────────────────────────────
   await Promise.all([
-    prisma.route.upsert({ where: { routeId: "RT-AHM-W-01" }, update: {}, create: { routeId: "RT-AHM-W-01", routeName: "AHM-West-Route-1", cycleGroup: "GRP-A", readerId: "EMP00123", status: "ACTIVE", areaId: "AHM-WEST" } }),
-    prisma.route.upsert({ where: { routeId: "RT-AHM-W-02" }, update: {}, create: { routeId: "RT-AHM-W-02", routeName: "AHM-West-Route-2", cycleGroup: "GRP-A", readerId: "EMP00124", status: "ACTIVE", areaId: "AHM-WEST" } }),
-    prisma.route.upsert({ where: { routeId: "RT-AHM-E-01" }, update: {}, create: { routeId: "RT-AHM-E-01", routeName: "AHM-East-Route-1", cycleGroup: "GRP-B", readerId: "EMP00125", status: "ACTIVE", areaId: "AHM-EAST" } }),
-    prisma.route.upsert({ where: { routeId: "RT-GAN-01" },   update: {}, create: { routeId: "RT-GAN-01",   routeName: "Gandhinagar-Route-1", cycleGroup: "GRP-C", readerId: "EMP00126", status: "ACTIVE", areaId: "GAN-NORTH" } }),
+    prisma.route.upsert({ where: { routeId: "RT-AHM-W-01" }, update: { cycleGroup: "BC-MONTHLY-1" }, create: { routeId: "RT-AHM-W-01", routeName: "AHM-West-Route-1", cycleGroup: "BC-MONTHLY-1", readerId: "EMP00123", status: "ACTIVE", areaId: "AHM-WEST" } }),
+    prisma.route.upsert({ where: { routeId: "RT-AHM-W-02" }, update: { cycleGroup: "BC-MONTHLY-2" }, create: { routeId: "RT-AHM-W-02", routeName: "AHM-West-Route-2", cycleGroup: "BC-MONTHLY-2", readerId: "EMP00124", status: "ACTIVE", areaId: "AHM-WEST" } }),
+    prisma.route.upsert({ where: { routeId: "RT-AHM-E-01" }, update: { cycleGroup: "BC-MONTHLY-2" }, create: { routeId: "RT-AHM-E-01", routeName: "AHM-East-Route-1", cycleGroup: "BC-MONTHLY-2", readerId: "EMP00125", status: "ACTIVE", areaId: "AHM-EAST" } }),
+    prisma.route.upsert({ where: { routeId: "RT-GAN-01" },   update: { cycleGroup: "BC-MONTHLY-3" }, create: { routeId: "RT-GAN-01",   routeName: "Gandhinagar-Route-1", cycleGroup: "BC-MONTHLY-3", readerId: "EMP00126", status: "ACTIVE", areaId: "GAN-NORTH" } }),
   ]);
   console.log(`  ✓ Routes: 4`);
 
