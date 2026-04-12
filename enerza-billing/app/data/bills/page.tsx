@@ -51,6 +51,7 @@ export default function Page() {
       apiPath="/api/bills"
       columns={columns}
       color="#818cf8"
+      detailPath="/data/bills"
     />
   );
 }
