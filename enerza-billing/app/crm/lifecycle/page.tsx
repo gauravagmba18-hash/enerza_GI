@@ -76,7 +76,7 @@ export default function ServiceLifecycle() {
     <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "var(--bg)" }}>
       <div style={{ padding: "12px 24px", background: "var(--card-bg)", borderBottom: "1px solid var(--card-border)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div style={{ display: "flex", alignItems: "baseline", gap: 12 }}>
-          <h1 style={{ fontSize: 18, fontWeight: 700, color: "var(--foreground)", margin: 0 }}>Service Lifecycle</h1>
+          <h1 style={{ fontSize: 18, fontWeight: 700, color: "var(--foreground)", margin: 0 }}>Service Management</h1>
           <span style={{ fontSize: 13, color: "var(--muted)" }}>Move-in · Move-out · Transfer · BR-005 to BR-009</span>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
@@ -115,7 +115,7 @@ export default function ServiceLifecycle() {
         {/* Main Workflow Card */}
         <div style={{ background: "var(--card-bg)", border: "1px solid var(--card-border)", borderRadius: 12, overflow: "hidden" }}>
           <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--card-border)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <h2 style={{ fontSize: 14, fontWeight: 700, color: "var(--foreground)" }}>Service Lifecycle Workflow</h2>
+            <h2 style={{ fontSize: 14, fontWeight: 700, color: "var(--foreground)" }}>Service Management Workflow</h2>
             <select value={lifecycleType} onChange={(e) => { setLifecycleType(e.target.value); setActiveStep(1); setSubmitResult(null); }}
               style={{ padding: "7px 12px", borderRadius: 6, border: "1px solid var(--card-border)", fontSize: 12, fontWeight: 500, background: "var(--bg-lighter)", color: "var(--foreground)" }}>
               <option>New Connection</option>

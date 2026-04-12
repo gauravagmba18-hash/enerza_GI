@@ -89,7 +89,7 @@ const OPERATIONAL_GROUPS: SidebarGroup[] = [
     color: "#2dd4bf",
     items: [
       { label: "CRM Dashboard",       path: "/crm" },
-      { label: "Billing Lifecycle",   path: "/crm/lifecycle" },
+      { label: "Service Management",   path: "/crm/lifecycle" },
       { label: "Complaints Register", path: "/crm/complaints", badge: "3" },
       { label: "Work Order Dispatch", path: "/crm/work-orders" },
       { label: "Device Replacement",  path: "/crm/replacement" },
