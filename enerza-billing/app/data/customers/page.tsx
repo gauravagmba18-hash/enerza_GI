@@ -40,7 +40,7 @@ export default function Page() {
       apiPath="/api/customers"
       columns={columns}
       color="#06b6d4"
-      detailPath="/customers"
+      detailPath="/crm/customers"
     />
   );
 }
