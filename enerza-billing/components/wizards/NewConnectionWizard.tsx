@@ -38,7 +38,7 @@ export function NewConnectionWizard() {
   const [step, setStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<{ requestId: string | null; accountId: string; customerId: string } | null>(null);
+  const [result, setResult] = useState<{ requestId: string | null; customerId: string; premiseId: string } | null>(null);
 
   const [form, setForm] = useState({
     customer: { fullName: "", mobile: "", email: "", customerType: "INDIVIDUAL", segmentId: "cl_dom_01" },
@@ -57,14 +57,14 @@ export function NewConnectionWizard() {
     setSubmitting(true);
     setError(null);
     try {
-      const res = await fetch("/api/onboarding", {
+      const res = await fetch("/api/new-connection-request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Onboarding failed");
-      setResult({ requestId: data.data?.requestId ?? null, accountId: data.data?.accountId ?? "", customerId: data.data?.customerId ?? "" });
+      if (!res.ok) throw new Error(data.error || "Failed to raise service request");
+      setResult({ requestId: data.data?.requestId ?? null, customerId: data.data?.customerId ?? "", premiseId: data.data?.premiseId ?? "" });
       setStep(6);
     } catch (e: any) {
       setError(e.message);
@@ -339,45 +339,44 @@ export function NewConnectionWizard() {
             </>
           )}
 
-          {/* Step 6 — Success */}
+          {/* Step 6 — SR Raised */}
           {step === 6 && (
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 0", textAlign: "center" }}>
-              <div style={{ width: 72, height: 72, borderRadius: "50%", background: "rgba(16,185,129,0.12)",
-                border: "2px solid #10b981", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 20 }}>
-                <Check size={36} color="#10b981" strokeWidth={3} />
+              <div style={{ width: 72, height: 72, borderRadius: "50%", background: "rgba(59,130,246,0.12)",
+                border: "2px solid #3b82f6", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 20 }}>
+                <FilePlus size={36} color="#3b82f6" strokeWidth={2} />
               </div>
-              <h2 style={{ fontSize: 22, fontWeight: 800, color: "var(--foreground)", marginBottom: 8 }}>Connection Active!</h2>
-              <p style={{ color: "var(--muted)", fontSize: 13, maxWidth: 400, lineHeight: 1.6, marginBottom: 20 }}>
-                Customer, Premise, Account, Technical configuration, and initial Meter Baseline have been successfully provisioned.
+              <h2 style={{ fontSize: 22, fontWeight: 800, color: "var(--foreground)", marginBottom: 8 }}>Service Request Raised!</h2>
+              <p style={{ color: "var(--muted)", fontSize: 13, maxWidth: 420, lineHeight: 1.6, marginBottom: 20 }}>
+                Application submitted. The request is now at <strong style={{ color: "var(--foreground)" }}>Stage 1 — Application Details</strong>.
+                It will proceed through Document Verification → Field Work → Billing Setup → Activation.
               </p>
               {result && (
                 <div style={{ background: "rgba(59,130,246,0.06)", border: "1px solid rgba(59,130,246,0.2)",
                   borderRadius: 10, padding: "14px 24px", marginBottom: 24, textAlign: "left", minWidth: 320 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: "#3b82f6", textTransform: "uppercase", letterSpacing: "0.6px", marginBottom: 10 }}>Provisioning Summary</div>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px 16px", fontSize: 12 }}>
-                    {result.accountId && <><span style={{ color: "var(--muted)" }}>Account ID</span><span style={{ color: "var(--foreground)", fontWeight: 600, fontFamily: "monospace" }}>{result.accountId.slice(0, 16)}…</span></>}
-                    {result.customerId && <><span style={{ color: "var(--muted)" }}>Customer ID</span><span style={{ color: "var(--foreground)", fontWeight: 600, fontFamily: "monospace" }}>{result.customerId.slice(0, 16)}…</span></>}
-                    {result.requestId && <><span style={{ color: "var(--muted)" }}>Service Request</span><span style={{ color: "#3b82f6", fontWeight: 700, fontFamily: "monospace" }}>{result.requestId.slice(0, 16)}…</span></>}
+                  <div style={{ fontSize: 11, fontWeight: 700, color: "#3b82f6", textTransform: "uppercase", letterSpacing: "0.6px", marginBottom: 10 }}>Request Summary</div>
+                  <div style={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: "6px 16px", fontSize: 12 }}>
+                    {result.requestId && <><span style={{ color: "var(--muted)" }}>Service Request ID</span><span style={{ color: "#3b82f6", fontWeight: 700, fontFamily: "monospace" }}>{result.requestId.slice(0, 20)}…</span></>}
+                    {result.customerId && <><span style={{ color: "var(--muted)" }}>Customer ID</span><span style={{ color: "var(--foreground)", fontWeight: 600, fontFamily: "monospace" }}>{result.customerId.slice(0, 20)}…</span></>}
+                    <span style={{ color: "var(--muted)" }}>Status</span><span style={{ color: "#eab308", fontWeight: 700 }}>SUBMITTED — Awaiting Verification</span>
                   </div>
                 </div>
               )}
               <div style={{ display: "flex", gap: 12, flexWrap: "wrap", justifyContent: "center" }}>
-                {result?.requestId && (
-                  <button onClick={() => router.push("/crm/lifecycle")}
-                    style={{ padding: "9px 20px", borderRadius: 8, border: "none",
-                      background: "#10b981", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
-                    View Lifecycle →
-                  </button>
-                )}
+                <button onClick={() => router.push("/crm/lifecycle")}
+                  style={{ padding: "9px 20px", borderRadius: 8, border: "none",
+                    background: "#3b82f6", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+                  Track in Lifecycle →
+                </button>
                 <button onClick={() => router.push("/")}
                   style={{ padding: "9px 20px", borderRadius: 8, border: "1px solid var(--card-border)",
                     background: "transparent", color: "var(--foreground)", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
                   Go to Dashboard
                 </button>
-                <button onClick={() => { setStep(1); setResult(null); setForm(f => ({ ...f, meter: { ...f.meter, serialNo: "" } })); }}
-                  style={{ padding: "9px 20px", borderRadius: 8, border: "none",
-                    background: "#3b82f6", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
-                  Onboard Another
+                <button onClick={() => { setStep(1); setResult(null); setForm(f => ({ ...f, customer: { fullName: "", mobile: "", email: "", customerType: "INDIVIDUAL", segmentId: "cl_dom_01" }, meter: { ...f.meter, serialNo: "" } })); }}
+                  style={{ padding: "9px 20px", borderRadius: 8, border: "1px solid var(--card-border)",
+                    background: "transparent", color: "var(--muted)", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+                  New Request
                 </button>
               </div>
             </div>
@@ -419,12 +418,12 @@ export function NewConnectionWizard() {
             ) : (
               <button
                 onClick={submit}
-                disabled={submitting || !form.meter.serialNo}
+                disabled={submitting}
                 style={{
                   padding: "8px 22px", borderRadius: 8, border: "none",
-                  background: !form.meter.serialNo ? "var(--muted)" : "#3b82f6",
+                  background: "#3b82f6",
                   color: "#fff", fontSize: 13, fontWeight: 600,
-                  cursor: !form.meter.serialNo ? "not-allowed" : "pointer",
+                  cursor: submitting ? "wait" : "pointer",
                   display: "flex", alignItems: "center", gap: 6,
                 }}>
                 {submitting ? "Raising Request…" : <><FilePlus size={15} /> Raise Service Request</>}
