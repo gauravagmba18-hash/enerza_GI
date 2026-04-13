@@ -22,8 +22,7 @@ export function DispatchFilters({ activeFilter, onFilterChange, criticalSpares }
     <div style={{ width: 240, flexShrink: 0, display: "flex", flexDirection: "column", gap: 0 }}>
       {/* Quick Filters */}
       <div
-        className="glass"
-        style={{ borderRadius: 10, overflow: "hidden", marginBottom: 12 }}
+        style={{ background: "var(--card-bg)", border: "1px solid var(--card-border)", borderRadius: 12, overflow: "hidden", marginBottom: 12 }}
       >
         <div
           style={{
@@ -52,10 +51,11 @@ export function DispatchFilters({ activeFilter, onFilterChange, criticalSpares }
                 padding: "9px 14px",
                 fontSize: 13,
                 cursor: "pointer",
-                background: active ? "var(--accent)" : "transparent",
-                color: active ? "#fff" : "var(--foreground)",
+                background: active ? "var(--accent-glow)" : "transparent",
+                color: active ? "var(--accent)" : "var(--foreground)",
                 border: "none",
                 borderBottom: "1px solid var(--card-border)",
+                borderLeft: active ? "3px solid var(--accent)" : "3px solid transparent",
                 fontWeight: active ? 600 : 400,
                 transition: "background 0.15s",
               }}
@@ -67,7 +67,7 @@ export function DispatchFilters({ activeFilter, onFilterChange, criticalSpares }
       </div>
 
       {/* Critical Spares */}
-      <div className="glass" style={{ borderRadius: 10, overflow: "hidden" }}>
+      <div style={{ background: "var(--card-bg)", border: "1px solid var(--card-border)", borderRadius: 12, overflow: "hidden" }}>
         <div
           style={{
             padding: "10px 14px",

@@ -89,7 +89,7 @@ export default function DispatchBoard() {
             </div>
             <a
               href="/crm/complaints/new"
-              style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", fontSize: 13, fontWeight: 700, background: "#0f172a", color: "#fff", borderRadius: 8, textDecoration: "none", whiteSpace: "nowrap" }}
+              style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", fontSize: 13, fontWeight: 700, background: "var(--accent)", color: "#fff", borderRadius: 8, textDecoration: "none", whiteSpace: "nowrap" }}
             >
               <Plus size={14} /> Create Quick Ticket
             </a>
