@@ -10,13 +10,27 @@ export async function GET(req: NextRequest) {
       const rows = await (prisma.dunningNotice as any).findMany({ orderBy: { createdAt: "desc" } });
       return excelDownloadResponse(rows, "dunning-notices");
     }
-    const page  = parseInt(searchParams.get("page")  ?? "1");
-    const limit = parseInt(searchParams.get("limit") ?? "25");
+    const page   = parseInt(searchParams.get("page")   ?? "1");
+    const limit  = parseInt(searchParams.get("limit")  ?? "25");
     const search = searchParams.get("search") ?? "";
-    const skip  = (page - 1) * limit;
-    const where: any = search ? { OR: [{ status: { contains: search } }] } : {};
+    const status = searchParams.get("status") ?? "";
+    const hasPtp = searchParams.get("hasPtp") === "1";
+    const skip   = (page - 1) * limit;
+
+    const where: any = {};
+    if (status) where.status = status;
+    if (hasPtp) where.ptpDate = { not: null };
+    if (search) where.OR = [{ accountId: { contains: search } }];
+
     const [data, total] = await Promise.all([
-      (prisma.dunningNotice as any).findMany({ where, skip, take: limit, orderBy: { createdAt: "desc" } }),
+      (prisma.dunningNotice as any).findMany({
+        where, skip, take: limit,
+        orderBy: { createdAt: "desc" },
+        include: {
+          account: { include: { customer: { select: { fullName: true, customerId: true } } } },
+          level: true,
+        },
+      }),
       (prisma.dunningNotice as any).count({ where }),
     ]);
     return ok({ data, total, page, limit });

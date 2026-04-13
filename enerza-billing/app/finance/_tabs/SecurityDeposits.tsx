@@ -27,7 +27,7 @@ export default function SecurityDeposits() {
   useEffect(() => { load(); }, []);
 
   const totalPrincipal = deposits.reduce((s, d) => s + (d.amount ?? 0), 0);
-  const totalInterest = deposits.reduce((s, d) => s + calcInterest(d.amount ?? 0, d.interestRate ?? 7.25, d.depositDate ?? d.createdAt), 0);
+  const totalInterest = deposits.reduce((s, d) => s + calcInterest(d.amount ?? 0, d.interestRate ?? 7.25, d.paymentDate ?? d.createdAt), 0);
 
   const submit = async () => {
     if (!form.accountId || !form.amount) return;
@@ -40,7 +40,7 @@ export default function SecurityDeposits() {
         amount: parseFloat(form.amount),
         depositType: form.depositType,
         interestRate: parseFloat(form.interestRate),
-        depositDate: new Date().toISOString(),
+        paymentDate: new Date().toISOString(),
         status: "PAID",
       }),
     });
@@ -141,7 +141,7 @@ export default function SecurityDeposits() {
                       <td style={{ padding: "8px 12px", color: "var(--foreground)" }}>{d.accountId}</td>
                       <td style={{ padding: "8px 12px", color: "var(--muted)" }}>{d.depositType ?? "STANDARD"}</td>
                       <td style={{ padding: "8px 12px", textAlign: "right", color: "#818cf8", fontWeight: 600 }}>{fmt(d.amount ?? 0)}</td>
-                      <td style={{ padding: "8px 12px", color: "var(--muted)" }}>{d.depositDate ? new Date(d.depositDate).toLocaleDateString("en-IN") : "—"}</td>
+                      <td style={{ padding: "8px 12px", color: "var(--muted)" }}>{d.paymentDate ? new Date(d.paymentDate).toLocaleDateString("en-IN") : "—"}</td>
                       <td style={{ padding: "8px 12px", color: "var(--muted)" }}>{d.interestRate ?? 7.25}%</td>
                       <td style={{ padding: "8px 12px", textAlign: "right", color: "#f59e0b" }}>{fmt(interest)}</td>
                       <td style={{ padding: "8px 12px", textAlign: "right", fontWeight: 600, color: "#10b981" }}>{fmt((d.amount ?? 0) + interest)}</td>

@@ -77,15 +77,15 @@ export default function DunningPtp() {
           <tbody>
             {levels.map((lv: any, i: number) => (
               <tr key={lv.levelId ?? i} style={{ borderBottom: "1px solid var(--card-border)" }}>
-                <td style={{ padding: "8px 14px", fontWeight: 700, color: "#ef4444" }}>L{lv.level}</td>
+                <td style={{ padding: "8px 14px", fontWeight: 700, color: "#ef4444" }}>{lv.levelName}</td>
                 <td style={{ padding: "8px 14px", color: "var(--foreground)" }}>{lv.daysOverdue}d</td>
-                <td style={{ padding: "8px 14px", color: "var(--muted)" }}>{lv.action}</td>
+                <td style={{ padding: "8px 14px", color: "var(--muted)" }}>{lv.actionType}</td>
                 <td style={{ padding: "8px 14px", color: lv.penaltyFee > 0 ? "#f59e0b" : "var(--muted)" }}>
                   {lv.penaltyFee > 0 ? fmt(lv.penaltyFee) : "—"}
                 </td>
                 <td style={{ padding: "8px 14px" }}>
-                  <span style={{ background: lv.isActive ? "#10b98122" : "#ef444422", color: lv.isActive ? "#10b981" : "#ef4444", padding: "2px 8px", borderRadius: 4, fontSize: 11, fontWeight: 600 }}>
-                    {lv.isActive ? "ACTIVE" : "INACTIVE"}
+                  <span style={{ background: lv.status === "ACTIVE" ? "#10b98122" : "#ef444422", color: lv.status === "ACTIVE" ? "#10b981" : "#ef4444", padding: "2px 8px", borderRadius: 4, fontSize: 11, fontWeight: 600 }}>
+                    {lv.status}
                   </span>
                 </td>
               </tr>
@@ -119,7 +119,7 @@ export default function DunningPtp() {
                   <tr key={nid ?? i} style={{ borderBottom: "1px solid var(--card-border)" }}>
                     <td style={{ padding: "8px 12px", color: "var(--foreground)" }}>{n.account?.customer?.fullName ?? "—"}</td>
                     <td style={{ padding: "8px 12px", color: "var(--muted)", fontFamily: "monospace", fontSize: 11 }}>{n.accountId}</td>
-                    <td style={{ padding: "8px 12px", fontWeight: 700, color: "#ef4444" }}>L{n.level?.level ?? "?"}</td>
+                    <td style={{ padding: "8px 12px", fontWeight: 700, color: "#ef4444" }}>{n.level?.levelName ?? "?"}</td>
                     <td style={{ padding: "8px 12px", color: "var(--muted)" }}>{n.issuedAt ? new Date(n.issuedAt).toLocaleDateString("en-IN") : "—"}</td>
                     <td style={{ padding: "8px 12px" }}>
                       <span style={{ background: "#f59e0b22", color: "#f59e0b", padding: "2px 8px", borderRadius: 4, fontSize: 11, fontWeight: 600 }}>{n.status}</span>
