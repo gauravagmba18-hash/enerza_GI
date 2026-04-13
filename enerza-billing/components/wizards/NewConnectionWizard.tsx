@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Check, ChevronRight, ChevronLeft, User, MapPin, Zap, Settings, Gauge, Flame, Droplets, FilePlus } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -40,10 +40,38 @@ export function NewConnectionWizard() {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<{ requestId: string | null; customerId: string; premiseId: string } | null>(null);
 
+  // Live lookup data from DB
+  const [areas, setAreas] = useState<{ areaId: string; areaName: string; city: string }[]>([]);
+  const [segments, setSegments] = useState<{ segmentId: string; segmentName: string; utilityType: string }[]>([]);
+
+  useEffect(() => {
+    fetch("/api/cgd-areas?limit=100")
+      .then(r => r.json())
+      .then(d => {
+        const list = d.data?.data ?? d.data ?? [];
+        setAreas(list);
+        if (list.length > 0) set("premise", "areaId", list[0].areaId);
+      })
+      .catch(() => {});
+    fetch("/api/consumer-segments?limit=100")
+      .then(r => r.json())
+      .then(d => {
+        const list = d.data?.data ?? d.data ?? [];
+        setSegments(list);
+        // Default to first electricity domestic segment
+        const def = list.find((s: any) => s.utilityType === "ELECTRICITY") ?? list[0];
+        if (def) {
+          set("service", "segmentId", def.segmentId);
+          set("customer", "segmentId", def.segmentId);
+        }
+      })
+      .catch(() => {});
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   const [form, setForm] = useState({
-    customer: { fullName: "", mobile: "", email: "", customerType: "INDIVIDUAL", segmentId: "cl_dom_01" },
-    premise:  { addressLine1: "", areaId: "area_hq_01", buildingType: "RESIDENTIAL" },
-    service:  { utilityType: "ELECTRICITY", cycleId: "monthly_01", segmentId: "cl_dom_01" },
+    customer: { fullName: "", mobile: "", email: "", customerType: "INDIVIDUAL", segmentId: "" },
+    premise:  { addressLine1: "", areaId: "", buildingType: "RESIDENTIAL" },
+    service:  { utilityType: "ELECTRICITY", cycleId: "monthly_01", segmentId: "" },
     technical: { loadKw: 5, contractDemandKva: 6, supplyVoltage: "230V", phaseType: "SINGLE",
                  isNetMetered: false, serviceType: "DOMESTIC", pressureBandId: "cl_pb_01",
                  pipeSizeMm: 15, meterType: "SMART" },
@@ -178,10 +206,10 @@ export function NewConnectionWizard() {
                   </Field>
                   <Field label="Operating Zone (CGD / DISCOM)">
                     <select style={SELECT} value={form.premise.areaId} onChange={e => set("premise", "areaId", e.target.value)}>
-                      <option value="area_hq_01">Central City Zone 1</option>
-                      <option value="area_hq_02">Central City Zone 2</option>
-                      <option value="area_sub_01">Suburban Zone A</option>
-                      <option value="area_sub_02">Suburban Zone B</option>
+                      {areas.length === 0
+                        ? <option value="">Loading areas…</option>
+                        : areas.map(a => <option key={a.areaId} value={a.areaId}>{a.areaName} — {a.city}</option>)
+                      }
                     </select>
                   </Field>
                 </div>
@@ -201,7 +229,12 @@ export function NewConnectionWizard() {
                 ].map(({ type, icon: Icon, label, color }) => {
                   const sel = form.service.utilityType === type;
                   return (
-                    <button key={type} onClick={() => set("service", "utilityType", type)}
+                    <button key={type} onClick={() => {
+                      set("service", "utilityType", type);
+                      // Auto-pick first matching segment for this utility type
+                      const match = segments.find(s => s.utilityType === type || s.utilityType === "ALL");
+                      if (match) { set("service", "segmentId", match.segmentId); set("customer", "segmentId", match.segmentId); }
+                    }}
                       style={{ padding: "20px 16px", borderRadius: 12, cursor: "pointer", textAlign: "center",
                         border: `2px solid ${sel ? color : "var(--card-border)"}`,
                         background: sel ? `${color}12` : "rgba(255,255,255,0.02)",
@@ -222,10 +255,12 @@ export function NewConnectionWizard() {
                 </Field>
                 <Field label="Consumer Segment">
                   <select style={SELECT} value={form.service.segmentId} onChange={e => { set("service", "segmentId", e.target.value); set("customer", "segmentId", e.target.value); }}>
-                    <option value="cl_dom_01">Domestic / Residential</option>
-                    <option value="cl_com_01">Commercial</option>
-                    <option value="cl_ind_01">Industrial / HT</option>
-                    <option value="cl_ag_01">Agricultural</option>
+                    {segments.length === 0
+                      ? <option value="">Loading segments…</option>
+                      : segments
+                          .filter(s => s.utilityType === form.service.utilityType || s.utilityType === "ALL")
+                          .map(s => <option key={s.segmentId} value={s.segmentId}>{s.segmentName}</option>)
+                    }
                   </select>
                 </Field>
               </div>
@@ -373,7 +408,7 @@ export function NewConnectionWizard() {
                     background: "transparent", color: "var(--foreground)", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
                   Go to Dashboard
                 </button>
-                <button onClick={() => { setStep(1); setResult(null); setForm(f => ({ ...f, customer: { fullName: "", mobile: "", email: "", customerType: "INDIVIDUAL", segmentId: "cl_dom_01" }, meter: { ...f.meter, serialNo: "" } })); }}
+                <button onClick={() => { setStep(1); setResult(null); setForm(f => ({ ...f, customer: { fullName: "", mobile: "", email: "", customerType: "INDIVIDUAL", segmentId: f.service.segmentId }, meter: { ...f.meter, serialNo: "" } })); }}
                   style={{ padding: "9px 20px", borderRadius: 8, border: "1px solid var(--card-border)",
                     background: "transparent", color: "var(--muted)", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
                   New Request

@@ -21,6 +21,12 @@ export async function POST(req: NextRequest) {
     if (!service?.utilityType) {
       return badRequest("Utility type is required");
     }
+    if (!service?.segmentId) {
+      return badRequest("Consumer segment is required — please select a segment in Step 3");
+    }
+    if (!premise?.areaId) {
+      return badRequest("Area / zone is required — please select an operating zone in Step 2");
+    }
 
     // Create Customer and Premise (no Account/Connection yet)
     const { customerId, fullName, premiseId } = await prisma.$transaction(async (tx: any) => {
@@ -78,7 +84,10 @@ export async function POST(req: NextRequest) {
   } catch (err: any) {
     console.error("new-connection-request failed:", err);
     if (err.code === "P2002") {
-      return badRequest(`Duplicate field: ${err.meta?.target}`);
+      return badRequest(`Duplicate entry: ${err.meta?.target?.join(", ")}`);
+    }
+    if (err.code === "P2003") {
+      return badRequest(`Invalid reference: ${err.meta?.field_name} — check that area and segment IDs exist in the database`);
     }
     return serverError(err.message || "Failed to raise service request");
   }
