@@ -1,135 +1,134 @@
 "use client";
-import React, { useEffect, useState } from 'react';
-import dynamic from 'next/dynamic';
-import type { MapContainerProps, MarkerProps, TileLayerProps, PopupProps } from 'react-leaflet';
-import { MapPin, Search, Phone } from "lucide-react";
-import { CRMStatusPill } from "@/components/crm/CRMStatusPill";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { Search, Plus } from "lucide-react";
+import { DispatchKpiBar } from "@/components/dispatch/DispatchKpiBar";
+import { DispatchFilters } from "@/components/dispatch/DispatchFilters";
+import { DispatchTicketCard } from "@/components/dispatch/DispatchTicketCard";
+import { AssignModal } from "@/components/dispatch/AssignModal";
+import { WorkOrderDetailModal } from "@/components/dispatch/WorkOrderDetailModal";
+import type { DispatchItem, DispatchSummary } from "@/components/dispatch/types";
 
-// Dynamic import for Leaflet (SSR fix) — typed to avoid @ts-ignore on props
-const MapContainer = dynamic<MapContainerProps>(() => import('react-leaflet').then(mod => mod.MapContainer), { ssr: false });
-const TileLayer = dynamic<TileLayerProps>(() => import('react-leaflet').then(mod => mod.TileLayer), { ssr: false });
-const Marker = dynamic<MarkerProps>(() => import('react-leaflet').then(mod => mod.Marker), { ssr: false });
-const Popup = dynamic<PopupProps>(() => import('react-leaflet').then(mod => mod.Popup), { ssr: false });
+const DEFAULT_SUMMARY: DispatchSummary = {
+  kpis: { pending: 0, onVisit: 0, resolved: 0, slaBreach: 0, sparesHeld: 0 },
+  items: [],
+  criticalSpares: [],
+};
 
-type Technician = { technicianId: string; fullName: string; status: string; mobile: string; pincodeScope?: string; _count?: { workOrders: number } };
-
-// Default map positions spread around a city center for display purposes
-const DEFAULT_POSITIONS: [number, number][] = [
-  [23.0225, 72.5714], [23.0338, 72.5850], [23.0120, 72.5100],
-  [23.0450, 72.6000], [23.0300, 72.5500], [23.0180, 72.5900],
-];
-
-export default function FieldTracking() {
-  const [isClient, setIsClient] = useState(false);
-  const [technicians, setTechnicians] = useState<Technician[]>([]);
+export default function DispatchBoard() {
+  const [summary, setSummary] = useState<DispatchSummary>(DEFAULT_SUMMARY);
+  const [filter, setFilter] = useState("all");
+  const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [assignTarget, setAssignTarget] = useState<DispatchItem | null>(null);
+  const [trackWoId, setTrackWoId] = useState<string | null>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const fetchTechnicians = () => {
+  const fetchSummary = useCallback((f: string, s: string) => {
     setLoading(true);
-    fetch("/api/field/technicians")
-      .then(res => res.json())
-      .then(d => {
-        setTechnicians(Array.isArray(d.data) ? d.data : []);
+    const params = new URLSearchParams({ filter: f });
+    if (s) params.set("search", s);
+    fetch(`/api/field/dispatch-summary?${params}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.data) setSummary(d.data);
         setLoading(false);
       })
       .catch(() => setLoading(false));
-  };
-
-  useEffect(() => {
-    setIsClient(true);
-    fetchTechnicians();
-    // Fix default Leaflet marker icons
-    import('leaflet').then(mod => {
-      delete (mod.Icon.Default.prototype as any)._getIconUrl;
-      mod.Icon.Default.mergeOptions({
-        iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-        iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-        shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-      });
-    });
   }, []);
 
-  if (!isClient) {
-    return <div style={{ padding: 24, textAlign: "center", color: "var(--muted)" }}>Loading Field Operations Map...</div>;
+  useEffect(() => {
+    fetchSummary(filter, search);
+  }, [filter]);
+
+  function handleSearch(val: string) {
+    setSearch(val);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => fetchSummary(filter, val), 300);
+  }
+
+  function handleAssigned() {
+    fetchSummary(filter, search);
   }
 
   return (
-    <div style={{ padding: 24, height: "100%", display: "flex", flexDirection: "column", gap: 16 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
-        <div>
-          <h1 style={{ fontSize: 24, fontWeight: 700, color: "var(--foreground)", marginBottom: 4 }}>Field Operations Tracking</h1>
-          <p style={{ fontSize: 13, color: "var(--muted)" }}>Live technician locations and service request dispatch board</p>
-        </div>
-        <div style={{ display: "flex", gap: 12 }}>
-          <button onClick={fetchTechnicians} style={{ background: "var(--bg-lighter)", border: "1px solid var(--card-border)", padding: "8px 12px", borderRadius: 8, fontSize: 13, cursor: "pointer" }}>
-            {loading ? "Loading..." : "Refresh Data"}
-          </button>
-          <button style={{ background: "var(--accent)", color: "#fff", border: "none", padding: "8px 16px", borderRadius: 8, fontWeight: 700, fontSize: 13, cursor: "pointer" }}>
-            Dispatch WO
-          </button>
-        </div>
+    <div style={{ padding: 24, height: "100%", display: "flex", flexDirection: "column", gap: 0 }}>
+      {/* Page header */}
+      <div style={{ marginBottom: 20 }}>
+        <h1 style={{ fontSize: 24, fontWeight: 700, color: "var(--foreground)", marginBottom: 4 }}>
+          Industrial Field Service Dispatch
+        </h1>
+        <p style={{ fontSize: 13, color: "var(--muted)" }}>
+          Manage service tickets, technicians, and inventory.
+        </p>
       </div>
 
-      <div style={{ flex: 1, display: "grid", gridTemplateColumns: "320px 1fr", gap: 16, minHeight: 600 }}>
-        {/* Left Sidebar: Technician List */}
-        <div style={{ background: "var(--card-bg)", border: "1px solid var(--card-border)", borderRadius: 12, overflow: "hidden", display: "flex", flexDirection: "column" }}>
-          <div style={{ padding: 12, borderBottom: "1px solid var(--card-border)" }}>
-            <div style={{ position: "relative" }}>
+      {/* KPI bar */}
+      <DispatchKpiBar kpis={summary.kpis} />
+
+      {/* Main layout: filter sidebar + ticket list */}
+      <div style={{ flex: 1, display: "flex", gap: 16, minHeight: 0 }}>
+        {/* Left: filters */}
+        <DispatchFilters
+          activeFilter={filter}
+          onFilterChange={(f) => setFilter(f)}
+          criticalSpares={summary.criticalSpares}
+        />
+
+        {/* Right: search + list */}
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
+          {/* Search + create */}
+          <div style={{ display: "flex", gap: 10, marginBottom: 14, alignItems: "center" }}>
+            <div style={{ position: "relative", flex: 1 }}>
               <Search size={14} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "var(--muted)" }} />
-              <input 
-                placeholder="Search technicians..." 
-                style={{ width: "100%", background: "var(--bg-lighter)", border: "1px solid var(--card-border)", borderRadius: 6, padding: "6px 10px 6px 30px", fontSize: 12 }} 
+              <input
+                value={search}
+                onChange={(e) => handleSearch(e.target.value)}
+                placeholder="Search by Ticket ID or Account"
+                style={{ width: "100%", padding: "8px 10px 8px 32px", borderRadius: 8, border: "1px solid var(--card-border)", background: "var(--card-bg)", color: "var(--foreground)", fontSize: 13, boxSizing: "border-box" }}
               />
             </div>
+            <a
+              href="/crm/complaints/new"
+              style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", fontSize: 13, fontWeight: 700, background: "#0f172a", color: "#fff", borderRadius: 8, textDecoration: "none", whiteSpace: "nowrap" }}
+            >
+              <Plus size={14} /> Create Quick Ticket
+            </a>
           </div>
-          <div style={{ flex: 1, overflowY: "auto", padding: "12px 0" }}>
-            {loading ? (
-              <div style={{ padding: 24, textAlign: "center", color: "var(--muted)", fontSize: 12 }}>Loading technicians...</div>
-            ) : technicians.length === 0 ? (
-              <div style={{ padding: 24, textAlign: "center", color: "var(--muted)", fontSize: 12 }}>No technicians found.</div>
-            ) : technicians.map(tech => (
-              <div key={tech.technicianId} style={{ padding: "12px 16px", borderBottom: "1px solid var(--card-border)", cursor: "pointer", transition: "all 0.15s" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-                  <div style={{ fontWeight: 600, fontSize: 13 }}>{tech.fullName}</div>
-                  <CRMStatusPill status={tech.status} />
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11, color: "var(--muted)" }}>
-                  <span style={{ display: "flex", alignItems: "center", gap: 4 }}><Phone size={10} /> {tech.mobile}</span>
-                  {tech.pincodeScope && <span style={{ display: "flex", alignItems: "center", gap: 4 }}><MapPin size={10} /> {tech.pincodeScope}</span>}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
 
-        {/* Right Pane: Functional Map */}
-        <div style={{ 
-          background: "var(--card-bg)", 
-          border: "1px solid var(--card-border)", 
-          borderRadius: 12, 
-          overflow: "hidden",
-          position: "relative"
-        }}>
-          <MapContainer center={[23.0225, 72.5714]} zoom={13} style={{ height: "100%", width: "100%" }}>
-            <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            />
-            {technicians.map((tech, idx) => (
-              <Marker key={tech.technicianId} position={DEFAULT_POSITIONS[idx % DEFAULT_POSITIONS.length]}>
-                <Popup>
-                  <div style={{ padding: "4px" }}>
-                    <div style={{ fontWeight: 700, fontSize: "14px" }}>{tech.fullName}</div>
-                    <div style={{ fontSize: "12px", color: "#666" }}>Status: {tech.status}</div>
-                    <div style={{ fontSize: "12px", color: "#666" }}>Mobile: {tech.mobile}</div>
-                    {tech.pincodeScope && <div style={{ fontSize: "12px", color: "#666" }}>Area: {tech.pincodeScope}</div>}
-                  </div>
-                </Popup>
-              </Marker>
-            ))}
-          </MapContainer>
+          {/* Ticket list */}
+          <div style={{ flex: 1, overflowY: "auto" }}>
+            {loading ? (
+              <div style={{ padding: 40, textAlign: "center", color: "var(--muted)", fontSize: 13 }}>
+                Loading dispatch board…
+              </div>
+            ) : summary.items.length === 0 ? (
+              <div style={{ padding: 40, textAlign: "center", color: "var(--muted)", fontSize: 13 }}>
+                No items match the current filter.
+              </div>
+            ) : (
+              summary.items.map((item) => (
+                <DispatchTicketCard
+                  key={`${item.type}-${item.id}`}
+                  item={item}
+                  onDispatch={(i) => setAssignTarget(i)}
+                  onTrack={(woId) => setTrackWoId(woId)}
+                />
+              ))
+            )}
+          </div>
         </div>
       </div>
+
+      {/* Modals */}
+      <AssignModal
+        item={assignTarget}
+        onClose={() => setAssignTarget(null)}
+        onAssigned={handleAssigned}
+      />
+      <WorkOrderDetailModal
+        woId={trackWoId}
+        onClose={() => setTrackWoId(null)}
+      />
     </div>
   );
 }
