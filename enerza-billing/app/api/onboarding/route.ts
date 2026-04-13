@@ -134,16 +134,61 @@ export async function POST(req: NextRequest) {
 
       return {
         customerId: newCustomer.customerId,
+        fullName: newCustomer.fullName,
         premiseId: newPremise.premiseId,
         accountId: newAccount.accountId,
         connectionId: newConnection.connectionId,
-        meterId: newMeter.meterId
+        meterId: newMeter.meterId,
+        meterSerial: newMeter.serialNo,
+        utilityType: service.utilityType,
       };
     }, {
       timeout: 10000 // allow ample time for atomic ops
     });
 
-    return ok(result, 201);
+    // Create ServiceRequest for the new connection lifecycle (outside transaction for safety)
+    let requestId: string | null = null;
+    try {
+      const sr = await (prisma.serviceRequest as any).create({
+        data: {
+          customerId: result.customerId,
+          accountId: result.accountId,
+          type: "NEW_CONNECTION",
+          status: "ACTIVE",
+          currentStep: 5,
+          description: `New ${result.utilityType} connection for ${result.fullName}`,
+          priority: "MEDIUM",
+        },
+      });
+      requestId = sr.requestId;
+
+      const stages = [
+        { stepName: "Application Details", notes: `KYC submitted for ${result.fullName}. Customer ID: ${result.customerId}` },
+        { stepName: "Document Verification", notes: "Documents auto-verified via digital onboarding portal" },
+        { stepName: "Field Work", notes: `Meter ${result.meterSerial} commissioned at premises. Connection ID: ${result.connectionId}` },
+        { stepName: "Billing Setup", notes: `Rate plan configured. Account ${result.accountId} created with opening read at 0` },
+        { stepName: "Activation", notes: `CAN ${result.accountId} activated. ${result.utilityType} service is live` },
+      ];
+
+      await Promise.all(
+        stages.map((s, i) =>
+          (prisma.workflowLog as any).create({
+            data: {
+              requestId: sr.requestId,
+              stepName: s.stepName,
+              status: "COMPLETED",
+              notes: s.notes,
+              performedBy: "SYSTEM",
+            },
+          })
+        )
+      );
+    } catch (srErr) {
+      // Non-fatal: log but don't fail the onboarding response
+      console.error("ServiceRequest creation failed (non-fatal):", srErr);
+    }
+
+    return ok({ ...result, requestId }, 201);
   } catch (err: any) {
     console.error("Onboarding transaction failed:", err);
     // If it's a unique constraint violation (e.g. meter serial), handle gracefully

@@ -1,267 +1,447 @@
 "use client";
-import React, { useState } from 'react';
-import { Check, ChevronRight, User, MapPin, Zap, Settings, Gauge, Flame, Droplets as Droplet } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { ElectricityTechForm } from './onboarding/ElectricityTechForm';
-import { GasTechForm } from './onboarding/GasTechForm';
-import { WaterTechForm } from './onboarding/WaterTechForm';
+import { useState } from "react";
+import { Check, ChevronRight, ChevronLeft, User, MapPin, Zap, Settings, Gauge, Flame, Droplets } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 const STEPS = [
-  { id: 1, title: "Applicant KYC", icon: User },
-  { id: 2, title: "Premise", icon: MapPin },
-  { id: 3, title: "Service Selection", icon: Zap },
-  { id: 4, title: "Technical Specs", icon: Settings },
-  { id: 5, title: "Meter Commissioning", icon: Gauge },
+  { id: 1, title: "Applicant KYC",      icon: User },
+  { id: 2, title: "Premise",            icon: MapPin },
+  { id: 3, title: "Service Selection",  icon: Zap },
+  { id: 4, title: "Technical Specs",    icon: Settings },
+  { id: 5, title: "Meter Commissioning",icon: Gauge },
 ];
+
+const INPUT = {
+  width: "100%", padding: "8px 12px", borderRadius: 8,
+  border: "1px solid var(--card-border)", background: "var(--sidebar)",
+  color: "var(--foreground)", fontSize: 13, outline: "none",
+} as const;
+
+const SELECT = { ...INPUT } as const;
+
+const LABEL = {
+  display: "block", fontSize: 12, fontWeight: 600,
+  color: "var(--muted)", marginBottom: 6, textTransform: "uppercase" as const, letterSpacing: "0.4px",
+};
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column" }}>
+      <label style={LABEL}>{label}</label>
+      {children}
+    </div>
+  );
+}
 
 export function NewConnectionWizard() {
   const router = useRouter();
-  const [currentStep, setCurrentStep] = useState(1);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [step, setStep] = useState(1);
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [result, setResult] = useState<{ requestId: string | null; accountId: string; customerId: string } | null>(null);
 
-  const [formData, setFormData] = useState({
+  const [form, setForm] = useState({
     customer: { fullName: "", mobile: "", email: "", customerType: "INDIVIDUAL", segmentId: "cl_dom_01" },
-    premise: { addressLine1: "", areaId: "area_hq_01", buildingType: "RESIDENTIAL" },
-    service: { utilityType: "ELECTRICITY", cycleId: "monthly_01", segmentId: "cl_dom_01" },
-    technical: { 
-      loadKw: 5, contractDemandKva: 6, supplyVoltage: "230V", phaseType: "SINGLE", isNetMetered: false,
-      serviceType: "DOMESTIC", pressureBandId: "cl_pb_01", pipeSizeMm: 15, meterType: "SMART"
-    },
-    meter: { serialNo: "", meterType: "SMART", make: "LandisGyr" }
+    premise:  { addressLine1: "", areaId: "area_hq_01", buildingType: "RESIDENTIAL" },
+    service:  { utilityType: "ELECTRICITY", cycleId: "monthly_01", segmentId: "cl_dom_01" },
+    technical: { loadKw: 5, contractDemandKva: 6, supplyVoltage: "230V", phaseType: "SINGLE",
+                 isNetMetered: false, serviceType: "DOMESTIC", pressureBandId: "cl_pb_01",
+                 pipeSizeMm: 15, meterType: "SMART" },
+    meter: { serialNo: "", meterType: "SMART", make: "LandisGyr" },
   });
 
-  const updateForm = (section: keyof typeof formData, field: string, value: any) => {
-    setFormData(prev => ({ ...prev, [section]: { ...prev[section], [field]: value } }));
-  };
+  const set = (section: keyof typeof form, field: string, value: any) =>
+    setForm(p => ({ ...p, [section]: { ...p[section], [field]: value } }));
 
-  const handleNext = () => setCurrentStep(prev => Math.min(prev + 1, STEPS.length + 1));
-  const handlePrev = () => setCurrentStep(prev => Math.max(prev - 1, 1));
-
-  const submitOnboarding = async () => {
-    setIsSubmitting(true);
+  const submit = async () => {
+    setSubmitting(true);
     setError(null);
     try {
       const res = await fetch("/api/onboarding", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(form),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to onboard customer");
-      
-      setCurrentStep(6); // Success screen
-    } catch (err: any) {
-      setError(err.message);
+      if (!res.ok) throw new Error(data.error || "Onboarding failed");
+      setResult({ requestId: data.data?.requestId ?? null, accountId: data.data?.accountId ?? "", customerId: data.data?.customerId ?? "" });
+      setStep(6);
+    } catch (e: any) {
+      setError(e.message);
     } finally {
-      setIsSubmitting(false);
+      setSubmitting(false);
     }
   };
 
+  // ── Layout ───────────────────────────────────────────────────────────────────
   return (
-    <div className="max-w-4xl mx-auto glass rounded-xl overflow-hidden flex flex-col md:flex-row text-[var(--foreground)]">
-      
-      {/* Sidebar Progress Tracker */}
-      <div className="border-r border-[var(--card-border)] bg-[rgba(255,255,255,0.02)] w-full md:w-64 p-6 shrink-0 hidden md:block">
-        <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--muted)] mb-6">Onboarding Steps</h3>
-        <div className="space-y-4 relative">
-            <div className="absolute left-[15px] top-[14px] bottom-10 border-l-2 border-gray-200 z-0"/>
-          {STEPS.map((step, i) => {
-            const Icon = step.icon;
-            const complete = currentStep > step.id;
-            const active = currentStep === step.id;
-            return (
-              <div key={step.id} className="flex flex-col relative z-10">
-                <div className="flex items-center gap-3">
-                  <div className={`h-8 w-8 rounded-full flex items-center justify-center border-2 bg-[var(--card)] transition-colors
-                    ${complete ? "border-[var(--success)] text-[var(--success)]" : active ? "border-[var(--accent)] text-[var(--accent)] shadow-[0_0_12px_var(--accent-glow)]" : "border-[var(--card-border)] text-[var(--muted)]"}`}>
-                    {complete ? <Check className="h-4 w-4" strokeWidth={3} /> : <Icon className="h-4 w-4" />}
-                  </div>
-                  <span className={`text-sm font-medium ${complete || active ? "text-[var(--foreground)]" : "text-[var(--muted)]"}`}>
-                    {step.title}
-                  </span>
-                </div>
-              </div>
-            );
-          })}
+    <div className="glass" style={{
+      border: "1px solid var(--card-border)", borderRadius: 16,
+      overflow: "hidden", display: "flex", minHeight: 540,
+    }}>
+
+      {/* ── Step sidebar ───────────────────────────────────────────────────────── */}
+      <div style={{
+        width: 220, minWidth: 220, padding: "28px 20px",
+        borderRight: "1px solid var(--card-border)",
+        background: "rgba(255,255,255,0.02)",
+        display: "flex", flexDirection: "column", gap: 6,
+      }}>
+        <div style={{ fontSize: 10, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 16 }}>
+          Onboarding Steps
         </div>
+        {STEPS.map(s => {
+          const Icon = s.icon;
+          const done   = step > s.id;
+          const active = step === s.id;
+          const color  = done ? "#10b981" : active ? "#3b82f6" : "var(--muted)";
+          return (
+            <div key={s.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", borderRadius: 8,
+              background: active ? "rgba(59,130,246,0.08)" : "transparent",
+              borderLeft: active ? "2px solid #3b82f6" : "2px solid transparent",
+            }}>
+              <div style={{
+                width: 28, height: 28, borderRadius: "50%", flexShrink: 0,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                background: done ? "#10b98122" : active ? "#3b82f622" : "rgba(255,255,255,0.04)",
+                border: `1.5px solid ${color}`,
+              }}>
+                {done
+                  ? <Check size={13} color="#10b981" strokeWidth={3} />
+                  : <Icon size={13} color={color} />}
+              </div>
+              <span style={{ fontSize: 12, fontWeight: active ? 700 : 500, color }}>{s.title}</span>
+            </div>
+          );
+        })}
       </div>
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col bg-transparent">
+      {/* ── Main content ───────────────────────────────────────────────────────── */}
+      <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+
         {error && (
-            <div className="m-6 mb-0 p-4 bg-[rgba(239,68,68,0.1)] text-[var(--danger)] rounded-md border border-[var(--danger)] text-sm">
-                <strong>Error: </strong>{error}
-            </div>
+          <div style={{ margin: "16px 28px 0", padding: "10px 16px", borderRadius: 8,
+            background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.3)",
+            color: "#ef4444", fontSize: 13 }}>
+            <strong>Error:</strong> {error}
+          </div>
         )}
 
-        <div className="p-8 flex-1">
-          {currentStep === 1 && (
-            <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
-               <h2 className="text-2xl font-bold text-[var(--foreground)] border-b border-[var(--card-border)] pb-2">Applicant KYC</h2>
-               <div className="grid grid-cols-2 gap-4 mt-6">
-                 <div>
-                   <label className="block text-sm font-medium text-[var(--muted)] mb-1">Full Name</label>
-                   <input type="text" className="w-full bg-[rgba(255,255,255,0.03)] border border-[var(--card-border)] text-[var(--foreground)] rounded-md px-3 py-2 outline-none focus:border-[var(--accent)]" value={formData.customer.fullName} onChange={e => updateForm('customer', 'fullName', e.target.value)} placeholder="e.g. Acme Corp" />
-                 </div>
-                 <div>
-                   <label className="block text-sm font-medium text-[var(--muted)] mb-1">Customer Type</label>
-                   <select className="w-full bg-[rgba(255,255,255,0.03)] border border-[var(--card-border)] text-[var(--foreground)] rounded-md px-3 py-2 outline-none focus:border-[var(--accent)]" value={formData.customer.customerType} onChange={e => updateForm('customer', 'customerType', e.target.value)}>
-                     <option value="INDIVIDUAL">Individual</option>
-                     <option value="COMMERCIAL">Commercial / Retail</option>
-                     <option value="INDUSTRIAL">Industrial</option>
-                     <option value="GOVERNMENT">Government</option>
-                   </select>
-                 </div>
-                 <div>
-                   <label className="block text-sm font-medium text-[var(--muted)] mb-1">Mobile</label>
-                   <input type="text" className="w-full bg-[rgba(255,255,255,0.03)] border border-[var(--card-border)] text-[var(--foreground)] rounded-md px-3 py-2 outline-none focus:border-[var(--accent)]" value={formData.customer.mobile} onChange={e => updateForm('customer', 'mobile', e.target.value)} />
-                 </div>
-                 <div>
-                   <label className="block text-sm font-medium text-[var(--muted)] mb-1">Email</label>
-                   <input type="email" className="w-full bg-[rgba(255,255,255,0.03)] border border-[var(--card-border)] text-[var(--foreground)] rounded-md px-3 py-2 outline-none focus:border-[var(--accent)]" value={formData.customer.email} onChange={e => updateForm('customer', 'email', e.target.value)} />
-                 </div>
-               </div>
-            </div>
-          )}
+        {/* Step content */}
+        <div style={{ flex: 1, padding: "28px 32px", overflowY: "auto" }}>
 
-          {currentStep === 2 && (
-            <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
-               <h2 className="text-2xl font-bold text-[var(--foreground)] border-b border-[var(--card-border)] pb-2">Premise Location</h2>
-               <div className="grid grid-cols-1 gap-4 mt-6">
-                 <div>
-                   <label className="block text-sm font-medium text-[var(--muted)] mb-1">Address Line 1</label>
-                   <input type="text" className="w-full bg-[rgba(255,255,255,0.03)] border border-[var(--card-border)] text-[var(--foreground)] rounded-md px-3 py-2 outline-none focus:border-[var(--accent)]" value={formData.premise.addressLine1} onChange={e => updateForm('premise', 'addressLine1', e.target.value)} />
-                 </div>
-                 <div className="grid grid-cols-2 gap-4">
-                     <div>
-                       <label className="block text-sm font-medium text-[var(--muted)] mb-1">Building Type</label>
-                       <select className="w-full bg-[rgba(255,255,255,0.03)] border border-[var(--card-border)] text-[var(--foreground)] rounded-md px-3 py-2 outline-none focus:border-[var(--accent)]" value={formData.premise.buildingType} onChange={e => updateForm('premise', 'buildingType', e.target.value)}>
-                         <option value="RESIDENTIAL">Multi-Story Residential</option>
-                         <option value="COMMERCIAL_MALL">Commercial / Mall</option>
-                         <option value="FACTORY">Factory / Plant</option>
-                       </select>
-                     </div>
-                     <div>
-                       <label className="block text-sm font-medium text-[var(--muted)] mb-1">Operating Area (CGD/DISCOM Zone)</label>
-                       <select className="w-full bg-[rgba(255,255,255,0.03)] border border-[var(--card-border)] text-[var(--foreground)] rounded-md px-3 py-2 outline-none focus:border-[var(--accent)]" value={formData.premise.areaId} onChange={e => updateForm('premise', 'areaId', e.target.value)}>
-                         <option value="area_hq_01">Central City Zone 1</option>
-                         <option value="area_hq_02">North Industrial Hub</option>
-                         <option value="area_hq_03">South Suburbs</option>
-                       </select>
-                     </div>
-                 </div>
-               </div>
-            </div>
-          )}
-
-          {currentStep === 3 && (
-            <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
-               <h2 className="text-2xl font-bold text-[var(--foreground)] border-b border-[var(--card-border)] pb-2">Service Selection</h2>
-               <div className="mt-6 flex gap-4">
-                   <button className={`flex-1 p-4 rounded-xl border-2 transition ${formData.service.utilityType === "ELECTRICITY" ? "border-[var(--warning)] bg-[rgba(245,158,11,0.05)]" : "border-[var(--card-border)] bg-[rgba(255,255,255,0.02)]"}`} onClick={() => updateForm('service', 'utilityType', "ELECTRICITY")}>
-                       <Zap className={`h-8 w-8 mx-auto mb-2 ${formData.service.utilityType === "ELECTRICITY" ? "text-[var(--warning)]" : "text-[var(--muted)]"}`} />
-                       <p className={`font-semibold ${formData.service.utilityType === "ELECTRICITY" ? "text-[var(--warning)]" : "text-[var(--muted)]"}`}>Electricity</p>
-                   </button>
-                   <button className={`flex-1 p-4 rounded-xl border-2 transition ${formData.service.utilityType === "GAS_PNG" ? "border-[var(--accent)] bg-[rgba(6,182,212,0.05)]" : "border-[var(--card-border)] bg-[rgba(255,255,255,0.02)]"}`} onClick={() => updateForm('service', 'utilityType', "GAS_PNG")}>
-                       <Flame className={`h-8 w-8 mx-auto mb-2 ${formData.service.utilityType === "GAS_PNG" ? "text-[var(--accent)]" : "text-[var(--muted)]"}`} />
-                       <p className={`font-semibold ${formData.service.utilityType === "GAS_PNG" ? "text-[var(--accent)]" : "text-[var(--muted)]"}`}>PNG Gas</p>
-                   </button>
-                   <button className={`flex-1 p-4 rounded-xl border-2 transition ${formData.service.utilityType === "WATER" ? "border-[var(--success)] bg-[rgba(16,185,129,0.05)]" : "border-[var(--card-border)] bg-[rgba(255,255,255,0.02)]"}`} onClick={() => updateForm('service', 'utilityType', "WATER")}>
-                       <Droplet className={`h-8 w-8 mx-auto mb-2 ${formData.service.utilityType === "WATER" ? "text-[var(--success)]" : "text-[var(--muted)]"}`} />
-                       <p className={`font-semibold ${formData.service.utilityType === "WATER" ? "text-[var(--success)]" : "text-[var(--muted)]"}`}>Water</p>
-                   </button>
-               </div>
-            </div>
-          )}
-
-          {currentStep === 4 && (
-            <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
-               <h2 className="text-2xl font-bold text-[var(--foreground)] border-b border-[var(--card-border)] pb-2 pr-6">
-                 Technical Specification: {formData.service.utilityType}
-               </h2>
-               
-               {formData.service.utilityType === "ELECTRICITY" && (
-                 <ElectricityTechForm data={formData.technical} updateForm={updateForm} />
-               )}
-               
-               {formData.service.utilityType === "GAS_PNG" && (
-                 <GasTechForm data={formData.technical} updateForm={updateForm} />
-               )}
-
-               {formData.service.utilityType === "WATER" && (
-                 <WaterTechForm data={formData.technical} updateForm={updateForm} />
-               )}
-            </div>
-          )}
-
-          {currentStep === 5 && (
-            <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
-               <h2 className="text-2xl font-bold text-[var(--foreground)] border-b border-[var(--card-border)] pb-2">Meter Commissioning</h2>
-               <div className="grid grid-cols-2 gap-4 mt-6">
-                 <div>
-                   <label className="block text-sm font-medium text-[var(--muted)] mb-1">Meter Serial Number</label>
-                   <input type="text" className="w-full bg-[rgba(255,255,255,0.03)] border border-[var(--card-border)] text-[var(--foreground)] rounded-md px-3 py-2 outline-none focus:border-[var(--accent)]" value={formData.meter.serialNo} onChange={e => updateForm('meter', 'serialNo', e.target.value)} placeholder="SRL-9382103" />
-                 </div>
-                 <div>
-                   <label className="block text-sm font-medium text-[var(--muted)] mb-1">Meter Make</label>
-                   <input type="text" className="w-full bg-[rgba(255,255,255,0.03)] border border-[var(--card-border)] text-[var(--foreground)] rounded-md px-3 py-2 outline-none focus:border-[var(--accent)]" value={formData.meter.make} onChange={e => updateForm('meter', 'make', e.target.value)} placeholder="LandisGyr" />
-                 </div>
-               </div>
-               <div className="mt-6 p-4 bg-[rgba(6,182,212,0.1)] text-[var(--accent)] rounded-md border border-[rgba(6,182,212,0.2)] flex gap-3 text-sm">
-                   <div className="mt-0.5"><Gauge className="h-4 w-4"/></div>
-                   <p>A <strong>Meter Reading</strong> record will automatically be initialized at 0 kWh/SCM to establish the commissioning baseline for future billing cyles.</p>
-               </div>
-            </div>
-          )}
-
-          {currentStep === 6 && (
-              <div className="py-12 flex flex-col items-center justify-center animate-in zoom-in-95 duration-500">
-                 <div className="h-20 w-20 bg-[rgba(16,185,129,0.1)] rounded-full flex items-center justify-center text-[var(--success)] mb-6">
-                     <Check className="h-10 w-10" strokeWidth={3} />
-                 </div>
-                 <h2 className="text-2xl font-bold text-[var(--foreground)] mb-2">Connection Active!</h2>
-                 <p className="text-[var(--muted)] text-center max-w-sm mb-6">The Customer, Premise, Account, Technical configuration, and initial Meter Baseline have been successfully established.</p>
-                 <div className="flex gap-3">
-                    <button className="px-4 py-2 border border-[var(--card-border)] rounded-md font-medium text-[var(--foreground)] hover:bg-[rgba(255,255,255,0.05)] transition" onClick={() => router.push('/')}>Go to Dashboard</button>
-                    <button className="px-4 py-2 bg-[var(--accent)] text-white rounded-md font-medium hover:bg-[var(--accent-2)] transition" onClick={() => { setCurrentStep(1); setFormData({...formData, meter: { ...formData.meter, serialNo: "" } }); }}>Onboard Another</button>
-                 </div>
+          {/* Step 1 — KYC */}
+          {step === 1 && (
+            <>
+              <StepHeader title="Applicant KYC" subtitle="Basic customer identification and contact details" />
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18 }}>
+                <Field label="Full Name">
+                  <input style={INPUT} value={form.customer.fullName} placeholder="e.g. Ramesh Patel"
+                    onChange={e => set("customer", "fullName", e.target.value)} />
+                </Field>
+                <Field label="Customer Type">
+                  <select style={SELECT} value={form.customer.customerType} onChange={e => set("customer", "customerType", e.target.value)}>
+                    <option value="INDIVIDUAL">Individual</option>
+                    <option value="COMMERCIAL">Commercial / Retail</option>
+                    <option value="INDUSTRIAL">Industrial</option>
+                    <option value="GOVERNMENT">Government</option>
+                  </select>
+                </Field>
+                <Field label="Mobile">
+                  <input style={INPUT} type="tel" value={form.customer.mobile} placeholder="+91 9800000000"
+                    onChange={e => set("customer", "mobile", e.target.value)} />
+                </Field>
+                <Field label="Email">
+                  <input style={INPUT} type="email" value={form.customer.email} placeholder="customer@example.com"
+                    onChange={e => set("customer", "email", e.target.value)} />
+                </Field>
               </div>
+            </>
+          )}
+
+          {/* Step 2 — Premise */}
+          {step === 2 && (
+            <>
+              <StepHeader title="Premise Location" subtitle="Physical installation address and area zone" />
+              <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+                <Field label="Address Line 1">
+                  <input style={INPUT} value={form.premise.addressLine1} placeholder="Plot No. / Street / Society"
+                    onChange={e => set("premise", "addressLine1", e.target.value)} />
+                </Field>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18 }}>
+                  <Field label="Building Type">
+                    <select style={SELECT} value={form.premise.buildingType} onChange={e => set("premise", "buildingType", e.target.value)}>
+                      <option value="RESIDENTIAL">Residential</option>
+                      <option value="COMMERCIAL_MALL">Commercial / Mall</option>
+                      <option value="FACTORY">Factory / Plant</option>
+                    </select>
+                  </Field>
+                  <Field label="Operating Zone (CGD / DISCOM)">
+                    <select style={SELECT} value={form.premise.areaId} onChange={e => set("premise", "areaId", e.target.value)}>
+                      <option value="area_hq_01">Central City Zone 1</option>
+                      <option value="area_hq_02">Central City Zone 2</option>
+                      <option value="area_sub_01">Suburban Zone A</option>
+                      <option value="area_sub_02">Suburban Zone B</option>
+                    </select>
+                  </Field>
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Step 3 — Service Selection */}
+          {step === 3 && (
+            <>
+              <StepHeader title="Service Selection" subtitle="Choose the utility type and billing parameters" />
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, marginBottom: 24 }}>
+                {[
+                  { type: "ELECTRICITY", icon: Zap,      label: "Electricity", color: "#f59e0b" },
+                  { type: "GAS_PNG",     icon: Flame,    label: "Gas (PNG)",   color: "#ef4444" },
+                  { type: "WATER",       icon: Droplets, label: "Water",       color: "#3b82f6" },
+                ].map(({ type, icon: Icon, label, color }) => {
+                  const sel = form.service.utilityType === type;
+                  return (
+                    <button key={type} onClick={() => set("service", "utilityType", type)}
+                      style={{ padding: "20px 16px", borderRadius: 12, cursor: "pointer", textAlign: "center",
+                        border: `2px solid ${sel ? color : "var(--card-border)"}`,
+                        background: sel ? `${color}12` : "rgba(255,255,255,0.02)",
+                        transition: "all 0.15s" }}>
+                      <Icon size={28} color={sel ? color : "var(--muted)"} style={{ margin: "0 auto 8px" }} />
+                      <div style={{ fontSize: 13, fontWeight: 700, color: sel ? color : "var(--muted)" }}>{label}</div>
+                    </button>
+                  );
+                })}
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18 }}>
+                <Field label="Billing Cycle">
+                  <select style={SELECT} value={form.service.cycleId} onChange={e => set("service", "cycleId", e.target.value)}>
+                    <option value="monthly_01">Monthly</option>
+                    <option value="bi_monthly_01">Bi-Monthly</option>
+                    <option value="quarterly_01">Quarterly</option>
+                  </select>
+                </Field>
+                <Field label="Consumer Segment">
+                  <select style={SELECT} value={form.service.segmentId} onChange={e => { set("service", "segmentId", e.target.value); set("customer", "segmentId", e.target.value); }}>
+                    <option value="cl_dom_01">Domestic / Residential</option>
+                    <option value="cl_com_01">Commercial</option>
+                    <option value="cl_ind_01">Industrial / HT</option>
+                    <option value="cl_ag_01">Agricultural</option>
+                  </select>
+                </Field>
+              </div>
+            </>
+          )}
+
+          {/* Step 4 — Technical Specs */}
+          {step === 4 && (
+            <>
+              <StepHeader title="Technical Specifications" subtitle={`${form.service.utilityType === "ELECTRICITY" ? "Electrical load and supply parameters" : form.service.utilityType === "WATER" ? "Water connection parameters" : "Gas connection parameters"}`} />
+              {form.service.utilityType === "ELECTRICITY" && (
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18 }}>
+                  <Field label="Connected Load (kW)">
+                    <input style={INPUT} type="number" value={form.technical.loadKw}
+                      onChange={e => set("technical", "loadKw", parseFloat(e.target.value))} />
+                  </Field>
+                  <Field label="Contract Demand (kVA)">
+                    <input style={INPUT} type="number" value={form.technical.contractDemandKva}
+                      onChange={e => set("technical", "contractDemandKva", parseFloat(e.target.value))} />
+                  </Field>
+                  <Field label="Supply Voltage">
+                    <select style={SELECT} value={form.technical.supplyVoltage} onChange={e => set("technical", "supplyVoltage", e.target.value)}>
+                      <option value="230V">230V Single Phase</option>
+                      <option value="415V">415V Three Phase</option>
+                      <option value="11kV">11kV HT</option>
+                      <option value="33kV">33kV HT</option>
+                    </select>
+                  </Field>
+                  <Field label="Phase Type">
+                    <select style={SELECT} value={form.technical.phaseType} onChange={e => set("technical", "phaseType", e.target.value)}>
+                      <option value="SINGLE">Single Phase</option>
+                      <option value="THREE">Three Phase</option>
+                    </select>
+                  </Field>
+                  <div style={{ gridColumn: "span 2" }}>
+                    <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
+                      <input type="checkbox" checked={form.technical.isNetMetered}
+                        onChange={e => set("technical", "isNetMetered", e.target.checked)}
+                        style={{ width: 16, height: 16 }} />
+                      <span style={{ fontSize: 13, color: "var(--foreground)" }}>Net Metering / Solar Rooftop</span>
+                    </label>
+                  </div>
+                </div>
+              )}
+              {(form.service.utilityType === "GAS_PNG" || form.service.utilityType === "GAS_CNG") && (
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18 }}>
+                  <Field label="Service Type">
+                    <select style={SELECT} value={form.technical.serviceType} onChange={e => set("technical", "serviceType", e.target.value)}>
+                      <option value="DOMESTIC">Domestic</option>
+                      <option value="COMMERCIAL">Commercial</option>
+                      <option value="INDUSTRIAL">Industrial</option>
+                    </select>
+                  </Field>
+                  <Field label="Pressure Band">
+                    <select style={SELECT} value={form.technical.pressureBandId} onChange={e => set("technical", "pressureBandId", e.target.value)}>
+                      <option value="cl_pb_01">LP – Low Pressure</option>
+                      <option value="cl_pb_02">MP – Medium Pressure</option>
+                      <option value="cl_pb_03">HP – High Pressure</option>
+                    </select>
+                  </Field>
+                </div>
+              )}
+              {form.service.utilityType === "WATER" && (
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18 }}>
+                  <Field label="Pipe Size (mm)">
+                    <select style={SELECT} value={form.technical.pipeSizeMm} onChange={e => set("technical", "pipeSizeMm", parseInt(e.target.value))}>
+                      <option value={15}>15mm (½″)</option>
+                      <option value={20}>20mm (¾″)</option>
+                      <option value={25}>25mm (1″)</option>
+                      <option value={40}>40mm (1½″)</option>
+                      <option value={50}>50mm (2″)</option>
+                    </select>
+                  </Field>
+                  <Field label="Meter Type">
+                    <select style={SELECT} value={form.technical.meterType} onChange={e => set("technical", "meterType", e.target.value)}>
+                      <option value="MECHANICAL">Mechanical</option>
+                      <option value="SMART">Smart Meter (AMR)</option>
+                    </select>
+                  </Field>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* Step 5 — Meter */}
+          {step === 5 && (
+            <>
+              <StepHeader title="Meter Commissioning" subtitle="Register the physical meter and set the baseline reading" />
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18, marginBottom: 20 }}>
+                <Field label="Meter Serial Number *">
+                  <input style={INPUT} value={form.meter.serialNo} placeholder="e.g. LG-2024-001234"
+                    onChange={e => set("meter", "serialNo", e.target.value)} />
+                </Field>
+                <Field label="Meter Make / Brand">
+                  <input style={INPUT} value={form.meter.make} placeholder="e.g. LandisGyr"
+                    onChange={e => set("meter", "make", e.target.value)} />
+                </Field>
+                <Field label="Meter Type">
+                  <select style={SELECT} value={form.meter.meterType} onChange={e => set("meter", "meterType", e.target.value)}>
+                    <option value="SMART">Smart Meter (AMI)</option>
+                    <option value="BASIC">Basic Electromechanical</option>
+                    <option value="PREPAID">Prepaid</option>
+                  </select>
+                </Field>
+              </div>
+              <div style={{ marginTop: 4, padding: "12px 16px", borderRadius: 8,
+                background: "rgba(59,130,246,0.08)", border: "1px solid rgba(59,130,246,0.2)",
+                fontSize: 12, color: "#3b82f6", lineHeight: 1.6 }}>
+                A Meter Reading record will be initialized at 0 kWh / SCM to establish the commissioning baseline for future billing cycles.
+              </div>
+            </>
+          )}
+
+          {/* Step 6 — Success */}
+          {step === 6 && (
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 0", textAlign: "center" }}>
+              <div style={{ width: 72, height: 72, borderRadius: "50%", background: "rgba(16,185,129,0.12)",
+                border: "2px solid #10b981", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 20 }}>
+                <Check size={36} color="#10b981" strokeWidth={3} />
+              </div>
+              <h2 style={{ fontSize: 22, fontWeight: 800, color: "var(--foreground)", marginBottom: 8 }}>Connection Active!</h2>
+              <p style={{ color: "var(--muted)", fontSize: 13, maxWidth: 400, lineHeight: 1.6, marginBottom: 20 }}>
+                Customer, Premise, Account, Technical configuration, and initial Meter Baseline have been successfully provisioned.
+              </p>
+              {result && (
+                <div style={{ background: "rgba(59,130,246,0.06)", border: "1px solid rgba(59,130,246,0.2)",
+                  borderRadius: 10, padding: "14px 24px", marginBottom: 24, textAlign: "left", minWidth: 320 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: "#3b82f6", textTransform: "uppercase", letterSpacing: "0.6px", marginBottom: 10 }}>Provisioning Summary</div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px 16px", fontSize: 12 }}>
+                    {result.accountId && <><span style={{ color: "var(--muted)" }}>Account ID</span><span style={{ color: "var(--foreground)", fontWeight: 600, fontFamily: "monospace" }}>{result.accountId.slice(0, 16)}…</span></>}
+                    {result.customerId && <><span style={{ color: "var(--muted)" }}>Customer ID</span><span style={{ color: "var(--foreground)", fontWeight: 600, fontFamily: "monospace" }}>{result.customerId.slice(0, 16)}…</span></>}
+                    {result.requestId && <><span style={{ color: "var(--muted)" }}>Service Request</span><span style={{ color: "#3b82f6", fontWeight: 700, fontFamily: "monospace" }}>{result.requestId.slice(0, 16)}…</span></>}
+                  </div>
+                </div>
+              )}
+              <div style={{ display: "flex", gap: 12, flexWrap: "wrap", justifyContent: "center" }}>
+                {result?.requestId && (
+                  <button onClick={() => router.push("/crm/lifecycle")}
+                    style={{ padding: "9px 20px", borderRadius: 8, border: "none",
+                      background: "#10b981", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+                    View Lifecycle →
+                  </button>
+                )}
+                <button onClick={() => router.push("/")}
+                  style={{ padding: "9px 20px", borderRadius: 8, border: "1px solid var(--card-border)",
+                    background: "transparent", color: "var(--foreground)", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+                  Go to Dashboard
+                </button>
+                <button onClick={() => { setStep(1); setResult(null); setForm(f => ({ ...f, meter: { ...f.meter, serialNo: "" } })); }}
+                  style={{ padding: "9px 20px", borderRadius: 8, border: "none",
+                    background: "#3b82f6", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+                  Onboard Another
+                </button>
+              </div>
+            </div>
           )}
         </div>
 
-        {/* Footer Actions */}
-        {currentStep < 6 && (
-          <div className="border-t border-[var(--card-border)] p-4 px-6 bg-[rgba(255,255,255,0.01)] flex items-center justify-between">
-            <button 
-              className={`px-4 py-2 text-sm font-medium rounded-md text-[var(--muted)] hover:text-[var(--foreground)] transition ${currentStep === 1 ? 'opacity-0 pointer-events-none' : ''}`}
-              onClick={handlePrev}
-            >
-              Back
+        {/* ── Footer nav ─────────────────────────────────────────────────────────── */}
+        {step < 6 && (
+          <div style={{ borderTop: "1px solid var(--card-border)", padding: "14px 28px",
+            display: "flex", justifyContent: "space-between", alignItems: "center",
+            background: "rgba(255,255,255,0.01)" }}>
+            <button onClick={() => setStep(s => Math.max(s - 1, 1))}
+              style={{
+                padding: "8px 18px", borderRadius: 8, border: "1px solid var(--card-border)",
+                background: "transparent", color: step === 1 ? "transparent" : "var(--muted)",
+                fontSize: 13, fontWeight: 600, cursor: step === 1 ? "default" : "pointer",
+                display: "flex", alignItems: "center", gap: 6, pointerEvents: step === 1 ? "none" : "auto",
+              }}>
+              <ChevronLeft size={15} /> Back
             </button>
-            <div className="flex items-center gap-3">
-              <span className="text-sm font-medium text-[var(--muted)]">Step {currentStep} of {STEPS.length}</span>
-              {currentStep < STEPS.length ? (
-                <button 
-                  className="px-6 py-2 bg-[var(--accent)] text-white text-sm font-medium rounded-md hover:bg-[var(--accent-2)] transition flex items-center gap-1 shadow-[0_0_12px_var(--accent-glow)]"
-                  onClick={handleNext}
-                  disabled={currentStep === 1 && !formData.customer.fullName}
-                >
-                  Next <ChevronRight className="h-4 w-4" />
-                </button>
-              ) : (
-                <button 
-                  className="px-6 py-2 bg-[var(--success)] text-white text-sm font-medium rounded-md hover:opacity-90 transition flex items-center gap-2"
-                  onClick={submitOnboarding}
-                  disabled={isSubmitting || !formData.meter.serialNo}
-                >
-                  {isSubmitting ? "Processing..." : "Complete Activation"}
-                </button>
-              )}
-            </div>
+
+            <span style={{ fontSize: 12, color: "var(--muted)", fontWeight: 600 }}>
+              Step {step} of {STEPS.length}
+            </span>
+
+            {step < STEPS.length ? (
+              <button
+                onClick={() => setStep(s => s + 1)}
+                disabled={step === 1 && !form.customer.fullName}
+                style={{
+                  padding: "8px 20px", borderRadius: 8, border: "none",
+                  background: step === 1 && !form.customer.fullName ? "var(--muted)" : "#3b82f6",
+                  color: "#fff", fontSize: 13, fontWeight: 600,
+                  cursor: step === 1 && !form.customer.fullName ? "not-allowed" : "pointer",
+                  display: "flex", alignItems: "center", gap: 6,
+                }}>
+                Next <ChevronRight size={15} />
+              </button>
+            ) : (
+              <button
+                onClick={submit}
+                disabled={submitting || !form.meter.serialNo}
+                style={{
+                  padding: "8px 22px", borderRadius: 8, border: "none",
+                  background: !form.meter.serialNo ? "var(--muted)" : "#10b981",
+                  color: "#fff", fontSize: 13, fontWeight: 600,
+                  cursor: !form.meter.serialNo ? "not-allowed" : "pointer",
+                  display: "flex", alignItems: "center", gap: 6,
+                }}>
+                {submitting ? "Processing…" : <><Check size={15} /> Complete Activation</>}
+              </button>
+            )}
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function StepHeader({ title, subtitle }: { title: string; subtitle: string }) {
+  return (
+    <div style={{ marginBottom: 24, paddingBottom: 16, borderBottom: "1px solid var(--card-border)" }}>
+      <h2 style={{ fontSize: 18, fontWeight: 700, color: "var(--foreground)", margin: 0 }}>{title}</h2>
+      <p style={{ margin: "4px 0 0", fontSize: 13, color: "var(--muted)" }}>{subtitle}</p>
     </div>
   );
 }
