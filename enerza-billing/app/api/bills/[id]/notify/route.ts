@@ -237,7 +237,7 @@ export async function POST(req: NextRequest, { params }: Ctx) {
         html: buildHtml(bill),
       });
 
-      const masked = toAddress.replace(/^(.)(.*)(@.*)$/, (_, a, b, c) => a + "*".repeat(b.length) + c);
+      const masked = toAddress.replace(/^(.)(.*)(@.*)$/, (_: string, a: string, b: string, c: string) => a + "*".repeat(b.length) + c);
       console.log(`[BillNotify] Bill ${id} emailed to ${toAddress}`);
 
       return ok({

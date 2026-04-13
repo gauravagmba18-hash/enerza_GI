@@ -6,7 +6,7 @@ import {
   Users, Zap, CreditCard, BarChart3, Smartphone,
   Globe, ChevronDown, ChevronRight, Activity,
   Gauge, Flame, Building2, Receipt, FlaskConical, ShieldAlert, Droplets,
-  Sun, Moon, Wrench, Database, LucideIcon
+  Sun, Moon, Wrench, Database, DollarSign, LucideIcon
 } from "lucide-react";
 
 interface SidebarItem {
@@ -68,6 +68,9 @@ const OPERATIONAL_GROUPS: SidebarGroup[] = [
     color: "#818cf8",
     items: [
       { label: "FI-CA Dashboard",      path: "/fica" },
+      { label: "Finance Hub",          path: "/finance" },
+      { label: "Disputes",             path: "/data/disputes" },
+      { label: "Credit Notes",         path: "/data/credit-notes" },
       { label: "Settlements",          path: "/data/settlements" },
       { label: "Gateway Transactions", path: "/data/gateway-txns" },
       { label: "Suspense Records",     path: "/data/suspense-records" },
@@ -466,6 +469,50 @@ export function Sidebar() {
             </div>
             <span style={{ fontSize: 13, fontWeight: 700, letterSpacing: "-0.2px" }}>
               FI-CA Collections
+            </span>
+          </div>
+        </Link>
+      </div>
+
+      {/* Finance Hub quick-link */}
+      <div style={{ padding: "6px 12px 0" }}>
+        <Link href="/finance" style={{ textDecoration: "none" }}>
+          <div
+            className="glass"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              padding: "10px 14px",
+              borderRadius: 12,
+              background: pathname.startsWith("/finance")
+                ? "rgba(129,140,248,0.15)"
+                : "rgba(255,255,255,0.02)",
+              border: "1px solid var(--card-border)",
+              color: pathname.startsWith("/finance") ? "#818cf8" : "var(--foreground)",
+              transition: "all 0.2s",
+              cursor: "pointer",
+              marginTop: 4,
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.transform = "translateY(-1px)")}
+            onMouseLeave={(e) => (e.currentTarget.style.transform = "none")}
+          >
+            <div
+              style={{
+                background: "#818cf8",
+                borderRadius: "50%",
+                width: 22,
+                height: 22,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                boxShadow: "0 4px 10px rgba(129,140,248,0.3)",
+              }}
+            >
+              <DollarSign size={12} color="#fff" strokeWidth={3} />
+            </div>
+            <span style={{ fontSize: 13, fontWeight: 700, letterSpacing: "-0.2px" }}>
+              Finance Hub
             </span>
           </div>
         </Link>

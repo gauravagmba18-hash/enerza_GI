@@ -14,7 +14,6 @@ export default function Page() {
   return (
     <DataTable
       title="Routes"
-      description="Predefined reading routes — each route covers an area and billing cycle"
       apiPath="/api/routes"
       columns={columns}
       color="#f59e0b"

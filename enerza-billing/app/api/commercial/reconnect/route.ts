@@ -40,19 +40,22 @@ export async function POST(req: NextRequest) {
 
     // Log opening read if provided
     if (openingRead !== undefined && openingRead !== "") {
-      const conn = await prisma.serviceConnection.findFirst({
+      const conn = await (prisma.serviceConnection as any).findFirst({
         where: { accountId },
-        include: { meter: true },
+        include: { meterInstalls: { orderBy: { installDate: "desc" }, take: 1 } },
       });
-      if (conn?.meterId) {
-        await prisma.meterReading.create({
+      const latestInstall = conn?.meterInstalls?.[0];
+      if (latestInstall?.meterId && conn?.connectionId) {
+        await (prisma.meterReading as any).create({
           data: {
-            meterId: conn.meterId,
+            meterId: latestInstall.meterId,
+            connectionId: conn.connectionId,
+            routeId: "MANUAL",
             readingDate: new Date(reconnectDate || new Date()),
             readingValue: parseFloat(openingRead) || 0,
+            consumption: 0,
             readingType: "RECONNECTION",
             status: "ACCEPTED",
-            notes: `Opening read on reconnection — request ${serviceRequest.requestId}`,
           },
         });
       }
