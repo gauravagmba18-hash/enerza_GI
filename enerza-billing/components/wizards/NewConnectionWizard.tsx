@@ -38,6 +38,7 @@ export function NewConnectionWizard() {
   const [step, setStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [result, setResult] = useState<{ requestId: string | null; accountId: string; customerId: string } | null>(null);
 
   const [form, setForm] = useState({
     customer: { fullName: "", mobile: "", email: "", customerType: "INDIVIDUAL", segmentId: "cl_dom_01" },
@@ -63,6 +64,7 @@ export function NewConnectionWizard() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Onboarding failed");
+      setResult({ requestId: data.data?.requestId ?? null, accountId: data.data?.accountId ?? "", customerId: data.data?.customerId ?? "" });
       setStep(6);
     } catch (e: any) {
       setError(e.message);
@@ -177,8 +179,9 @@ export function NewConnectionWizard() {
                   <Field label="Operating Zone (CGD / DISCOM)">
                     <select style={SELECT} value={form.premise.areaId} onChange={e => set("premise", "areaId", e.target.value)}>
                       <option value="area_hq_01">Central City Zone 1</option>
-                      <option value="area_hq_02">North Industrial Hub</option>
-                      <option value="area_hq_03">South Suburbs</option>
+                      <option value="area_hq_02">Central City Zone 2</option>
+                      <option value="area_sub_01">Suburban Zone A</option>
+                      <option value="area_sub_02">Suburban Zone B</option>
                     </select>
                   </Field>
                 </div>
@@ -186,50 +189,69 @@ export function NewConnectionWizard() {
             </>
           )}
 
-          {/* Step 3 — Service */}
+          {/* Step 3 — Service Selection */}
           {step === 3 && (
             <>
-              <StepHeader title="Service Selection" subtitle="Choose the utility type for this connection" />
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 16, marginTop: 8 }}>
+              <StepHeader title="Service Selection" subtitle="Choose the utility type and billing parameters" />
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, marginBottom: 24 }}>
                 {[
-                  { type: "ELECTRICITY", label: "Electricity", Icon: Zap,      color: "#eab308" },
-                  { type: "GAS_PNG",     label: "PNG Gas",     Icon: Flame,    color: "#06b6d4" },
-                  { type: "WATER",       label: "Water",       Icon: Droplets, color: "#3b82f6" },
-                ].map(({ type, label, Icon, color }) => {
-                  const active = form.service.utilityType === type;
+                  { type: "ELECTRICITY", icon: Zap,      label: "Electricity", color: "#f59e0b" },
+                  { type: "GAS_PNG",     icon: Flame,    label: "Gas (PNG)",   color: "#ef4444" },
+                  { type: "WATER",       icon: Droplets, label: "Water",       color: "#3b82f6" },
+                ].map(({ type, icon: Icon, label, color }) => {
+                  const sel = form.service.utilityType === type;
                   return (
                     <button key={type} onClick={() => set("service", "utilityType", type)}
-                      style={{
-                        padding: "28px 16px", borderRadius: 12, cursor: "pointer",
-                        border: `2px solid ${active ? color : "var(--card-border)"}`,
-                        background: active ? `${color}11` : "rgba(255,255,255,0.02)",
-                        display: "flex", flexDirection: "column", alignItems: "center", gap: 10,
-                        transition: "all 0.15s",
-                      }}>
-                      <Icon size={32} color={active ? color : "var(--muted)"} />
-                      <span style={{ fontSize: 14, fontWeight: 700, color: active ? color : "var(--muted)" }}>{label}</span>
+                      style={{ padding: "20px 16px", borderRadius: 12, cursor: "pointer", textAlign: "center",
+                        border: `2px solid ${sel ? color : "var(--card-border)"}`,
+                        background: sel ? `${color}12` : "rgba(255,255,255,0.02)",
+                        transition: "all 0.15s" }}>
+                      <Icon size={28} color={sel ? color : "var(--muted)"} style={{ margin: "0 auto 8px" }} />
+                      <div style={{ fontSize: 13, fontWeight: 700, color: sel ? color : "var(--muted)" }}>{label}</div>
                     </button>
                   );
                 })}
               </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18 }}>
+                <Field label="Billing Cycle">
+                  <select style={SELECT} value={form.service.cycleId} onChange={e => set("service", "cycleId", e.target.value)}>
+                    <option value="monthly_01">Monthly</option>
+                    <option value="bi_monthly_01">Bi-Monthly</option>
+                    <option value="quarterly_01">Quarterly</option>
+                  </select>
+                </Field>
+                <Field label="Consumer Segment">
+                  <select style={SELECT} value={form.service.segmentId} onChange={e => { set("service", "segmentId", e.target.value); set("customer", "segmentId", e.target.value); }}>
+                    <option value="cl_dom_01">Domestic / Residential</option>
+                    <option value="cl_com_01">Commercial</option>
+                    <option value="cl_ind_01">Industrial / HT</option>
+                    <option value="cl_ag_01">Agricultural</option>
+                  </select>
+                </Field>
+              </div>
             </>
           )}
 
-          {/* Step 4 — Technical */}
+          {/* Step 4 — Technical Specs */}
           {step === 4 && (
             <>
-              <StepHeader title={`Technical Specs — ${form.service.utilityType}`} subtitle="Connection load and configuration parameters" />
+              <StepHeader title="Technical Specifications" subtitle={`${form.service.utilityType === "ELECTRICITY" ? "Electrical load and supply parameters" : form.service.utilityType === "WATER" ? "Water connection parameters" : "Gas connection parameters"}`} />
               {form.service.utilityType === "ELECTRICITY" && (
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18 }}>
                   <Field label="Connected Load (kW)">
-                    <input style={INPUT} type="number" value={form.technical.loadKw} onChange={e => set("technical", "loadKw", +e.target.value)} />
+                    <input style={INPUT} type="number" value={form.technical.loadKw}
+                      onChange={e => set("technical", "loadKw", parseFloat(e.target.value))} />
                   </Field>
                   <Field label="Contract Demand (kVA)">
-                    <input style={INPUT} type="number" value={form.technical.contractDemandKva} onChange={e => set("technical", "contractDemandKva", +e.target.value)} />
+                    <input style={INPUT} type="number" value={form.technical.contractDemandKva}
+                      onChange={e => set("technical", "contractDemandKva", parseFloat(e.target.value))} />
                   </Field>
                   <Field label="Supply Voltage">
                     <select style={SELECT} value={form.technical.supplyVoltage} onChange={e => set("technical", "supplyVoltage", e.target.value)}>
-                      <option>230V</option><option>415V</option><option>11kV</option><option>33kV</option>
+                      <option value="230V">230V Single Phase</option>
+                      <option value="415V">415V Three Phase</option>
+                      <option value="11kV">11kV HT</option>
+                      <option value="33kV">33kV HT</option>
                     </select>
                   </Field>
                   <Field label="Phase Type">
@@ -238,6 +260,18 @@ export function NewConnectionWizard() {
                       <option value="THREE">Three Phase</option>
                     </select>
                   </Field>
+                  <div style={{ gridColumn: "span 2" }}>
+                    <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
+                      <input type="checkbox" checked={form.technical.isNetMetered}
+                        onChange={e => set("technical", "isNetMetered", e.target.checked)}
+                        style={{ width: 16, height: 16 }} />
+                      <span style={{ fontSize: 13, color: "var(--foreground)" }}>Net Metering / Solar Rooftop</span>
+                    </label>
+                  </div>
+                </div>
+              )}
+              {(form.service.utilityType === "GAS_PNG" || form.service.utilityType === "GAS_CNG") && (
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18 }}>
                   <Field label="Service Type">
                     <select style={SELECT} value={form.technical.serviceType} onChange={e => set("technical", "serviceType", e.target.value)}>
                       <option value="DOMESTIC">Domestic</option>
@@ -245,37 +279,30 @@ export function NewConnectionWizard() {
                       <option value="INDUSTRIAL">Industrial</option>
                     </select>
                   </Field>
-                  <Field label="Net Metered (Solar)">
-                    <select style={SELECT} value={form.technical.isNetMetered ? "YES" : "NO"} onChange={e => set("technical", "isNetMetered", e.target.value === "YES")}>
-                      <option value="NO">No</option>
-                      <option value="YES">Yes — Prosumer</option>
-                    </select>
-                  </Field>
-                </div>
-              )}
-              {form.service.utilityType === "GAS_PNG" && (
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18 }}>
                   <Field label="Pressure Band">
                     <select style={SELECT} value={form.technical.pressureBandId} onChange={e => set("technical", "pressureBandId", e.target.value)}>
-                      <option value="cl_pb_01">Low Pressure (LP)</option>
-                      <option value="cl_pb_02">Medium Pressure (MP)</option>
-                      <option value="cl_pb_03">High Pressure (HP)</option>
+                      <option value="cl_pb_01">LP – Low Pressure</option>
+                      <option value="cl_pb_02">MP – Medium Pressure</option>
+                      <option value="cl_pb_03">HP – High Pressure</option>
                     </select>
-                  </Field>
-                  <Field label="Pipe Size (mm)">
-                    <input style={INPUT} type="number" value={form.technical.pipeSizeMm} onChange={e => set("technical", "pipeSizeMm", +e.target.value)} />
                   </Field>
                 </div>
               )}
               {form.service.utilityType === "WATER" && (
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18 }}>
                   <Field label="Pipe Size (mm)">
-                    <input style={INPUT} type="number" value={form.technical.pipeSizeMm} onChange={e => set("technical", "pipeSizeMm", +e.target.value)} />
+                    <select style={SELECT} value={form.technical.pipeSizeMm} onChange={e => set("technical", "pipeSizeMm", parseInt(e.target.value))}>
+                      <option value={15}>15mm (½″)</option>
+                      <option value={20}>20mm (¾″)</option>
+                      <option value={25}>25mm (1″)</option>
+                      <option value={40}>40mm (1½″)</option>
+                      <option value={50}>50mm (2″)</option>
+                    </select>
                   </Field>
-                  <Field label="Service Type">
-                    <select style={SELECT} value={form.technical.serviceType} onChange={e => set("technical", "serviceType", e.target.value)}>
-                      <option value="DOMESTIC">Domestic</option>
-                      <option value="COMMERCIAL">Commercial</option>
+                  <Field label="Meter Type">
+                    <select style={SELECT} value={form.technical.meterType} onChange={e => set("technical", "meterType", e.target.value)}>
+                      <option value="MECHANICAL">Mechanical</option>
+                      <option value="SMART">Smart Meter (AMR)</option>
                     </select>
                   </Field>
                 </div>
@@ -286,10 +313,10 @@ export function NewConnectionWizard() {
           {/* Step 5 — Meter */}
           {step === 5 && (
             <>
-              <StepHeader title="Meter Commissioning" subtitle="Register the physical meter for this connection" />
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18 }}>
-                <Field label="Meter Serial Number">
-                  <input style={INPUT} value={form.meter.serialNo} placeholder="e.g. SRL-9382103"
+              <StepHeader title="Meter Commissioning" subtitle="Register the physical meter and set the baseline reading" />
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18, marginBottom: 20 }}>
+                <Field label="Meter Serial Number *">
+                  <input style={INPUT} value={form.meter.serialNo} placeholder="e.g. LG-2024-001234"
                     onChange={e => set("meter", "serialNo", e.target.value)} />
                 </Field>
                 <Field label="Meter Make / Brand">
@@ -304,7 +331,7 @@ export function NewConnectionWizard() {
                   </select>
                 </Field>
               </div>
-              <div style={{ marginTop: 20, padding: "12px 16px", borderRadius: 8,
+              <div style={{ marginTop: 4, padding: "12px 16px", borderRadius: 8,
                 background: "rgba(59,130,246,0.08)", border: "1px solid rgba(59,130,246,0.2)",
                 fontSize: 12, color: "#3b82f6", lineHeight: 1.6 }}>
                 A Meter Reading record will be initialized at 0 kWh / SCM to establish the commissioning baseline for future billing cycles.
@@ -320,16 +347,34 @@ export function NewConnectionWizard() {
                 <Check size={36} color="#10b981" strokeWidth={3} />
               </div>
               <h2 style={{ fontSize: 22, fontWeight: 800, color: "var(--foreground)", marginBottom: 8 }}>Connection Active!</h2>
-              <p style={{ color: "var(--muted)", fontSize: 13, maxWidth: 380, lineHeight: 1.6, marginBottom: 28 }}>
+              <p style={{ color: "var(--muted)", fontSize: 13, maxWidth: 400, lineHeight: 1.6, marginBottom: 20 }}>
                 Customer, Premise, Account, Technical configuration, and initial Meter Baseline have been successfully provisioned.
               </p>
-              <div style={{ display: "flex", gap: 12 }}>
+              {result && (
+                <div style={{ background: "rgba(59,130,246,0.06)", border: "1px solid rgba(59,130,246,0.2)",
+                  borderRadius: 10, padding: "14px 24px", marginBottom: 24, textAlign: "left", minWidth: 320 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: "#3b82f6", textTransform: "uppercase", letterSpacing: "0.6px", marginBottom: 10 }}>Provisioning Summary</div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px 16px", fontSize: 12 }}>
+                    {result.accountId && <><span style={{ color: "var(--muted)" }}>Account ID</span><span style={{ color: "var(--foreground)", fontWeight: 600, fontFamily: "monospace" }}>{result.accountId.slice(0, 16)}…</span></>}
+                    {result.customerId && <><span style={{ color: "var(--muted)" }}>Customer ID</span><span style={{ color: "var(--foreground)", fontWeight: 600, fontFamily: "monospace" }}>{result.customerId.slice(0, 16)}…</span></>}
+                    {result.requestId && <><span style={{ color: "var(--muted)" }}>Service Request</span><span style={{ color: "#3b82f6", fontWeight: 700, fontFamily: "monospace" }}>{result.requestId.slice(0, 16)}…</span></>}
+                  </div>
+                </div>
+              )}
+              <div style={{ display: "flex", gap: 12, flexWrap: "wrap", justifyContent: "center" }}>
+                {result?.requestId && (
+                  <button onClick={() => router.push("/crm/lifecycle")}
+                    style={{ padding: "9px 20px", borderRadius: 8, border: "none",
+                      background: "#10b981", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+                    View Lifecycle →
+                  </button>
+                )}
                 <button onClick={() => router.push("/")}
                   style={{ padding: "9px 20px", borderRadius: 8, border: "1px solid var(--card-border)",
                     background: "transparent", color: "var(--foreground)", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
                   Go to Dashboard
                 </button>
-                <button onClick={() => { setStep(1); setForm(f => ({ ...f, meter: { ...f.meter, serialNo: "" } })); }}
+                <button onClick={() => { setStep(1); setResult(null); setForm(f => ({ ...f, meter: { ...f.meter, serialNo: "" } })); }}
                   style={{ padding: "9px 20px", borderRadius: 8, border: "none",
                     background: "#3b82f6", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
                   Onboard Another

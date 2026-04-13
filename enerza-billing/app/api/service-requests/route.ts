@@ -16,8 +16,16 @@ export async function GET(req: NextRequest) {
     if (status) where.status = status;
 
     const [data, total] = await Promise.all([
-      prisma.serviceRequest.findMany({ where, skip, take: limit, orderBy: { createdAt: "desc" } }),
-      prisma.serviceRequest.count({ where }),
+      (prisma.serviceRequest as any).findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: "desc" },
+        include: {
+          customer: { select: { fullName: true, customerId: true } },
+        },
+      }),
+      (prisma.serviceRequest as any).count({ where }),
     ]);
 
     return ok({ data, total, page, limit });
@@ -29,7 +37,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const record = await prisma.serviceRequest.create({ data: body });
+    const record = await (prisma.serviceRequest as any).create({ data: body });
     return ok(record, 201);
   } catch (err) {
     return serverError(err);
