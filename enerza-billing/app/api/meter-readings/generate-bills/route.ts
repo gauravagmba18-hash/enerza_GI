@@ -88,8 +88,7 @@ export async function POST(req: NextRequest) {
           totalAmount = parseFloat((totalAmount + diff).toFixed(2));
         }
 
-        // Persist Bill header — BillLines skipped because ChargeComponent FKs
-        // may not be seeded; amounts are captured at the header level.
+        // Persist Bill header
         const created = await (prisma.bill as any).create({
           data: {
             billDate,
@@ -103,6 +102,22 @@ export async function POST(req: NextRequest) {
             cycleId:      account.cycleId ?? "BC-MONTHLY-1",
           },
         });
+
+        // Persist BillLines from billing engine output
+        const lineCreations = bill.rating.lines.map((line: any) =>
+          (prisma.billLine as any).create({
+            data: {
+              billId:      created.billId,
+              componentId: line.componentId,
+              description: line.name,
+              quantity:    line.qty ?? 0,
+              rate:        line.rate,
+              amount:      line.amount,
+              lineType:    line.type,
+            },
+          }).catch(() => null) // skip if componentId FK missing
+        );
+        await Promise.all(lineCreations);
 
         results.push({
           billId:       created.billId,
