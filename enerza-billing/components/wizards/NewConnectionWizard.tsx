@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { Check, ChevronRight, ChevronLeft, User, MapPin, Zap, Settings, Gauge, Flame, Droplets } from "lucide-react";
+import { Check, ChevronRight, ChevronLeft, User, MapPin, Zap, Settings, Gauge, Flame, Droplets, FilePlus } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 const STEPS = [
@@ -422,12 +422,12 @@ export function NewConnectionWizard() {
                 disabled={submitting || !form.meter.serialNo}
                 style={{
                   padding: "8px 22px", borderRadius: 8, border: "none",
-                  background: !form.meter.serialNo ? "var(--muted)" : "#10b981",
+                  background: !form.meter.serialNo ? "var(--muted)" : "#3b82f6",
                   color: "#fff", fontSize: 13, fontWeight: 600,
                   cursor: !form.meter.serialNo ? "not-allowed" : "pointer",
                   display: "flex", alignItems: "center", gap: 6,
                 }}>
-                {submitting ? "Processing…" : <><Check size={15} /> Complete Activation</>}
+                {submitting ? "Raising Request…" : <><FilePlus size={15} /> Raise Service Request</>}
               </button>
             )}
           </div>
