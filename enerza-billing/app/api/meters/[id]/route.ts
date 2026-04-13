@@ -17,6 +17,15 @@ export async function PUT(req: NextRequest, { params }: Ctx) {
   try {
     const { id } = await params;
     const body = await req.json();
+    // Sanitize date field
+    if (!body.calibrationDue) {
+      body.calibrationDue = null;
+    } else if (typeof body.calibrationDue === "string") {
+      const d = new Date(body.calibrationDue);
+      body.calibrationDue = isNaN(d.getTime()) ? null : d.toISOString();
+    }
+    // Remove read-only fields that must not be sent to update
+    delete body.meterId; delete body.createdAt; delete body.updatedAt;
     const record = await (prisma.meter as any).update({ where: { meterId: id }, data: body });
     return ok(record);
   } catch (err) { return serverError(err); }

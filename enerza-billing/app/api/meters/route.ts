@@ -33,6 +33,19 @@ export async function POST(req: NextRequest) {
       return ok({ imported: created.length });
     }
     const body = await req.json();
+    // Sanitize: convert empty-string date fields to null so Prisma doesn't choke
+    if (body.calibrationDue === "" || body.calibrationDue === "dd-mm-yyyy") {
+      body.calibrationDue = null;
+    } else if (body.calibrationDue && typeof body.calibrationDue === "string") {
+      // HTML date inputs return YYYY-MM-DD — wrap in a Date so Prisma gets an ISO datetime
+      const d = new Date(body.calibrationDue);
+      body.calibrationDue = isNaN(d.getTime()) ? null : d.toISOString();
+    }
+    // Ensure required fields have defaults
+    if (!body.status) body.status = "ACTIVE";
+    if (!body.uom && body.utilityType) {
+      body.uom = body.utilityType === "ELECTRICITY" ? "kWh" : body.utilityType === "WATER" ? "kL" : "SCM";
+    }
     const record = await (prisma.meter as any).create({ data: body });
     return ok(record, 201);
   } catch (err) { return serverError(err); }
