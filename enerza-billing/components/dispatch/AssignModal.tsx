@@ -45,10 +45,13 @@ export function AssignModal({ item, onClose, onAssigned }: Props) {
     setSaving(true);
     setError("");
     try {
+      const payload = item!.type === "SR"
+        ? { requestId: item!.id, technicianId: selectedId, scheduledDate, notes }
+        : { ticketId: item!.id,  technicianId: selectedId, scheduledDate, notes };
       const res = await fetch("/api/field/work-orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ticketId: item!.id, technicianId: selectedId, scheduledDate, notes }),
+        body: JSON.stringify(payload),
       });
       if (!res.ok) { const d = await res.json(); setError(d.error ?? "Failed to assign"); setSaving(false); return; }
       onAssigned();

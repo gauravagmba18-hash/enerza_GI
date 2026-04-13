@@ -120,14 +120,12 @@ export function DispatchTicketCard({ item, onDispatch, onTrack }: Props) {
                 TRACK
               </button>
             )}
-            {item.type === "TICKET" && (
-              <button onClick={() => onDispatch(item)} style={{
-                padding: "5px 14px", fontSize: 12, fontWeight: 700, borderRadius: 6, cursor: "pointer",
-                background: item.technicianId ? "#f59e0b" : "var(--accent)", border: "none", color: "#fff",
-              }}>
-                {item.technicianId ? "RE-ASSIGN" : "DISPATCH"}
-              </button>
-            )}
+            <button onClick={() => onDispatch(item)} style={{
+              padding: "5px 14px", fontSize: 12, fontWeight: 700, borderRadius: 6, cursor: "pointer",
+              background: item.technicianId ? "#f59e0b" : "var(--accent)", border: "none", color: "#fff",
+            }}>
+              {item.technicianId ? "RE-ASSIGN" : "DISPATCH"}
+            </button>
           </div>
         )}
       </div>

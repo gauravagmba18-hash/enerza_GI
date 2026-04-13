@@ -24,7 +24,10 @@ export async function GET(req: NextRequest) {
     // Fetch service requests needing field work (steps 2 & 3)
     const srs = await (prisma.serviceRequest as any).findMany({
       where: { currentStep: { in: [2, 3] }, status: { notIn: ["ACTIVE", "CANCELLED"] } },
-      include: { customer: true },
+      include: {
+        customer: true,
+        workOrders: { include: { technician: true, spares: { include: { item: true } } } },
+      },
       orderBy: { createdAt: "desc" },
     });
 
@@ -56,21 +59,25 @@ export async function GET(req: NextRequest) {
 
     // Map SRs → DispatchItems
     const srItems: any[] = srs.map((sr: any) => {
+      const activeWO = (sr.workOrders ?? []).find((w: any) => w.status !== "COMPLETED");
+      const sparesHeld = (sr.workOrders ?? []).some(
+        (w: any) => w.spares.length > 0 && w.status !== "COMPLETED"
+      );
       const stepLabel = sr.currentStep === 2 ? "Field Verification" : "Field Work";
       return {
         type: "SR",
         id: sr.requestId,
-        subject: `${stepLabel}: ${sr.type.replace("_", " ")}`,
+        subject: `${stepLabel}: ${sr.type.replace(/_/g, " ")} — ${sr.customer?.fullName ?? ""}`,
         status: sr.status,
         priority: sr.priority,
         category: sr.type,
         accountId: sr.accountId ?? null,
         customerName: sr.customer?.fullName ?? "—",
-        technicianId: null,
-        technicianName: null,
-        workOrderId: null,
+        technicianId: activeWO?.technicianId ?? null,
+        technicianName: activeWO?.technician?.fullName ?? null,
+        workOrderId: activeWO?.workOrderId ?? null,
         slaBreached: false,
-        sparesHeld: false,
+        sparesHeld,
         createdAt: sr.createdAt,
       };
     });
