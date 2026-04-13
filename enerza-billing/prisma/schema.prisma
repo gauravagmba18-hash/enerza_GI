@@ -864,9 +864,14 @@ model WorkOrder {
   photos            String?
   signature         String?
   unattended_reason String?
+  requestId         String?          @map("request_id")
+  approvalStatus    String?          @map("approval_status")  // PENDING | APPROVED | REJECTED
+  approvedAt        DateTime?        @map("approved_at")
+  rejectionReason   String?          @map("rejection_reason")
   asset             asset?           @relation(fields: [asset_id], references: [asset_id])
   technician        Technician?      @relation(fields: [technicianId], references: [technicianId])
   ticket            ServiceTicket?   @relation(fields: [ticketId], references: [ticketId])
+  request           ServiceRequest?  @relation(fields: [requestId], references: [requestId])
   spares            WorkOrderSpare[]
 
   @@map("work_order")
@@ -1216,6 +1221,7 @@ model ServiceRequest {
   workflowLogs       WorkflowLog[]
   boq                BoQHeader?
   demandNote         DemandNote?
+  workOrders         WorkOrder[]
   customer           Customer?          @relation(fields: [customerId], references: [customerId])
   account            Account?           @relation(fields: [accountId], references: [accountId])
 

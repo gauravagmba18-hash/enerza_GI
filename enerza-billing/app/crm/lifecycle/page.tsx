@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { PlusCircle, RefreshCw, ChevronDown, ChevronUp, CheckCircle2, Clock, Circle } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { StageActionPanel } from "@/components/lifecycle/StageActionPanel";
 
 const STAGE_LABELS = [
   { id: 1, label: "Application Details",   short: "Application" },
@@ -264,7 +265,7 @@ export default function ServiceLifecycle() {
                   </div>
                 </div>
 
-                {/* Expanded Workflow Logs */}
+                {/* Expanded Workflow Logs + Action Panel */}
                 {expanded === req.requestId && (
                   <div style={{ padding: "16px 24px 20px 24px",
                     background: "rgba(59,130,246,0.02)", borderBottom: "1px solid var(--card-border)" }}>
@@ -317,6 +318,15 @@ export default function ServiceLifecycle() {
                         })}
                       </div>
                     )}
+                    {/* Stage Action Panel */}
+                    {(req.currentStep ?? 1) < 5 && (
+                      <StageActionPanel req={req} onAdvanced={() => {
+                        // Refresh SR list and clear cached logs so they reload
+                        setLogs(prev => { const next = { ...prev }; delete next[req.requestId]; return next; });
+                        load();
+                      }} />
+                    )}
+
                     {/* Detail links */}
                     <div style={{ marginTop: 14, display: "flex", gap: 10 }}>
                       {req.accountId && (
