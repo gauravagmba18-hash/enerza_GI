@@ -7,7 +7,7 @@ type Step = "schedule" | "capture" | "validate" | "approve";
 interface ConnectionEntry {
   connectionId: string;
   accountId: string;
-  customer: { fullName: string; mobile?: string } | null;
+  customer: { fullName: string; mobile?: string; customerId?: string } | null;
   meter: { meterId: string; serialNo: string; meterType: string } | null;
   route: { routeId: string; routeName: string } | null;
   lastReading: { readingId: string; readingDate: string; readingValue: number; consumption: number } | null;
@@ -23,7 +23,7 @@ interface ValidationEntry {
   readingType: string;
   status: string;
   connectionId: string;
-  customer: { fullName: string };
+  customer: { fullName: string; customerId?: string | null };
   meter: { serialNo: string; meterType: string } | null;
   analysis: {
     mean: number; stdDev: number; sigma: number; isSuspect: boolean;
@@ -40,7 +40,7 @@ interface ApproveEntry {
   readingType: string;
   connectionId: string;
   accountId: string | null;
-  customer: { fullName: string };
+  customer: { fullName: string; customerId?: string | null };
   meter: { serialNo: string; meterType: string } | null;
   anomaly: {
     isAnomaly: boolean;
@@ -654,11 +654,27 @@ function CaptureStep() {
                 return (
                   <tr key={entry.connectionId} style={{ background: rowBg }}>
                     <td>
-                      <div style={{ fontWeight: 600 }}>{entry.customer?.fullName ?? "—"}</div>
-                      <div style={{ fontSize: 10, color: "var(--ds-text-muted)", fontFamily: "monospace" }}>{entry.accountId.slice(-8)}</div>
+                      {entry.customer?.customerId ? (
+                        <a href={`/crm/customers/${entry.customer.customerId}`}
+                          style={{ fontWeight: 600, color: "var(--accent)", textDecoration: "none" }}
+                          title="Open Customer 360">
+                          {entry.customer.fullName}
+                        </a>
+                      ) : (
+                        <div style={{ fontWeight: 600 }}>{entry.customer?.fullName ?? "—"}</div>
+                      )}
+                      <div style={{ fontSize: 10, color: "var(--ds-text-muted)", fontFamily: "monospace" }}>{entry.customer?.customerId ?? entry.accountId}</div>
                     </td>
                     <td>
-                      <div style={{ fontFamily: "monospace", fontWeight: 600, color: "var(--ds-brand)" }}>{entry.meter?.serialNo ?? <em style={{ opacity: .5 }}>No meter</em>}</div>
+                      <div style={{ fontFamily: "monospace", fontWeight: 600, color: "var(--ds-brand)" }}>
+                        {entry.meter?.serialNo
+                          ? <a href={`/data/meters?search=${encodeURIComponent(entry.meter.serialNo)}`}
+                              style={{ color: "var(--ds-brand)", textDecoration: "none" }}
+                              title="View in Meter Master">
+                              {entry.meter.serialNo}
+                            </a>
+                          : <em style={{ opacity: .5 }}>No meter</em>}
+                      </div>
                       <div style={{ fontSize: 10, color: "var(--ds-text-muted)" }}>{entry.meter?.meterType}</div>
                     </td>
                     <td>
@@ -851,8 +867,25 @@ function ValidateStep() {
                   return (
                     <tr key={e.readingId}>
                       <td>
-                        <div style={{ fontWeight: 600 }}>{e.customer.fullName}</div>
-                        <div style={{ fontSize: 10, fontFamily: "monospace", color: "var(--ds-text-muted)" }}>{e.meter?.serialNo} · {e.meter?.meterType}</div>
+                        {e.customer.customerId ? (
+                          <a href={`/crm/customers/${e.customer.customerId}`}
+                            style={{ fontWeight: 600, color: "var(--accent)", textDecoration: "none" }}
+                            title="Open Customer 360">
+                            {e.customer.fullName}
+                          </a>
+                        ) : (
+                          <div style={{ fontWeight: 600 }}>{e.customer.fullName}</div>
+                        )}
+                        <div style={{ fontSize: 10, fontFamily: "monospace", color: "var(--ds-text-muted)" }}>
+                          {e.meter?.serialNo
+                            ? <a href={`/data/meters?search=${encodeURIComponent(e.meter.serialNo)}`}
+                                style={{ color: "var(--ds-text-muted)", textDecoration: "none" }}
+                                title="View in Meter Master">
+                                {e.meter.serialNo}
+                              </a>
+                            : "—"}
+                          {e.meter?.meterType ? ` · ${e.meter.meterType}` : ""}
+                        </div>
                       </td>
                       <td>
                         <div style={{ fontFamily: "monospace", fontWeight: 700 }}>{e.readingValue.toFixed(2)} kWh</div>
@@ -1082,8 +1115,26 @@ function ApproveStep() {
                           onChange={() => toggleSelect(e.readingId)}
                           style={{ cursor: "pointer", accentColor: "var(--accent)" }} />
                       </td>
-                      <td style={{ fontWeight: 600 }}>{e.customer.fullName}</td>
-                      <td style={{ fontFamily: "monospace", fontSize: 12 }}>{e.meter?.serialNo ?? "—"}</td>
+                      <td style={{ fontWeight: 600 }}>
+                        {e.customer.customerId ? (
+                          <a href={`/crm/customers/${e.customer.customerId}`}
+                            style={{ color: "var(--accent)", textDecoration: "none" }}
+                            onClick={ev => ev.stopPropagation()}
+                            title="Open Customer 360">
+                            {e.customer.fullName}
+                          </a>
+                        ) : e.customer.fullName}
+                      </td>
+                      <td style={{ fontFamily: "monospace", fontSize: 12 }}>
+                        {e.meter?.serialNo
+                          ? <a href={`/data/meters?search=${encodeURIComponent(e.meter.serialNo)}`}
+                              style={{ color: "var(--muted)", textDecoration: "none" }}
+                              onClick={ev => ev.stopPropagation()}
+                              title="View in Meter Master">
+                              {e.meter.serialNo}
+                            </a>
+                          : "—"}
+                      </td>
                       <td style={{ color: "var(--muted)", fontSize: 12 }}>{fmtDate(e.readingDate)}</td>
                       <td style={{ fontFamily: "monospace", fontWeight: 700 }}>{e.readingValue.toFixed(2)} kWh</td>
                       <td style={{ fontFamily: "monospace", fontWeight: 700,
@@ -1161,7 +1212,15 @@ function ApproveStep() {
                   <tbody>
                     {lastApproved.map(e => (
                       <tr key={e.readingId}>
-                        <td style={{ fontWeight: 600 }}>{e.customer.fullName}</td>
+                        <td style={{ fontWeight: 600 }}>
+                          {e.customer.customerId ? (
+                            <a href={`/crm/customers/${e.customer.customerId}`}
+                              style={{ color: "var(--accent)", textDecoration: "none" }}
+                              title="Open Customer 360">
+                              {e.customer.fullName}
+                            </a>
+                          ) : e.customer.fullName}
+                        </td>
                         <td>{fmtDate(e.readingDate)}</td>
                         <td style={{ fontFamily: "monospace", color: "var(--success)", fontWeight: 600 }}>+{e.consumption.toFixed(2)} kWh</td>
                         <td><span className={`ds-badge ${e.readingType === "ACTUAL" ? "ds-badge-pos" : e.readingType === "ESTIMATED" ? "ds-badge-warn" : "ds-badge-neu"}`}>{e.readingType}</span></td>

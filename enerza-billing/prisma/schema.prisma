@@ -86,6 +86,8 @@ model Account {
   serviceTickets     ServiceTicket[]
   serviceRequests    ServiceRequest[]
   serviceOptIns      ServiceOptIn[]
+  disputes           Dispute[]
+  creditNotes        CreditNote[]
 
   @@index([status])
   @@index([customerId])
@@ -287,6 +289,7 @@ model Bill {
   dunningNotices     DunningNotice[]
   netMeteringCredits NetMeteringCredit[]
   paymentOrders      PaymentOrder[]
+  disputes           Dispute[]
 
   @@index([status])
   @@index([accountId])
@@ -1023,31 +1026,37 @@ model DunningLevel {
 }
 
 model DunningNotice {
-  noticeId  String       @id @default(cuid()) @map("notice_id")
-  accountId String       @map("account_id")
-  billId    String       @map("bill_id")
-  levelId   String       @map("level_id")
-  issuedAt  DateTime     @default(now()) @map("issued_at")
-  status    String       @default("ISSUED")
-  createdAt DateTime     @default(now()) @map("created_at")
-  updatedAt DateTime     @updatedAt @map("updated_at")
-  level     DunningLevel @relation(fields: [levelId], references: [levelId])
-  bill      Bill         @relation(fields: [billId], references: [billId])
-  account   Account      @relation(fields: [accountId], references: [accountId])
+  noticeId       String       @id @default(cuid()) @map("notice_id")
+  accountId      String       @map("account_id")
+  billId         String       @map("bill_id")
+  levelId        String       @map("level_id")
+  issuedAt       DateTime     @default(now()) @map("issued_at")
+  status         String       @default("ISSUED")
+  ptpDate        DateTime?    @map("ptp_date")
+  ptpStatus      String?      @map("ptp_status")
+  ptpRecordedBy  String?      @map("ptp_recorded_by")
+  suspendedUntil DateTime?    @map("suspended_until")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+  level          DunningLevel @relation(fields: [levelId], references: [levelId])
+  bill           Bill         @relation(fields: [billId], references: [billId])
+  account        Account      @relation(fields: [accountId], references: [accountId])
 
   @@map("dunning_notice")
 }
 
 model SecurityDeposit {
-  depositId   String    @id @default(cuid()) @map("deposit_id")
-  accountId   String    @map("account_id")
-  amount      Float
-  paymentDate DateTime? @map("payment_date")
-  status      String    @default("PENDING")
-  refundDate  DateTime? @map("refund_date")
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
-  account     Account   @relation(fields: [accountId], references: [accountId])
+  depositId    String    @id @default(cuid()) @map("deposit_id")
+  accountId    String    @map("account_id")
+  amount       Float
+  paymentDate  DateTime? @map("payment_date")
+  status       String    @default("PENDING")
+  refundDate   DateTime? @map("refund_date")
+  interestRate Float     @default(7.25) @map("interest_rate")
+  depositType  String    @default("STANDARD") @map("deposit_type")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  account      Account   @relation(fields: [accountId], references: [accountId])
 
   @@map("security_deposit")
 }
@@ -1065,6 +1074,48 @@ model BudgetBillingPlan {
   account             Account   @relation(fields: [accountId], references: [accountId])
 
   @@map("budget_billing_plan")
+}
+
+model Dispute {
+  disputeId      String       @id @default(cuid()) @map("dispute_id")
+  accountId      String       @map("account_id")
+  billId         String?      @map("bill_id")
+  disputeType    String       @map("dispute_type")
+  disputedAmount Float        @map("disputed_amount")
+  raisedOn       DateTime     @default(now()) @map("raised_on")
+  financialHold  Boolean      @default(false) @map("financial_hold")
+  assignedTo     String?      @map("assigned_to")
+  status         String       @default("OPEN")
+  resolution     String?
+  resolvedOn     DateTime?    @map("resolved_on")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+  account        Account      @relation(fields: [accountId], references: [accountId])
+  bill           Bill?        @relation(fields: [billId], references: [billId])
+  creditNotes    CreditNote[]
+
+  @@index([accountId])
+  @@index([status])
+  @@map("dispute")
+}
+
+model CreditNote {
+  cnId            String    @id @default(cuid()) @map("cn_id")
+  accountId       String    @map("account_id")
+  disputeId       String?   @map("dispute_id")
+  billId          String?   @map("bill_id")
+  reason          String
+  amount          Float
+  issuedOn        DateTime  @default(now()) @map("issued_on")
+  appliedToBillId String?   @map("applied_to_bill_id")
+  status          String    @default("PENDING")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  account         Account   @relation(fields: [accountId], references: [accountId])
+  dispute         Dispute?  @relation(fields: [disputeId], references: [disputeId])
+
+  @@index([accountId])
+  @@map("credit_note")
 }
 
 model asset {
