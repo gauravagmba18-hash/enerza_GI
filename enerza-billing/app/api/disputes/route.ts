@@ -39,6 +39,11 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
+    // Coerce numeric and boolean fields that arrive as strings from form inputs
+    if (body.disputedAmount !== undefined) body.disputedAmount = parseFloat(body.disputedAmount) || 0;
+    if (body.financialHold  !== undefined) body.financialHold  = body.financialHold === true || body.financialHold === "true";
+    // Remove client-generated disputeId if sent — let DB generate it
+    delete body.disputeId;
     const record = await (prisma.dispute as any).create({ data: body });
     return ok(record, 201);
   } catch (err) { return serverError(err); }
