@@ -4,11 +4,14 @@ import { ok, serverError } from "@/lib/api-response";
 
 export async function GET(_req: NextRequest) {
   try {
-    const now = new Date();
-    const currentY = now.getFullYear();
-    const currentM = now.getMonth();
-    const startOfMonth = new Date(currentY, currentM, 1);
-    const startOfNextMonth = new Date(currentY, currentM + 1, 1);
+    // Use the most recent month that has bills, not necessarily the current calendar month
+    const latestBill = await (prisma.bill as any).findFirst({
+      orderBy: { billDate: "desc" },
+      select: { billDate: true },
+    });
+    const ref = latestBill?.billDate ? new Date(latestBill.billDate) : new Date();
+    const startOfMonth     = new Date(ref.getFullYear(), ref.getMonth(), 1);
+    const startOfNextMonth = new Date(ref.getFullYear(), ref.getMonth() + 1, 1);
 
     // ── Fetch BillLines for current month with bill + connection + segment ───────
     const lines = await (prisma.billLine as any).findMany({

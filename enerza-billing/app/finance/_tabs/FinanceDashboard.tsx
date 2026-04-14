@@ -23,7 +23,10 @@ export default function FinanceDashboard() {
 
   if (loading) return <div style={{ color: "var(--muted)", padding: 32 }}>Loading…</div>;
 
-  const { totalBilled = 0, totalCollected = 0, periodKey, segments = [], lineTypes = [], matrix = {}, byLineType = {} } = summary ?? {};
+  const { totalBilled = 0, totalCollected = 0, periodKey, segments = [], lineTypes = [], matrix = {}, byLineType: byLineTypeArr = [] } = summary ?? {};
+  // Convert byLineType array → lookup map keyed by lineType
+  const byLineType: Record<string, number> = {};
+  (byLineTypeArr as any[]).forEach((row: any) => { byLineType[row.lineType] = row.total; });
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
@@ -95,14 +98,14 @@ export default function FinanceDashboard() {
             )}
             {history.map((row: any, i: number) => (
               <tr key={i} style={{ borderBottom: "1px solid var(--card-border)" }}>
-                <td style={{ padding: "7px 10px", color: "var(--foreground)" }}>{row.period}</td>
+                <td style={{ padding: "7px 10px", color: "var(--foreground)" }}>{row.periodKey}</td>
                 <td style={{ padding: "7px 10px", fontFamily: "monospace", color: "#818cf8" }}>{row.erpRef}</td>
-                <td style={{ padding: "7px 10px", textAlign: "right", color: "#3b82f6" }}>{fmt(row.totalDr ?? 0)}</td>
-                <td style={{ padding: "7px 10px", textAlign: "right", color: "#10b981" }}>{fmt(row.totalCr ?? 0)}</td>
+                <td style={{ padding: "7px 10px", textAlign: "right", color: "#3b82f6" }}>{fmt(row.totalDebit ?? 0)}</td>
+                <td style={{ padding: "7px 10px", textAlign: "right", color: "#10b981" }}>{fmt(row.totalDebit ?? 0)}</td>
                 <td style={{ padding: "7px 10px" }}>
                   <span style={{ background: "#10b98122", color: "#10b981", padding: "2px 8px", borderRadius: 4, fontSize: 11, fontWeight: 600 }}>{row.status}</span>
                 </td>
-                <td style={{ padding: "7px 10px", color: "var(--muted)" }}>{row.postedOn ? new Date(row.postedOn).toLocaleDateString("en-IN") : "—"}</td>
+                <td style={{ padding: "7px 10px", color: "var(--muted)" }}>{row.postedAt ? new Date(row.postedAt).toLocaleDateString("en-IN") : "—"}</td>
               </tr>
             ))}
           </tbody>
